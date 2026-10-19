@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Prompt Hall of Fame</title>
+<style>
+  :root {
+    --bg: #0f0f14;
+    --card: #1a1a24;
+    --card-border: #2a2a38;
+    --accent: #ffb703;
+    --accent2: #8ecae6;
+    --text: #f2f2f5;
+    --text-dim: #9a9aa8;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: radial-gradient(circle at top, #1c1c28 0%, #0f0f14 60%);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 60px;
+  }
+
+  header {
+    text-align: center;
+    padding: 40px 20px 20px;
+  }
+
+  header h1 {
+    font-size: 2.2em;
+    margin: 0;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: 1px;
+  }
+
+  header p {
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+
+  #toolbar {
+    max-width: 1100px;
+    margin: 0 auto 20px;
+    padding: 0 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  #searchBox {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  .btn {
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: transform 0.15s, opacity 0.15s;
+  }
+
+  .btn:hover { transform: translateY(-1px); opacity: 0.9; }
+
+  .btn-primary { background: var(--accent); color: #1a1a1a; }
+  .btn-secondary { background: var(--card-border); color: var(--text); }
+  .btn-danger { background: #e63946; color: #fff; }
+
+  #gallery {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 22px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+
+  .card:hover {
+    box-shadow: 0 8px 24px rgba(255, 183, 3, 0.15);
+    transform: translateY(-3px);
+  }
+
+  .rank {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.6);
+    color: var(--accent);
+    font-weight: bold;
+    font-size: 12px;
+    padding: 4px 9px;
+    border-radius: 20px;
+    z-index: 2;
+  }
+
+  .card img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+    background: #000;
+    cursor: zoom-in;
+  }
+
+  .card-body {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+  }
+
+  .card-title {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--accent2);
+  }
+
+  .card-prompt {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.4;
+    max-height: 4.2em;
+    overflow: hidden;
+  }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag {
+    font-size: 11px;
+    background: rgba(142, 202, 230, 0.15);
+    color: var(--accent2);
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: auto;
+    padding-top: 8px;
+  }
+
+  .icon-btn {
+    flex: 1;
+    background: var(--card-border);
+    border: none;
+    color: var(--text);
+    padding: 7px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .icon-btn:hover { background: #34344a; }
+  .icon-btn.danger:hover { background: #e63946; }
+
+  #emptyState {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 60px 20px;
+    display: none;
+  }
+
+  /* Modal add form */
+  #modalOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  #modalOverlay.show { display: flex; }
+
+  #modal {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 24px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  #modal h2 { margin-top: 0; font-size: 18px; }
+
+  #modal label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin: 14px 0 6px;
+  }
+
+  #modal input[type="text"],
+  #modal textarea {
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: 7px;
+    border: 1px solid var(--card-border);
+    background: #12121a;
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+  }
+
+  #modal textarea { min-height: 80px; }
+
+  #imgPreview {
+    margin-top: 10px;
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    display: none;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .modal-actions .btn { flex: 1; }
+
+  /* Lightbox */
+  #lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 20px;
+    cursor: zoom-out;
+  }
+
+  #lightbox.show { display: flex; }
+  #lightbox img { max-width: 90vw; max-height: 80vh; border-radius: 10px; }
+  #lightbox p { color: var(--text-dim); max-width: 600px; text-align: center; margin-top: 16px; }
+
+  #fabAdd {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #1a1a1a;
+    font-size: 28px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(255,183,3,0.4);
+    z-index: 50;
+  }
+
+  #toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #222;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+    z-index: 300;
+  }
+
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏆 Prompt Hall of Fame</h1>
+  <p>Koleksi prompt gambar AI terbaikmu, lengkap dengan contoh hasilnya</p>
+</header>
+
+<div id="toolbar">
+  <input type="text" id="searchBox" placeholder="Cari prompt, judul, atau tag...">
+  <div style="display:flex; gap:10px;">
+    <button class="btn btn-secondary" id="exportBtn">Export</button>
+    <button class="btn btn-secondary" id="importBtn">Import</button>
+    <input type="file" id="importFile" accept=".json" style="display:none">
+    <button class="btn btn-primary" id="addBtn">+ Tambah</button>
+  </div>
+</div>
+
+<div id="gallery"></div>
+<div id="emptyState">Belum ada koleksi. Klik tombol "+ Tambah" untuk mulai menyimpan prompt favoritmu.</div>
+
+<button id="fabAdd" title="Tambah prompt baru">+</button>
+
+<!-- Modal -->
+<div id="modalOverlay">
+  <div id="modal">
+    <h2 id="modalTitle">Tambah Prompt Baru</h2>
+    <label>Gambar Hasil</label>
+    <input type="file" id="imgInput" accept="image/*">
+    <img id="imgPreview">
+    <label>Judul</label>
+    <input type="text" id="titleInput" placeholder="mis. Cyberpunk Alley">
+    <label>Prompt</label>
+    <textarea id="promptInput" placeholder="Tulis prompt lengkap di sini..."></textarea>
+    <label>Tags (pisahkan dengan koma)</label>
+    <input type="text" id="tagsInput" placeholder="mis. midjourney, cyberpunk, neon">
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="cancelBtn">Batal</button>
+      <button class="btn btn-primary" id="saveBtn">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox">
+  <img id="lightboxImg">
+  <p id="lightboxCaption"></p>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const STORAGE_KEY = 'prompt_hall_of_fame_v1';
+  let items = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  let editingId = null;
+
+  const gallery = document.getElementById('gallery');
+  const emptyState = document.getElementById('emptyState');
+  const searchBox = document.getElementById('searchBox');
+  const modalOverlay = document.getElementById('modalOverlay');
+  const modalTitle = document.getElementById('modalTitle');
+  const imgInput = document.getElementById('imgInput');
+  const imgPreview = document.getElementById('imgPreview');
+  const titleInput = document.getElementById('titleInput');
+  const promptInput = document.getElementById('promptInput');
+  const tagsInput = document.getElementById('tagsInput');
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
+  const lightboxCaption = document.getElementById('lightboxCaption');
+  const toast = document.getElementById('toast');
+
+  let pendingImageData = null;
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  }
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 1800);
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function render() {
+    const query = searchBox.value.trim().toLowerCase();
+    const filtered = items.filter(it => {
+      if (!query) return true;
+      return (it.title + ' ' + it.prompt + ' ' + (it.tags || []).join(' ')).toLowerCase().includes(query);
+    });
+
+    gallery.innerHTML = '';
+    emptyState.style.display = items.length === 0 ? 'block' : 'none';
+
+    filtered.slice().reverse().forEach((it, idx) => {
+      const rankNum = items.length - items.indexOf(it);
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <span class="rank">#${rankNum}</span>
+        <img src="${it.image}" alt="${escapeHtml(it.title)}" data-id="${it.id}">
+        <div class="card-body">
+          <div class="card-title">${escapeHtml(it.title || 'Tanpa Judul')}</div>
+          <div class="card-prompt">${escapeHtml(it.prompt)}</div>
+          <div class="card-tags">${(it.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
+          <div class="card-actions">
+            <button class="icon-btn" data-action="copy" data-id="${it.id}">📋 Copy</button>
+            <button class="icon-btn" data-action="edit" data-id="${it.id}">✏️ Edit</button>
+            <button class="icon-btn danger" data-action="delete" data-id="${it.id}">🗑️</button>
+          </div>
+        </div>
+      `;
+      gallery.appendChild(card);
+    });
+  }
+
+  gallery.addEventListener('click', (e) => {
+    const img = e.target.closest('img[data-id]');
+    if (img) {
+      const it = items.find(x => x.id === img.dataset.id);
+      lightboxImg.src = it.image;
+      lightboxCaption.textContent = it.prompt;
+      lightbox.classList.add('show');
+      return;
+    }
+
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    const action = btn.dataset.action;
+    const it = items.find(x => x.id === id);
+    if (!it) return;
+
+    if (action === 'copy') {
+      navigator.clipboard.writeText(it.prompt).then(() => showToast('Prompt disalin!'));
+    } else if (action === 'delete') {
+      if (confirm('Hapus item ini dari koleksi?')) {
+        items = items.filter(x => x.id !== id);
+        save();
+        render();
+        showToast('Item dihapus');
+      }
+    } else if (action === 'edit') {
+      openModal(it);
+    }
+  });
+
+  lightbox.addEventListener('click', () => lightbox.classList.remove('show'));
+
+  function openModal(item) {
+    editingId = item ? item.id : null;
+    modalTitle.textContent = item ? 'Edit Prompt' : 'Tambah Prompt Baru';
+    titleInput.value = item ? item.title : '';
+    promptInput.value = item ? item.prompt : '';
+    tagsInput.value = item ? (item.tags || []).join(', ') : '';
+    pendingImageData = item ? item.image : null;
+    imgPreview.src = pendingImageData || '';
+    imgPreview.style.display = pendingImageData ? 'block' : 'none';
+    imgInput.value = '';
+    modalOverlay.classList.add('show');
+  }
+
+  function closeModal() {
+    modalOverlay.classList.remove('show');
+  }
+
+  document.getElementById('addBtn').addEventListener('click', () => openModal(null));
+  document.getElementById('fabAdd').addEventListener('click', () => openModal(null));
+  document.getElementById('cancelBtn').addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
+
+  imgInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      pendingImageData = ev.target.result;
+      imgPreview.src = pendingImageData;
+      imgPreview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('saveBtn').addEventListener('click', () => {
+    if (!pendingImageData) {
+      alert('Silakan upload gambar contoh hasil dulu.');
+      return;
+    }
+    if (!promptInput.value.trim()) {
+      alert('Prompt tidak boleh kosong.');
+      return;
+    }
+
+    const tags = tagsInput.value.split(',').map(t => t.trim()).filter(Boolean);
+
+    if (editingId) {
+      const it = items.find(x => x.id === editingId);
+      it.title = titleInput.value.trim();
+      it.prompt = promptInput.value.trim();
+      it.tags = tags;
+      it.image = pendingImageData;
+    } else {
+      items.push({
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+        title: titleInput.value.trim(),
+        prompt: promptInput.value.trim(),
+        tags: tags,
+        image: pendingImageData
+      });
+    }
+
+    save();
+    render();
+    closeModal();
+    showToast('Tersimpan!');
+  });
+
+  searchBox.addEventListener('input', render);
+
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'prompt-hall-of-fame-backup.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('importBtn').addEventListener('click', () => {
+    document.getElementById('importFile').click();
+  });
+
+  document.getElementById('importFile').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const imported = JSON.parse(ev.target.result);
+        if (Array.isArray(imported)) {
+          items = items.concat(imported);
+          save();
+          render();
+          showToast('Import berhasil!');
+        }
+      } catch (err) {
+        alert('File tidak valid.');
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  render();
+</script>
+
+</body>
+</html>

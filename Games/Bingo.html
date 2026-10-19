@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bingo</title>
+<style>
+:root{
+  --paper:#e8f0f3;
+  --ink:#16304a;
+  --muted:#5b7186;
+  --card:#ffffff;
+  --line:#c9d8e0;
+  --b:#2f6fdb; --i:#e0486b; --n:#e59a0c; --g:#22906a; --o:#7a4fd1;
+  --gold:#f2b705;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Avenir Next","Trebuchet MS","Segoe UI",system-ui,sans-serif;
+  line-height:1.45;
+}
+.wrap{max-width:980px; margin:0 auto; padding:20px 16px 48px}
+header{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px}
+h1{margin:0; font-size:2rem; letter-spacing:.04em; font-weight:800; display:flex; gap:2px}
+h1 span{display:inline-grid; place-items:center; width:1.55em; height:1.55em; border-radius:50%; color:#fff; font-size:.95rem}
+h1 .l-b{background:var(--b)} h1 .l-i{background:var(--i)} h1 .l-n{background:var(--n)} h1 .l-g{background:var(--g)} h1 .l-o{background:var(--o)}
+.tabs{display:inline-flex; background:#d3e0e7; border-radius:999px; padding:4px; gap:4px}
+.tabs button{
+  border:0; background:transparent; color:var(--ink); font:inherit; font-weight:600;
+  padding:8px 16px; border-radius:999px; cursor:pointer;
+}
+.tabs button[aria-selected="true"]{background:var(--ink); color:#fff}
+button:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-visible{outline:3px solid var(--gold); outline-offset:2px}
+
+.layout{display:grid; gap:18px; grid-template-columns:1fr}
+@media(min-width:780px){ .layout{grid-template-columns:320px 1fr; align-items:start} }
+
+.panel{background:var(--card); border-radius:var(--radius); padding:18px; border:1px solid var(--line)}
+.panel h2{margin:0 0 10px; font-size:1.05rem}
+
+/* Ball */
+.ball-area{display:grid; place-items:center; padding:6px 0 14px}
+.ball{
+  width:150px; height:150px; border-radius:50%; display:grid; place-content:center; text-align:center; color:#fff;
+  background:radial-gradient(circle at 32% 28%, rgba(255,255,255,.55) 0 14%, transparent 15%), var(--c, #aab9c4);
+  box-shadow:inset 0 -10px 18px rgba(0,0,0,.18);
+}
+.ball small{display:block; font-size:1.1rem; font-weight:700; opacity:.9; letter-spacing:.1em}
+.ball strong{display:block; font-size:3.4rem; line-height:1; font-variant-numeric:tabular-nums}
+.ball.empty{background:#d3e0e7; color:var(--muted); box-shadow:none}
+.ball.empty strong{font-size:1rem; font-weight:600; max-width:110px}
+.B{--c:var(--b)} .I{--c:var(--i)} .N{--c:var(--n)} .G{--c:var(--g)} .O{--c:var(--o)}
+@keyframes pop{0%{transform:scale(.7); opacity:.4} 60%{transform:scale(1.07)} 100%{transform:scale(1); opacity:1}}
+.ball.pop{animation:pop .35s ease-out}
+@media(prefers-reduced-motion:reduce){ .ball.pop{animation:none} .cell::before{transition:none} }
+
+.btn{
+  font:inherit; font-weight:700; border:0; border-radius:10px; padding:11px 16px; cursor:pointer;
+  background:var(--ink); color:#fff;
+}
+.btn:hover{filter:brightness(1.15)}
+.btn:disabled{opacity:.45; cursor:not-allowed}
+.btn.alt{background:#d3e0e7; color:var(--ink)}
+.btn.block{width:100%}
+.row{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+.row > *{flex:1 1 auto}
+.opt{display:flex; align-items:center; gap:8px; font-size:.92rem; margin-top:10px}
+.opt select{font:inherit; padding:5px 8px; border-radius:8px; border:1px solid var(--line); background:#fff; color:var(--ink)}
+.meta{font-size:.88rem; color:var(--muted); margin:10px 0 6px}
+.history{display:flex; flex-wrap:wrap; gap:6px; min-height:34px}
+.chip{
+  min-width:42px; padding:4px 8px; border-radius:999px; color:#fff; font-weight:700; font-size:.85rem; text-align:center;
+  background:var(--c); font-variant-numeric:tabular-nums;
+}
+
+/* Sub tabs */
+.subtabs{display:inline-flex; gap:4px; margin-bottom:12px}
+.subtabs button{border:1px solid var(--line); background:#fff; color:var(--ink); font:inherit; font-weight:600; padding:6px 14px; border-radius:8px; cursor:pointer}
+.subtabs button[aria-selected="true"]{background:var(--ink); color:#fff; border-color:var(--ink)}
+
+/* Card */
+.card-head{display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-bottom:6px}
+.card-head div{display:grid; place-items:center; height:42px; border-radius:10px; color:#fff; font-weight:800; font-size:1.2rem; background:var(--c)}
+.card{display:grid; gap:6px; max-width:440px}
+.card.n5{grid-template-columns:repeat(5,1fr)}
+.cell{
+  position:relative; aspect-ratio:1; border:2px solid var(--line); border-radius:10px; background:#fff; color:var(--ink);
+  font:inherit; font-weight:700; font-size:1.25rem; font-variant-numeric:tabular-nums; cursor:pointer; padding:2px; overflow:hidden;
+  display:grid; place-items:center;
+}
+.cell span{position:relative; z-index:1}
+.cell::before{
+  content:""; position:absolute; inset:8%; border-radius:50%; background:var(--c, var(--i));
+  transform:scale(0); transition:transform .15s ease-out;
+}
+.cell[aria-pressed="true"]{color:#fff}
+.cell[aria-pressed="true"]::before{transform:scale(1)}
+.cell.win{border-color:var(--gold); box-shadow:0 0 0 3px var(--gold)}
+.cell.free{font-size:.8rem}
+.cell.shake{animation:shake .25s}
+@keyframes shake{25%{transform:translateX(-4px)} 75%{transform:translateX(4px)}}
+
+.banner{
+  display:none; margin-top:14px; padding:12px 16px; border-radius:12px; background:var(--gold); color:#2b2100; font-weight:800; font-size:1.1rem;
+}
+.banner.show{display:block}
+.hint{font-size:.88rem; color:var(--muted); margin-top:10px; min-height:1.3em}
+
+/* Board */
+.board{display:grid; gap:6px}
+.board-row{display:grid; grid-template-columns:1.8rem repeat(15,1fr); gap:3px; align-items:center}
+.board-row b{display:grid; place-items:center; height:100%; min-height:26px; border-radius:6px; color:#fff; background:var(--c); font-size:.9rem}
+.board-row i{
+  font-style:normal; display:grid; place-items:center; aspect-ratio:1; border-radius:6px; background:#eef3f6; color:#8aa0b1;
+  font-size:.68rem; font-weight:600; font-variant-numeric:tabular-nums;
+}
+@media(min-width:560px){ .board-row i{font-size:.85rem} }
+.board-row i.on{background:var(--c); color:#fff; font-weight:800}
+
+/* Words */
+textarea{
+  width:100%; min-height:260px; resize:vertical; font:inherit; font-size:.95rem; padding:10px; border-radius:10px;
+  border:1px solid var(--line); color:var(--ink); background:#fbfdfe;
+}
+.error{color:#b3261e; font-weight:600; font-size:.9rem; margin-top:8px; min-height:1.2em}
+.card.words .cell{font-size:.8rem; font-weight:600; line-height:1.15; padding:4px; --c:var(--i)}
+.card.words.n3 .cell{font-size:1rem}
+.card.words.n4 .cell{font-size:.9rem}
+.card.words .cell.free{font-weight:800; letter-spacing:.04em}
+.card.words .cell span{overflow-wrap:anywhere; hyphens:auto}
+a.btn{text-decoration:none;display:inline-block;text-align:center}
+.btn.sm{padding:6px 10px;font-size:.85rem}
+.field{font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;color:var(--ink);background:#fbfdfe;width:100%}
+.opt .field{flex:1}
+.share-row{display:flex; gap:6px; flex-wrap:wrap; margin-top:10px}
+.cards-list{display:grid; gap:6px; margin-top:12px; max-height:300px; overflow:auto}
+.card-item{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 10px; border:1px solid var(--line); border-radius:10px}
+.result{margin-top:10px; font-weight:700}
+details.panel{margin-bottom:18px}
+details summary{cursor:pointer; font-weight:700}
+.modal{position:fixed; inset:0; background:rgba(10,24,40,.72); display:grid; place-items:center; padding:16px; z-index:10}
+.modal .box{background:#fff; border-radius:14px; padding:14px; max-width:480px; width:100%; max-height:92vh; overflow:auto}
+.modal img{width:100%; display:block; border-radius:10px; border:1px solid var(--line)}
+.guestonly{display:none}
+body.guest .guestonly{display:block}
+body.guest .tabs, body.guest .subtabs, body.guest .hostonly, body.guest #leftPanel, body.guest #wordLeft{display:none !important}
+body.guest .layout{grid-template-columns:1fr; max-width:460px; margin:0 auto}
+[hidden]{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 aria-label="Bingo"><span class="l-b">B</span><span class="l-i">I</span><span class="l-n">N</span><span class="l-g">G</span><span class="l-o">O</span></h1>
+    <div class="tabs" role="tablist" aria-label="Bingo type">
+      <button role="tab" id="tabNum" aria-selected="true">Number bingo</button>
+      <button role="tab" id="tabWord" aria-selected="false">Word bingo</button>
+    </div>
+  </header>
+
+  <details class="panel hostonly" id="settings">
+    <summary>Card link settings</summary>
+    <label class="opt">Bingo page address <input class="field" id="baseUrl" placeholder="https://contoh.com/bingo.html"></label>
+    <p class="meta">Enter the web address where players open this page. Card links are built from this address. If empty, card images can still be shared, but no link is created.</p>
+  </details>
+
+  <!-- ================= BINGO ANGKA ================= -->
+  <section id="numbers">
+    <div class="layout">
+      <div class="panel" id="leftPanel">
+        <div class="ball-area"><div class="ball empty" id="ball" aria-live="polite"><strong>No number yet</strong></div></div>
+        <button class="btn block" id="drawBtn">Draw number</button>
+        <div class="row">
+          <button class="btn alt" id="autoBtn">Auto draw</button>
+          <button class="btn alt" id="resetBtn">New game</button>
+        </div>
+        <label class="opt">Interval
+          <select id="speed">
+            <option value="3">3 seconds</option>
+            <option value="5" selected>5 seconds</option>
+            <option value="8">8 seconds</option>
+          </select>
+        </label>
+        <label class="opt"><input type="checkbox" id="voice"> Read numbers aloud</label>
+        <label class="opt">Card marking
+          <select id="markMode">
+            <option value="auto" selected>Automatic</option>
+            <option value="manual">Manual (called numbers only)</option>
+            <option value="free">Free (tap any number)</option>
+          </select>
+        </label>
+        <p class="meta" id="count">Called: 0 of 75</p>
+        <div class="history" id="history" aria-label="Last numbers"></div>
+      </div>
+
+      <div class="panel">
+        <div class="subtabs" role="tablist" aria-label="Role">
+          <button role="tab" id="viewPlayer" aria-selected="true">Player</button>
+          <button role="tab" id="viewHost" aria-selected="false">Host</button>
+        </div>
+
+        <div id="playerView">
+          <h2 class="guestonly" id="guestTitle"></h2>
+          <div class="card-head" id="cardHead"></div>
+          <div class="card n5" id="numCard"></div>
+          <div class="banner" id="numBanner" role="status"></div>
+          <p class="hint" id="numHint"></p>
+          <div class="row hostonly"><button class="btn alt" id="newCardBtn">New card</button></div>
+        </div>
+
+        <div id="hostView" hidden>
+          <h2>Number board</h2>
+          <div class="board" id="board"></div>
+          <p class="meta">Called numbers are highlighted. Draw numbers from the left panel.</p>
+          <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+          <h2>Player cards</h2>
+          <label class="opt">Number of cards <input class="field" type="number" id="cardQty" min="1" max="100" value="10" style="max-width:90px"></label>
+          <div class="row"><button class="btn" id="genCards">Create cards</button></div>
+          <div class="cards-list" id="cardsList"></div>
+          <h2 style="margin-top:20px">Check winning card</h2>
+          <div class="row"><input class="field" type="number" id="checkId" min="1" placeholder="Card number" style="flex:1 1 120px"><button class="btn" id="checkBtn" style="flex:0 0 auto">Check</button></div>
+          <div class="result" id="checkResult" role="status"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= BINGO KATA ================= -->
+  <section id="words" hidden>
+    <div class="layout">
+      <div class="panel" id="wordLeft">
+        <h2>Word list</h2>
+        <textarea id="wordInput" aria-label="Word list, one per line"></textarea>
+        <label class="opt">Card size
+          <select id="sizeSel">
+            <option value="3">3 x 3</option>
+            <option value="4">4 x 4</option>
+            <option value="5" selected>5 x 5</option>
+          </select>
+        </label>
+        <label class="opt"><input type="checkbox" id="freeSel" checked> Free center square (odd sizes)</label>
+        <p class="meta" id="wordCount"></p>
+        <div class="row">
+          <button class="btn" id="genBtn">Shuffle card</button>
+          <button class="btn alt" id="clearMarks">Clear marks</button>
+        </div>
+        <div class="error" id="wordError" role="alert"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Your card</h2>
+        <div class="card words" id="wordCard"></div>
+        <div class="banner" id="wordBanner" role="status"></div>
+        <p class="hint">Tap a square to mark it. A full row, column, or diagonal is a bingo.</p>
+        <div class="share-row hostonly"><button class="btn" id="wordShare">Share this card</button></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-label="Share card">
+  <div class="box">
+    <img id="shareImg" alt="Bingo card image">
+    <p class="meta" id="shareNote"></p>
+    <input class="field" id="shareLink" readonly aria-label="Card link">
+    <div class="share-row">
+      <button class="btn sm" id="shImg">Share image</button>
+      <a class="btn sm alt" id="shDl" download="kartu-bingo.png">Download image</a>
+      <button class="btn sm alt" id="shCopy">Copy link</button>
+      <a class="btn sm alt" id="shWa" target="_blank" rel="noopener">WhatsApp</a>
+      <button class="btn sm alt" id="shClose">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const LETTERS = ['B','I','N','G','O'];
+  const letterOf = n => LETTERS[Math.floor((n - 1) / 15)];
+
+  const shuffle = a => {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+
+  function lines(n) {
+    const L = [];
+    for (let r = 0; r < n; r++) L.push(Array.from({length:n}, (_, c) => r * n + c));
+    for (let c = 0; c < n; c++) L.push(Array.from({length:n}, (_, r) => r * n + c));
+    L.push(Array.from({length:n}, (_, i) => i * n + i));
+    L.push(Array.from({length:n}, (_, i) => i * n + (n - 1 - i)));
+    return L;
+  }
+  function winning(marks, n) {
+    const cells = new Set(); let count = 0;
+    for (const l of lines(n)) {
+      if (l.every(i => marks[i])) { count++; l.forEach(i => cells.add(i)); }
+    }
+    return { cells, count };
+  }
+  const bannerText = c => c === 1 ? 'BINGO! One line complete.' : `BINGO! ${c} lines complete.`;
+
+  /* ---------- Tabs ---------- */
+  function setTab(which) {
+    const num = which === 'num';
+    $('#numbers').hidden = !num;
+    $('#words').hidden = num;
+    $('#tabNum').setAttribute('aria-selected', num);
+    $('#tabWord').setAttribute('aria-selected', !num);
+    if (!num) stopAuto();
+  }
+  $('#tabNum').onclick = () => setTab('num');
+  $('#tabWord').onclick = () => setTab('word');
+
+  function setView(which) {
+    const player = which === 'player';
+    $('#playerView').hidden = !player;
+    $('#hostView').hidden = player;
+    $('#viewPlayer').setAttribute('aria-selected', player);
+    $('#viewHost').setAttribute('aria-selected', !player);
+  }
+  $('#viewPlayer').onclick = () => setView('player');
+  $('#viewHost').onclick = () => setView('host');
+
+  /* ---------- Number bingo ---------- */
+  let pool, called, card, marks, timer = null;
+
+  function sample(col) {
+    const a = Array.from({length:15}, (_, i) => col * 15 + i + 1);
+    return shuffle(a).slice(0, 5);
+  }
+  function genNums() {
+    const cols = LETTERS.map((_, c) => sample(c));
+    return Array.from({length:25}, (_, i) => {
+      const r = Math.floor(i / 5), c = i % 5;
+      return (r === 2 && c === 2) ? 0 : cols[c][r];
+    });
+  }
+  const isAuto = () => $('#markMode').value === 'auto';
+  function makeCard() {
+    card = genNums();
+    marks = card.map((v, i) => i === 12);
+    if (isAuto()) card.forEach((v, i) => { if (v && called.includes(v)) marks[i] = true; });
+  }
+  function newGame() {
+    stopAuto();
+    pool = shuffle(Array.from({length:75}, (_, i) => i + 1));
+    called = [];
+    makeCard();
+    renderNumbers(false);
+  }
+
+  function draw() {
+    if (!pool.length) { stopAuto(); return; }
+    const n = pool.pop();
+    called.push(n);
+    if (isAuto()) card.forEach((v, i) => { if (v === n) marks[i] = true; });
+    renderNumbers(true);
+    speak(n);
+    if (!pool.length) stopAuto();
+  }
+
+  function speak(n) {
+    if (!$('#voice').checked || !('speechSynthesis' in window)) return;
+    const u = new SpeechSynthesisUtterance(`${letterOf(n)}, ${n}`);
+    u.lang = 'id-ID';
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  }
+
+  function startAuto() {
+    draw();
+    if (!pool.length) return;
+    timer = setInterval(draw, Number($('#speed').value) * 1000);
+    $('#autoBtn').textContent = 'Stop auto draw';
+  }
+  function stopAuto() {
+    if (timer) clearInterval(timer);
+    timer = null;
+    $('#autoBtn').textContent = 'Auto draw';
+  }
+  $('#autoBtn').onclick = () => timer ? stopAuto() : startAuto();
+  $('#speed').onchange = () => { if (timer) { stopAuto(); startAuto(); } };
+  $('#drawBtn').onclick = draw;
+  $('#resetBtn').onclick = newGame;
+  $('#newCardBtn').onclick = () => { makeCard(); renderNumbers(false); };
+  $('#markMode').onchange = () => {
+    if (isAuto()) {
+      card.forEach((v, i) => { if (v && called.includes(v)) marks[i] = true; });
+      renderNumbers(false);
+    }
+  };
+
+  function renderNumbers(animate) {
+    const last = called[called.length - 1];
+    const ball = $('#ball');
+    if (last) {
+      ball.className = 'ball ' + letterOf(last);
+      ball.innerHTML = `<small>${letterOf(last)}</small><strong>${last}</strong>`;
+      if (animate) { ball.classList.remove('pop'); void ball.offsetWidth; ball.classList.add('pop'); }
+    } else {
+      ball.className = 'ball empty';
+      ball.innerHTML = '<strong>No number yet</strong>';
+    }
+    $('#count').textContent = `Called: ${called.length} of 75`;
+    $('#drawBtn').disabled = !pool.length;
+    $('#drawBtn').textContent = pool.length ? 'Draw number' : 'All numbers have been called';
+
+    $('#history').innerHTML = called.slice(-10).reverse()
+      .map(n => `<span class="chip ${letterOf(n)}">${letterOf(n)}${n}</span>`).join('');
+
+    // card
+    $('#cardHead').innerHTML = LETTERS.map(l => `<div class="${l}">${l}</div>`).join('');
+    const win = winning(marks, 5);
+    $('#numCard').innerHTML = card.map((v, i) => {
+      const col = LETTERS[i % 5];
+      const free = i === 12;
+      const cls = ['cell', col, free ? 'free' : '', win.cells.has(i) ? 'win' : ''].join(' ');
+      return `<button class="${cls}" data-i="${i}" aria-pressed="${marks[i]}" ${free ? 'aria-label="Free square"' : ''}><span>${free ? 'FREE' : v}</span></button>`;
+    }).join('');
+    const b = $('#numBanner');
+    b.classList.toggle('show', win.count > 0);
+    b.textContent = win.count ? bannerText(win.count) : '';
+    const mm = $('#markMode').value;
+    $('#numHint').textContent = mm === 'auto' ? '' : mm === 'free' ? 'Tap a number on your card after the host calls it.' : 'Manual marking: tap a number on your card after it has been called.';
+
+    // board
+    $('#board').innerHTML = LETTERS.map((l, r) => {
+      let cells = '';
+      for (let k = 1; k <= 15; k++) {
+        const n = r * 15 + k;
+        cells += `<i class="${called.includes(n) ? 'on' : ''}">${n}</i>`;
+      }
+      return `<div class="board-row ${l}"><b>${l}</b>${cells}</div>`;
+    }).join('');
+  }
+
+  $('#numCard').addEventListener('click', e => {
+    const btn = e.target.closest('.cell');
+    if (!btn) return;
+    const i = Number(btn.dataset.i);
+    if (i === 12) return;
+    if ($('#markMode').value !== 'free' && !called.includes(card[i])) {
+      btn.classList.remove('shake'); void btn.offsetWidth; btn.classList.add('shake');
+      $('#numHint').textContent = `Number ${card[i]} hasn't been called yet.`;
+      return;
+    }
+    marks[i] = !marks[i];
+    renderNumbers(false);
+    persist();
+  });
+
+  /* ---------- Word bingo ---------- */
+  const DEFAULT_WORDS = [
+    'Can you hear me?','You\'re on mute','Can you share your screen?','Could you repeat that?','Next slide',
+    'Sorry, I\'m late','Any questions?','Let\'s take this offline','I\'ll follow up','Can someone take notes?',
+    'Camera is off','My connection is bad','Hold on, let me find the file','According to the data','Are we aligned?',
+    'Anything to add?','We\'re almost out of time','Okay, moving on','Please mute yourself','Who is taking minutes?',
+    'Can everyone see this?','Deadline is next week','I\'ll send it by email','Someone has a schedule conflict','Thanks, everyone',
+    'That\'s out of scope','Let\'s revisit later','So, to sum up','Sorry, what was that?','Top priority'
+  ];
+  $('#wordInput').value = DEFAULT_WORDS.join('\n');
+
+  let wCard = [], wMarks = [], wSize = 5, wFree = true;
+
+  function parseWords() {
+    const seen = new Set(), out = [];
+    $('#wordInput').value.split('\n').forEach(l => {
+      const t = l.trim();
+      const key = t.toLowerCase();
+      if (t && !seen.has(key)) { seen.add(key); out.push(t); }
+    });
+    return out;
+  }
+  function updateWordCount() {
+    const n = Number($('#sizeSel').value);
+    const useFree = $('#freeSel').checked && n % 2 === 1;
+    const need = n * n - (useFree ? 1 : 0);
+    const have = parseWords().length;
+    $('#wordCount').textContent = `${have} unique words. You need at least ${need} for a ${n} x ${n} card.`;
+  }
+  $('#wordInput').oninput = updateWordCount;
+  $('#sizeSel').onchange = updateWordCount;
+  $('#freeSel').onchange = updateWordCount;
+
+  function genWordCard() {
+    const n = Number($('#sizeSel').value);
+    const useFree = $('#freeSel').checked && n % 2 === 1;
+    const need = n * n - (useFree ? 1 : 0);
+    const words = parseWords();
+    const err = $('#wordError');
+    if (words.length < need) {
+      err.textContent = `Missing ${need - words.length} words. Add more or choose a smaller card size.`;
+      return;
+    }
+    err.textContent = '';
+    wSize = n; wFree = useFree;
+    const pick = shuffle(words).slice(0, need);
+    const mid = Math.floor(n * n / 2);
+    wCard = []; let k = 0;
+    for (let i = 0; i < n * n; i++) wCard.push(useFree && i === mid ? null : pick[k++]);
+    wMarks = wCard.map(v => v === null);
+    renderWords();
+  }
+
+  function renderWords() {
+    const el = $('#wordCard');
+    el.className = `card words n${wSize}`;
+    el.style.gridTemplateColumns = `repeat(${wSize}, 1fr)`;
+    const win = winning(wMarks, wSize);
+    el.innerHTML = wCard.map((v, i) => {
+      const free = v === null;
+      const cls = ['cell', free ? 'free' : '', win.cells.has(i) ? 'win' : ''].join(' ');
+      return `<button class="${cls}" data-i="${i}" aria-pressed="${wMarks[i]}"><span></span></button>`;
+    }).join('');
+    // set text safely (no HTML injection from user words)
+    el.querySelectorAll('.cell').forEach((b, i) => { b.firstChild.textContent = wCard[i] === null ? 'FREE' : wCard[i]; });
+    const b = $('#wordBanner');
+    b.classList.toggle('show', win.count > 0);
+    b.textContent = win.count ? bannerText(win.count) : '';
+  }
+
+  $('#wordCard').addEventListener('click', e => {
+    const btn = e.target.closest('.cell');
+    if (!btn) return;
+    const i = Number(btn.dataset.i);
+    if (wCard[i] === null) return;
+    wMarks[i] = !wMarks[i];
+    renderWords();
+    persist();
+  });
+  $('#genBtn').onclick = genWordCard;
+  $('#clearMarks').onclick = () => { wMarks = wCard.map(v => v === null); renderWords(); };
+
+  /* ---------- Berbagi kartu ---------- */
+  const COLS = ['#2f6fdb','#e0486b','#e59a0c','#22906a','#7a4fd1'];
+  const FONT = '"Avenir Next","Trebuchet MS",sans-serif';
+
+  function rr(x, px, py, w, h, r) {
+    x.beginPath();
+    x.moveTo(px + r, py);
+    x.arcTo(px + w, py, px + w, py + h, r);
+    x.arcTo(px + w, py + h, px, py + h, r);
+    x.arcTo(px, py + h, px, py, r);
+    x.arcTo(px, py, px + w, py, r);
+    x.closePath();
+  }
+  function wrapLines(x, text, maxW) {
+    const out = []; let cur = '';
+    for (const w of text.split(' ')) {
+      const t = cur ? cur + ' ' + w : w;
+      if (!cur || x.measureText(t).width <= maxW) cur = t; else { out.push(cur); cur = w; }
+    }
+    if (cur) out.push(cur);
+    return out;
+  }
+  function fitText(x, text, maxW, maxH, startPx) {
+    let px = startPx, lines = [text];
+    for (; px >= 12; px -= 2) {
+      x.font = `700 ${px}px ${FONT}`;
+      lines = wrapLines(x, text, maxW);
+      if (lines.length * px * 1.2 <= maxH && lines.every(l => x.measureText(l).width <= maxW)) break;
+    }
+    return { px, lines };
+  }
+  function drawCardImage(o) {
+    const W = 900, pad = 40, gap = 10, n = o.size;
+    const cw = (W - pad * 2 - gap * (n - 1)) / n;
+    const gridTop = o.heads ? 250 : 170;
+    const H = gridTop + n * cw + (n - 1) * gap + pad;
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const x = c.getContext('2d');
+    x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
+    x.textAlign = 'left'; x.textBaseline = 'alphabetic';
+    x.fillStyle = '#16304a'; x.font = `800 56px ${FONT}`; x.fillText(o.title, pad, 85);
+    x.fillStyle = '#5b7186'; x.font = `600 30px ${FONT}`; x.fillText(o.subtitle, pad, 130);
+    x.textAlign = 'center'; x.textBaseline = 'middle';
+    if (o.heads) o.heads.forEach((h, i) => {
+      const px = pad + i * (cw + gap);
+      x.fillStyle = COLS[i]; rr(x, px, 160, cw, 70, 14); x.fill();
+      x.fillStyle = '#fff'; x.font = `800 40px ${FONT}`; x.fillText(h, px + cw / 2, 196);
+    });
+    o.cells.forEach((v, i) => {
+      const r = Math.floor(i / n), col = i % n;
+      const px = pad + col * (cw + gap), py = gridTop + r * (cw + gap);
+      x.fillStyle = '#fff'; rr(x, px, py, cw, cw, 14); x.fill();
+      x.lineWidth = 3; x.strokeStyle = '#c9d8e0'; x.stroke();
+      x.fillStyle = '#16304a';
+      if (v === null) { x.font = `800 26px ${FONT}`; x.fillText('FREE', px + cw / 2, py + cw / 2); return; }
+      const start = o.heads ? 64 : (n === 3 ? 40 : n === 4 ? 34 : 28);
+      const f = fitText(x, String(v), cw - 20, cw - 20, start);
+      x.font = `700 ${f.px}px ${FONT}`;
+      const lh = f.px * 1.2, y0 = py + cw / 2 - (f.lines.length - 1) * lh / 2;
+      f.lines.forEach((l, k) => x.fillText(l, px + cw / 2, y0 + k * lh));
+    });
+    return c;
+  }
+
+  function getBase() {
+    const v = $('#baseUrl').value.trim();
+    return v ? v.split('#')[0] : '';
+  }
+  if (/^https?:$/.test(location.protocol)) $('#baseUrl').value = location.href.split('#')[0];
+
+  function openShare(o) {
+    const cv = drawCardImage(o), url = cv.toDataURL('image/png');
+    const base = getBase(), link = base ? o.link(base) : '';
+    $('#shareImg').src = url;
+    $('#shDl').href = url; $('#shDl').download = o.name + '.png';
+    $('#shareLink').value = link;
+    $('#shareLink').hidden = !link; $('#shCopy').hidden = !link; $('#shWa').hidden = !link;
+    $('#shImg').hidden = !navigator.canShare;
+    $('#shareNote').textContent = link
+      ? 'Send the image or link to players. On a phone, long-press the image to save it.'
+      : 'No page address set, so only the image can be shared. Fill it in under Card link settings to create a link.';
+    $('#shWa').href = 'https://wa.me/?text=' + encodeURIComponent(`Bingo card ${o.subtitle}\n${link}`);
+    $('#shImg').onclick = async () => {
+      const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+      const f = new File([blob], o.name + '.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [f] })) {
+        try { await navigator.share({ files: [f], text: `Bingo card ${o.subtitle}` + (link ? '\n' + link : '') }); } catch (e) {}
+      } else {
+        $('#shareNote').textContent = 'This browser cannot share images directly. Use Download image, then attach it in WhatsApp.';
+      }
+    };
+    $('#shCopy').onclick = () => {
+      const inp = $('#shareLink');
+      const done = () => { $('#shareNote').textContent = 'Link copied.'; };
+      const fallback = () => {
+        inp.select();
+        let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+        $('#shareNote').textContent = ok ? 'Link copied.' : 'Long-press the link field to copy it.';
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(link).then(done, fallback);
+      else fallback();
+    };
+    $('#modal').hidden = false;
+    $('#shClose').focus();
+  }
+  const closeShare = () => { $('#modal').hidden = true; };
+  $('#shClose').onclick = closeShare;
+  $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeShare(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeShare(); });
+
+  /* kartu peserta (host) */
+  let hostCards = [];
+  const numLink = c => base => `${base}#n:${c.id}:${c.nums.filter((v, i) => i !== 12).join(',')}`;
+  $('#genCards').onclick = () => {
+    const q = Math.max(1, Math.min(100, Number($('#cardQty').value) || 1));
+    hostCards = Array.from({ length: q }, (_, i) => ({ id: i + 1, nums: genNums() }));
+    $('#cardsList').innerHTML = hostCards.map(c =>
+      `<div class="card-item"><b>Card #${c.id}</b><button class="btn sm" data-id="${c.id}">Share</button></div>`).join('');
+    $('#checkResult').textContent = '';
+  };
+  $('#cardsList').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const c = hostCards.find(k => k.id === Number(b.dataset.id)); if (!c) return;
+    openShare({ name: `kartu-bingo-${c.id}`, title: 'Bingo', subtitle: `#${c.id}`, heads: LETTERS, cells: c.nums.map(v => v || null), size: 5, link: numLink(c) });
+  });
+  $('#checkBtn').onclick = () => {
+    const id = Number($('#checkId').value), out = $('#checkResult');
+    const c = hostCards.find(k => k.id === id);
+    if (!c) { out.textContent = 'Card not found. Create cards first or check the number.'; return; }
+    const m = c.nums.map((v, i) => i === 12 || called.includes(v));
+    const w = winning(m, 5);
+    if (w.count) out.textContent = `Card #${id}: BINGO, ${w.count} complete line(s).`;
+    else {
+      let best = 5;
+      for (const l of lines(5)) best = Math.min(best, l.filter(i => !m[i]).length);
+      out.textContent = `Card #${id}: no bingo yet. Closest line is missing ${best} number(s).`;
+    }
+  };
+
+  /* kartu kata */
+  $('#wordShare').onclick = () => {
+    if (!wCard.length) return;
+    const words = wCard.filter(v => v !== null).map(w => w.replace(/\|/g, '/'));
+    openShare({
+      name: 'kartu-bingo-kata', title: 'Word bingo', subtitle: `${wSize} x ${wSize}`, heads: null,
+      cells: wCard, size: wSize,
+      link: base => `${base}#w:${wSize}:${wFree ? 1 : 0}:${encodeURIComponent(words.join('|'))}`
+    });
+  };
+
+  /* ---------- Tampilan peserta (dari tautan) ---------- */
+  let guestKey = null, guestType = null;
+  function persist() {
+    if (!guestKey) return;
+    try { localStorage.setItem(guestKey, JSON.stringify(guestType === 'n' ? marks : wMarks)); } catch (e) {}
+  }
+  function loadSaved(len) {
+    try {
+      const s = JSON.parse(localStorage.getItem(guestKey));
+      if (Array.isArray(s) && s.length === len) return s.map(Boolean);
+    } catch (e) {}
+    return null;
+  }
+  function initGuest() {
+    const p = location.hash.slice(1).split(':');
+    if (p[0] === 'n' && p.length === 3) {
+      const nums = p[2].split(',').map(Number);
+      if (nums.length !== 24 || !nums.every(n => Number.isInteger(n) && n >= 1 && n <= 75)) return;
+      guestKey = 'bingo:' + location.hash; guestType = 'n';
+      document.body.classList.add('guest');
+      stopAuto();
+      $('#markMode').value = 'free';
+      card = [...nums.slice(0, 12), 0, ...nums.slice(12)];
+      marks = loadSaved(25) || card.map((v, i) => i === 12);
+      marks[12] = true;
+      called = []; pool = [];
+      $('#guestTitle').textContent = 'Bingo card #' + p[1];
+      setTab('num'); setView('player');
+      renderNumbers(false);
+    } else if (p[0] === 'w' && p.length === 4) {
+      const size = Number(p[1]), free = p[3] === undefined ? false : p[2] === '1';
+      let words;
+      try { words = decodeURIComponent(p[3]).split('|'); } catch (e) { return; }
+      if (![3, 4, 5].includes(size)) return;
+      const need = size * size - (free ? 1 : 0);
+      if (words.length !== need) return;
+      guestKey = 'bingo:' + location.hash; guestType = 'w';
+      document.body.classList.add('guest');
+      wSize = size; wFree = free;
+      const mid = Math.floor(size * size / 2);
+      wCard = []; let k = 0;
+      for (let i = 0; i < size * size; i++) wCard.push(free && i === mid ? null : words[k++]);
+      wMarks = loadSaved(size * size) || wCard.map(v => v === null);
+      wCard.forEach((v, i) => { if (v === null) wMarks[i] = true; });
+      setTab('word');
+      renderWords();
+    }
+  }
+
+  /* ---------- Start ---------- */
+  newGame();
+  updateWordCount();
+  genWordCard();
+  initGuest();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>15 Puzzle</title>
+<style>
+:root{--bg:#f4f1ea;--card:#fff;--ink:#222;--muted:#777;--tile:#2f6f6a;--tile2:#3f8f88;--board:#d9d3c4;--accent:#e07a3f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17191c;--card:#22262a;--ink:#eee;--muted:#9aa;--tile:#3f8f88;--tile2:#56aaa2;--board:#101214}}
+:root[data-theme="dark"]{--bg:#17191c;--card:#22262a;--ink:#eee;--muted:#9aa;--tile:#3f8f88;--tile2:#56aaa2;--board:#101214}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;justify-content:center;min-height:100vh}
+main{width:100%;max-width:420px;padding:20px 16px;text-align:center}
+h1{margin:4px 0 12px;font-size:1.6rem}
+.stats{display:flex;gap:8px;margin-bottom:14px}
+.stat{flex:1;background:var(--card);border-radius:12px;padding:8px}
+.stat b{display:block;font-size:1.25rem;font-variant-numeric:tabular-nums}
+.stat span{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+#board{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:8px;background:var(--board);border-radius:16px;aspect-ratio:1}
+.t{border:0;border-radius:10px;background:var(--tile);color:#fff;font-size:clamp(1.4rem,7vw,2rem);font-weight:700;cursor:pointer;transition:background .15s,transform .1s}
+.t:hover{background:var(--tile2)}.t:active{transform:scale(.95)}
+.t.ok{background:var(--accent)}
+.t.e{visibility:hidden}
+button.main{margin-top:16px;padding:12px 28px;border:0;border-radius:12px;background:var(--accent);color:#fff;font-size:1rem;font-weight:600;cursor:pointer}
+#msg{min-height:1.6em;margin-top:14px;font-weight:600;color:var(--accent)}
+p.h{color:var(--muted);font-size:.8rem;margin-top:10px}
+</style>
+</head>
+<body>
+<main>
+<h1>15 Puzzle</h1>
+<div class="stats">
+<div class="stat"><b id="mv">0</b><span>Langkah</span></div>
+<div class="stat"><b id="tm">0:00</b><span>Waktu</span></div>
+<div class="stat"><b id="best">-</b><span>Terbaik</span></div>
+</div>
+<div id="board" role="grid" aria-label="Papan 15 puzzle"></div>
+<div id="msg"></div>
+<button class="main" id="new">Acak Ulang</button>
+<p class="h">Klik angka di baris/kolom yang sama dengan kotak kosong, atau pakai tombol panah. Urutkan 1–15.</p>
+</main>
+<script>
+const N=4,TOTAL=N*N;
+let b,moves,secs,timer,won;
+const $=id=>document.getElementById(id);
+const boardEl=$('board');
+function fmt(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+function getBest(){try{return +localStorage.getItem('p15best')||0}catch(e){return 0}}
+function setBest(v){try{localStorage.setItem('p15best',v)}catch(e){}}
+function showBest(){const v=getBest();$('best').textContent=v?fmt(v):'-'}
+function solved(){for(let i=0;i<TOTAL-1;i++)if(b[i]!==i+1)return false;return true}
+function shuffle(){
+  b=[...Array(TOTAL-1).keys()].map(i=>i+1);b.push(0);
+  let e=TOTAL-1,prev=-1;
+  for(let k=0;k<300;k++){
+    const r=Math.floor(e/N),c=e%N,opts=[];
+    if(r>0)opts.push(e-N);if(r<N-1)opts.push(e+N);
+    if(c>0)opts.push(e-1);if(c<N-1)opts.push(e+1);
+    const o=opts.filter(x=>x!==prev),n=o[Math.floor(Math.random()*o.length)];
+    [b[e],b[n]]=[b[n],b[e]];prev=e;e=n;
+  }
+  if(solved())shuffle();
+}
+function render(){
+  boardEl.innerHTML='';
+  b.forEach((v,i)=>{
+    const el=document.createElement('button');
+    el.className='t'+(v===0?' e':'')+(v===i+1?' ok':'');
+    el.textContent=v||'';
+    el.onclick=()=>clickTile(i);
+    boardEl.appendChild(el);
+  });
+  $('mv').textContent=moves;$('tm').textContent=fmt(secs);
+}
+function startTimer(){if(timer)return;timer=setInterval(()=>{secs++;$('tm').textContent=fmt(secs)},1000)}
+function afterMove(){
+  if(solved()){
+    won=true;clearInterval(timer);timer=null;
+    const best=getBest();
+    if(!best||secs<best){setBest(secs);showBest();$('msg').textContent='🎉 Selesai! Rekor baru: '+fmt(secs)}
+    else $('msg').textContent='🎉 Selesai dalam '+moves+' langkah!';
+  }
+  render();
+}
+function clickTile(i){
+  if(won)return;
+  const e=b.indexOf(0),r=Math.floor(i/N),c=i%N,er=Math.floor(e/N),ec=e%N;
+  if(r!==er&&c!==ec)return;
+  const step=r===er?(i>e?1:-1):(i>e?N:-N);
+  let p=e;
+  while(p!==i){b[p]=b[p+step];p+=step}
+  b[i]=0;moves++;startTimer();afterMove();
+}
+document.addEventListener('keydown',ev=>{
+  const d={ArrowUp:N,ArrowDown:-N,ArrowLeft:1,ArrowRight:-1}[ev.key];
+  if(!d||won)return;
+  ev.preventDefault();
+  const e=b.indexOf(0),t=e+d;
+  if(t<0||t>=TOTAL)return;
+  if(Math.abs(d)===1&&Math.floor(t/N)!==Math.floor(e/N))return;
+  clickTile(t);
+});
+function init(){
+  clearInterval(timer);timer=null;moves=0;secs=0;won=false;
+  $('msg').textContent='';shuffle();render();showBest();
+}
+$('new').onclick=init;
+init();
+</script>
+</body>
+</html>

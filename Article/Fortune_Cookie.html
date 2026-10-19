@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fortune Cookie</title>
+<style>
+:root{--bg:#fbf1dc;--card:#fffdf6;--ink:#3a2a1a;--sub:#7a6650;--acc:#b8651b;--line:#ead7b0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d1710;--card:#2a2118;--ink:#f6e8cf;--sub:#bda98a;--acc:#e8963f;--line:#44362a}}
+:root[data-theme="dark"]{--bg:#1d1710;--card:#2a2118;--ink:#f6e8cf;--sub:#bda98a;--acc:#e8963f;--line:#44362a}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Georgia,"Times New Roman",serif;text-align:center;padding:24px 16px 48px}
+main{max-width:440px;margin:0 auto}
+h1{font-size:1.6rem;margin:8px 0 2px;color:var(--acc)}
+.sub{color:var(--sub);font-size:.9rem;margin:0 0 18px;font-family:system-ui,sans-serif}
+#cookie{font-size:7rem;line-height:1;background:none;border:0;cursor:pointer;padding:8px;margin:0;filter:drop-shadow(0 8px 6px rgba(0,0,0,.2))}
+#cookie.wob{animation:wob .6s}
+@keyframes wob{0%,100%{transform:rotate(0)}20%{transform:rotate(-14deg) scale(1.05)}40%{transform:rotate(12deg) scale(1.1)}60%{transform:rotate(-8deg) scale(1.1)}80%{transform:rotate(6deg)}}
+#cookie.crack{animation:pop .4s forwards}
+@keyframes pop{to{transform:scale(1.25);opacity:.25}}
+#slip{display:none;margin-top:14px;background:var(--card);border:1px solid var(--line);border-left:6px solid var(--acc);padding:22px 18px;border-radius:6px;box-shadow:0 3px 10px rgba(0,0,0,.08)}
+#slip.show{display:block;animation:in .6s}
+@keyframes in{from{opacity:0;transform:translateY(-12px) rotate(-1.5deg)}}
+.f{font-size:1.25rem;font-style:italic;line-height:1.45;margin:0}
+.lk{margin:16px 0 0;font-family:system-ui,sans-serif;font-size:.85rem;color:var(--sub)}
+.lk b{color:var(--acc);letter-spacing:.08em}
+button.b{font:inherit;font-family:system-ui,sans-serif;background:var(--acc);color:#fff;border:0;border-radius:999px;padding:12px 28px;font-size:1rem;margin-top:20px;cursor:pointer;display:none}
+</style>
+</head>
+<body>
+<main>
+<h1>Fortune Cookie</h1>
+<p class="sub" id="hint">Tap the cookie to crack it open</p>
+<button id="cookie" aria-label="Crack the fortune cookie">🥠</button>
+<section id="slip" aria-live="polite"></section>
+<button class="b" id="again">Get another cookie</button>
+</main>
+<script>
+const L=[
+"A small step taken today beats a big plan kept for tomorrow.",
+"Someone you have not met yet is about to make your week better.",
+"The answer you are looking for is hiding in a question you have not asked.",
+"Patience is bitter, but its fruit is sweet.",
+"You will soon find joy in a very ordinary moment.",
+"Your next idea will be the one worth finishing.",
+"A kind word you gave long ago is about to come back to you.",
+"Do not wait for luck. Prepare, and luck will find you ready.",
+"What feels like a detour is leading you somewhere better.",
+"Good things come to those who start before they feel ready.",
+"The smile you share today will travel farther than you think.",
+"Trust your instincts; they know more than you give them credit for.",
+"A closed door today is a wall removed for something wider.",
+"Your hard work is quietly planting seeds you cannot yet see.",
+"Learn something new this week; it will pay off in an unexpected place.",
+"The best time to rest is when you feel you have no time for it.",
+"An unexpected message will brighten your day.",
+"Your curiosity will open a door that talent alone cannot.",
+"Be gentle with yourself; you are doing better than you think.",
+"Good fortune favors the one who says thank you often.",
+"A journey is coming, and it may be shorter than you expect.",
+"Share your meal, and you will double your happiness.",
+"Do one brave thing today and tomorrow will feel lighter.",
+"The calm after a busy season is closer than it looks.",
+"You already have what you need; now begin.",
+"A friendly stranger holds a piece of your puzzle.",
+"Finish what you started, and a new chance will follow.",
+"Laugh at the small mistakes; they make the best stories.",
+"Great things grow slowly, like a tree, not like a flame.",
+"Today's effort is tomorrow's easy habit.",
+"Courage is not the absence of fear, but a walk taken with it.",
+"A warm cup of tea will bring an unexpected idea.",
+"Your reputation for honesty will open a valuable door.",
+"The path ahead is clearer than the one behind.",
+"Spend time with people who make you feel lighter.",
+"A small gift of your time will mean the world to someone.",
+"You will soon be rewarded for a choice you once doubted.",
+"Do not measure your day by the harvest, but by the seeds you sow.",
+"A pleasant surprise is waiting at the end of a long week.",
+"Listen more than you speak, and wisdom will visit you.",
+"The moment you stop comparing, you start to grow.",
+"Your kindness is a language everyone understands.",
+"Change is coming, and it is dressed in good clothes.",
+"A forgotten dream will return with fresh strength.",
+"Be the reason someone believes in good people today.",
+"Look up from your screen; something lovely is happening nearby.",
+"You will solve a problem by walking away from it for a while.",
+"An old friend will soon bring you good news.",
+"Every expert was once a beginner who kept going.",
+"Say yes to the invitation you were about to refuse.",
+"Your work will be noticed by the right person.",
+"Home is wherever you feel at peace; carry it with you.",
+"A little courage now will save you a lot of regret later.",
+"Fortune smiles on those who stay curious.",
+"You are closer to your goal than the distance suggests.",
+"The best view comes after the hardest climb.",
+"Plant a tree today, and thank yourself in ten years.",
+"A calm mind will turn a difficult day into a good story.",
+"Money comes and goes, but good habits stay.",
+"Today you will be wiser than yesterday.",
+"A generous heart is the richest purse.",
+"Someone is thinking of you with great warmth.",
+"Your voice matters; use it kindly and clearly.",
+"Take the scenic route; it will teach you something.",
+"A chance meeting will turn into something lasting.",
+"Do not fear the empty page; it is full of possibility.",
+"You will find peace when you stop chasing perfection.",
+"A simple meal shared with loved ones is a feast.",
+"The sun will rise on your problems and dry them out.",
+"Trust the process; it is working even when unseen.",
+"Your patience is about to be rewarded.",
+"Speak the truth gently and it will be heard.",
+"The wind may change, but you can adjust your sails.",
+"A fresh start is only one decision away.",
+"Remember to enjoy the little things; they are the big things.",
+"An opportunity will arrive disguised as hard work.",
+"You will be surprised by how much you can do in a single hour.",
+"Your creativity will bring you a welcome reward.",
+"Do not carry yesterday's worries into today's meal.",
+"A good listener is a friend worth keeping.",
+"Luck is the meeting point of preparation and timing.",
+"Take a deep breath; the answer is simpler than you think.",
+"Your steady efforts will outshine a sudden burst of speed.",
+"The people who believe in you are closer than you think.",
+"A book, a song, or a talk will change your view this week.",
+"Greet the morning with gratitude and it will return the favor.",
+"You will soon be able to put down a heavy burden.",
+"A little humor will lighten a serious moment.",
+"Do not wait for the perfect moment; make this one count.",
+"Quiet progress is still progress.",
+"A new skill will soon make your life easier.",
+"Your next conversation holds an unexpected lesson.",
+"Joy is often found in the middle of an ordinary day.",
+"A shared laugh will mend an old misunderstanding.",
+"You are the author of the next chapter; write it boldly.",
+"What you give with a happy heart will return many times over.",
+"Rest well tonight; tomorrow holds a pleasant opportunity.",
+"The harder you work, the luckier you will become.",
+"A small act of courage will inspire someone else.",
+"Hold on to your hope; it is stronger than you realize."
+];
+const W=[["好运","hǎoyùn","good luck"],["朋友","péngyou","friend"],["谢谢","xièxie","thank you"],["快乐","kuàilè","happy"],["平安","píng'ān","safe and peaceful"],["梦想","mèngxiǎng","dream"],["勇气","yǒngqì","courage"],["健康","jiànkāng","health"],["爱","ài","love"],["家","jiā","home, family"],["希望","xīwàng","hope"],["微笑","wēixiào","smile"],["成功","chénggōng","success"],["智慧","zhìhuì","wisdom"],["耐心","nàixīn","patience"],["幸福","xìngfú","happiness"],["财富","cáifù","wealth"],["旅行","lǚxíng","travel"],["学习","xuéxí","to study"],["茶","chá","tea"]];
+function word(){const w=W[Math.floor(Math.random()*W.length)];return `<b>${w[0]}</b> ${w[1]} — ${w[2]}`}
+let bag=[];
+function next(){if(!bag.length)bag=L.map((_,i)=>i).sort(()=>Math.random()-.5);return L[bag.pop()]}
+function nums(){const s=new Set;while(s.size<6)s.add(1+Math.floor(Math.random()*49));return[...s].sort((a,b)=>a-b).join(" · ")}
+const c=document.getElementById("cookie"),s=document.getElementById("slip"),a=document.getElementById("again"),h=document.getElementById("hint");
+let busy=false;
+c.onclick=()=>{
+  if(busy)return;busy=true;c.className="wob";
+  setTimeout(()=>{
+    c.className="crack";
+    s.innerHTML=`<p class="f">“${next()}”</p><p class="lk">Learn Chinese: ${word()}</p><p class="lk">Lucky numbers: <b>${nums()}</b></p>`;
+    s.className="show";a.style.display="inline-block";h.textContent="Your fortune";
+  },650);
+};
+a.onclick=()=>{s.className="";a.style.display="none";c.className="";h.textContent="Tap the cookie to crack it open";busy=false;window.scrollTo({top:0,behavior:"smooth"})};
+</script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Survey Reward Drinks</title>
+<style>
+:root{--bg:#f4f7f5;--card:#fff;--text:#16241d;--muted:#5d6e65;--line:#dce5df;--accent:#1fa855;--accent-t:#fff;--sel:#e6f6ec;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101814;--card:#18231d;--text:#e8f1ec;--muted:#9bb0a5;--line:#2a3a31;--accent:#2ec46a;--accent-t:#06210f;--sel:#1d3a29}}
+:root[data-theme="dark"]{--bg:#101814;--card:#18231d;--text:#e8f1ec;--muted:#9bb0a5;--line:#2a3a31;--accent:#2ec46a;--accent-t:#06210f;--sel:#1d3a29}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
+main{max-width:480px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;margin:8px 0 4px}
+h2{font-size:16px;margin:0 0 4px}
+h3{font-size:13px;margin:16px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.sub{color:var(--muted);margin:0 0 18px;font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px}
+.qr{width:100%;max-width:260px;aspect-ratio:1;margin:0 auto 8px;border:2px dashed var(--line);border-radius:14px;display:flex;align-items:center;justify-content:center;overflow:hidden;color:var(--muted);font-size:14px;text-align:center;padding:8px}
+.qr img{width:100%;height:100%;object-fit:contain}
+label{display:block;font-size:13px;color:var(--muted);margin:12px 0 4px}
+input[type=text],input[type=tel]{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:16px}
+.btn{display:block;width:100%;text-align:center;padding:13px;border-radius:12px;border:0;background:var(--accent);color:var(--accent-t);font-size:16px;font-weight:600;cursor:pointer;text-decoration:none;margin-top:14px}
+.btn.alt{background:transparent;color:var(--text);border:1px solid var(--line);font-weight:500;margin-top:8px;padding:10px;font-size:14px}
+.drink{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;cursor:pointer}
+.drink.on{background:var(--sel);border-color:var(--accent)}
+.drink .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);flex:none}
+.drink.on .dot{border-color:var(--accent);background:var(--accent);box-shadow:inset 0 0 0 3px var(--sel)}
+.drink img{width:48px;height:48px;border-radius:10px;object-fit:cover;flex:none;background:var(--bg)}
+.drink .t{flex:1;min-width:0}
+.drink .n{font-weight:500;display:block;overflow-wrap:anywhere}
+.drink .s{font-size:12px;color:var(--muted);display:block;overflow-wrap:anywhere}
+.note{font-size:12px;color:var(--muted);margin-top:10px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opts input[type=color]{width:100%;height:40px;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:2px}
+select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:15px}
+.full{grid-column:1/-1}
+input[type=file]{display:none}
+details{margin-top:10px}
+summary{cursor:pointer;font-size:14px;color:var(--muted)}
+.scanme{text-align:center;font-weight:800;letter-spacing:.18em;font-size:20px;margin:14px 0 8px}
+.qnum{text-align:center;font-weight:600;font-size:15px;margin:6px 0 8px;overflow-wrap:anywhere}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <h1>Survey Reward Drinks</h1>
+  <p class="sub">Finish the survey, pick your free drink, then contact us on WhatsApp by scanning the QR or tapping the button.</p>
+
+  <section class="card">
+    <h2>Contact via WhatsApp</h2>
+    <label for="phone">WhatsApp number</label>
+    <input type="tel" id="phone" inputmode="tel" placeholder="e.g. 08123456789 or +6281234567890">
+    <div class="scanme" id="scanLbl">SCAN ME</div>
+    <div class="qr" id="qrBox" style="margin-top:0"></div>
+    <div class="qnum" id="qrNum"></div>
+    <div class="note" style="text-align:center;margin:0">Long-press (phone) or right-click (desktop) the QR to save it. It carries your selected reward.</div>
+    <a class="btn" id="waBtn" href="#" target="_blank" rel="noopener">💬 Chat on WhatsApp</a>
+    <button class="btn alt" id="dl" hidden>⬇️ Download QR as image</button>
+    <button class="btn alt" id="share">🔗 Share this page</button>
+    <div class="note" id="msgNote"></div>
+    <details>
+      <summary>Customize QR</summary>
+      <div class="opts">
+        <div><label for="fg">QR color</label><input type="color" id="fg"></div>
+        <div><label for="bg">Background</label><input type="color" id="bg"></div>
+        <div class="full"><label for="style">Dot style</label><select id="style"><option value="square">Square</option><option value="dot">Round</option></select></div>
+      </div>
+      <label class="btn alt" for="qrFile">🖼️ Add a logo in the center</label>
+      <input type="file" id="qrFile" accept="image/*">
+      <button class="btn alt" id="noLogo" style="margin-top:6px">Remove logo</button>
+    </details>
+  </section>
+
+  <section class="card">
+    <h2>🎁 Choose your reward</h2>
+    <p class="sub" style="margin:0 0 4px">Tap one drink. It is added to the WhatsApp message and the QR.</p>
+    <h3>☕ Coffee</h3><div id="coffee"></div>
+    <h3>🥤 Non-coffee</h3><div id="non"></div>
+    <h3>🤝 Custom freebies</h3><div id="comm"></div>
+  </section>
+
+  <section class="card" id="addForm">
+    <h2>Offer a custom freebie</h2>
+    <p class="sub" style="margin:0">Want to give something other than coffee? Add it here. It goes into your QR and WhatsApp message, and no sign-in is needed.</p>
+    <label for="fTitle">What are you giving?</label>
+    <input type="text" id="fTitle" maxlength="60" placeholder="e.g. Free croissant">
+    <label for="fBy">From (name or brand)</label>
+    <input type="text" id="fBy" maxlength="40" placeholder="e.g. Sunrise Bakery">
+    <label for="fNote">Note (optional)</label>
+    <input type="text" id="fNote" maxlength="120" placeholder="e.g. Show this message at the counter">
+    <button class="btn" id="addBtn">Add and select</button>
+    <div class="note" id="addErr"></div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+(function(){
+  var KEY='wa-reward-v3',SHARE='https://claude.ai/artifact/DXTh7AjBxUxHoXySvc82Q6';
+  function ph(e,c){return 'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="'+c+'"/><text x="50" y="68" font-size="52" text-anchor="middle">'+e+'</text></svg>');}
+  /* ===== FIXED MENU. Replace img with your own data URI image per drink later. ===== */
+  var CI=ph('☕','#e8d5c4'),NI=ph('🥤','#d9efe0'),GI=ph('🎁','#fde7c8');
+  var COFFEE=['Starrycano','Kopi Dari Tani','Butterscotch Sea Salt Latte','Buttercream Latte','Aren Latte','Pandan Latte','Dirty Matchapresso','Bumi Latte','Americano','Berry Manuka Americano','Kopi Dari Tani 1L'].map(function(n){return {name:n,img:CI};});
+  var NON=['Dark Chocolate','Matcha Green Tea','Classic Milo','Choco Cookie Shake','Butterscotch Milk Crumble','Choco Caramel Cloud','Hibiscus Lychee Peach Yakult'].map(function(n){return {name:n,img:NI};});
+  var comm=[],db=null,dlNs=null,cardCanvas=null;
+  var state={logo:'',fg:'#0b6b35',bg:'#ffffff',style:'square',phone:'',sel:'',mine:[]};
+  try{var s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&typeof s==='object')state=Object.assign(state,s);}catch(e){}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+  var $=function(id){return document.getElementById(id)};
+
+  function normalize(p){p=(p||'').replace(/[^\d+]/g,'').replace(/^\+/,'');if(p.indexOf('0')===0)p='62'+p.slice(1);else if(p.indexOf('8')===0)p='62'+p;return p;}
+  function message(){var m='Hi, I have completed the survey.';if(state.sel){var it=(state.mine||[]).filter(function(x){return x.name===state.sel;})[0];m+=' I would like to claim my reward: '+state.sel+(it&&it.by?' (from '+it.by+')':'')+'.'+(it&&it.note?' Note: '+it.note:'');}return m;}
+
+  function buildCard(qrCv,n){
+    var W=1000,H=1250,c=document.createElement('canvas');c.width=W;c.height=H;
+    var g=c.getContext('2d'),f='system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif';
+    g.fillStyle=state.bg;g.fillRect(0,0,W,H);
+    g.fillStyle=state.fg;g.textAlign='center';g.textBaseline='middle';
+    g.font='800 88px '+f;try{g.letterSpacing='16px';}catch(e){}
+    g.fillText('SCAN ME',W/2+8,100);
+    try{g.letterSpacing='0px';}catch(e){}
+    g.drawImage(qrCv,50,175,900,900);
+    g.font='600 54px '+f;g.fillText('WhatsApp: +'+n,W/2,1165);
+    cardCanvas=c;
+  }
+  function renderQR(){
+    var n=normalize(state.phone),box=$('qrBox');
+    var shown=n.length>=8;$('scanLbl').hidden=!shown;$('qrNum').hidden=!shown;$('qrNum').textContent=shown?'WhatsApp: +'+n:'';$('dl').hidden=!(shown&&dlNs);
+    box.innerHTML='';
+    if(n.length<8||typeof qrcode!=='function'){box.textContent='Your QR appears here once you enter a WhatsApp number.';box.style.borderStyle='dashed';return;}
+    var qr=qrcode(0,state.logo?'H':'M');
+    qr.addData('https://wa.me/'+n+'?text='+encodeURIComponent(message()));qr.make();
+    var cnt=qr.getModuleCount(),px=900,pad=4,cell=px/(cnt+pad*2);
+    var cv=document.createElement('canvas');cv.width=cv.height=px;
+    var x=cv.getContext('2d');x.fillStyle=state.bg;x.fillRect(0,0,px,px);x.fillStyle=state.fg;
+    for(var r=0;r<cnt;r++){for(var k=0;k<cnt;k++){
+      if(!qr.isDark(r,k))continue;
+      var X=(k+pad)*cell,Y=(r+pad)*cell;
+      if(state.style==='dot'){x.beginPath();x.arc(X+cell/2,Y+cell/2,cell*0.47,0,Math.PI*2);x.fill();}
+      else x.fillRect(X,Y,cell+0.6,cell+0.6);
+    }}
+    function done(){var im=new Image();im.src=cv.toDataURL('image/png');im.alt='WhatsApp QR';box.innerHTML='';box.appendChild(im);box.style.borderStyle='solid';buildCard(cv,n);}
+    if(state.logo){var lg=new Image();lg.onload=function(){var sz=px*0.22,o=(px-sz)/2;x.fillStyle=state.bg;x.fillRect(o-10,o-10,sz+20,sz+20);x.drawImage(lg,o,o,sz,sz);done();};lg.onerror=done;lg.src=state.logo;}
+    else done();
+  }
+  function renderLink(){
+    var n=normalize(state.phone),ok=n.length>=8;
+    $('waBtn').href=ok?'https://wa.me/'+n+'?text='+encodeURIComponent(message()):'#';
+    $('waBtn').style.opacity=ok?1:.5;
+    $('msgNote').textContent=ok?'Message: “'+message()+'”':'Enter a WhatsApp number first.';
+  }
+  function list(id,items){
+    var box=$(id);box.innerHTML='';
+    if(!items.length){var e=document.createElement('div');e.className='note';e.textContent='Nothing here yet.';box.appendChild(e);return;}
+    items.forEach(function(it){
+      var row=document.createElement('div');row.className='drink'+(state.sel===it.name?' on':'');
+      var dot=document.createElement('div');dot.className='dot';
+      var im=document.createElement('img');im.src=it.img;im.alt='';im.loading='lazy';
+      var t=document.createElement('div');t.className='t';
+      var n=document.createElement('span');n.className='n';n.textContent=it.name;t.appendChild(n);
+      if(it.sub){var s=document.createElement('span');s.className='s';s.textContent=it.sub;t.appendChild(s);}
+      row.onclick=function(){state.sel=state.sel===it.name?'':it.name;save();renderLists();renderLink();renderQR();};
+      row.appendChild(dot);row.appendChild(im);row.appendChild(t);box.appendChild(row);
+    });
+  }
+  function renderLists(){
+    list('coffee',COFFEE);list('non',NON);
+    list('comm',(state.mine||[]).map(function(c){return {name:c.name,img:GI,sub:[c.by?'from '+c.by:'',c.note].filter(Boolean).join(' · ')};}));
+  }
+
+  $('phone').value=state.phone;
+  $('phone').addEventListener('input',function(e){state.phone=e.target.value;save();renderLink();renderQR();});
+  $('waBtn').addEventListener('click',function(e){if($('waBtn').getAttribute('href')==='#'){e.preventDefault();$('phone').focus();}});
+  $('fg').value=state.fg;$('bg').value=state.bg;$('style').value=state.style;
+  $('fg').addEventListener('input',function(e){state.fg=e.target.value;save();renderQR();});
+  $('bg').addEventListener('input',function(e){state.bg=e.target.value;save();renderQR();});
+  $('style').addEventListener('change',function(e){state.style=e.target.value;save();renderQR();});
+  $('noLogo').addEventListener('click',function(){state.logo='';save();renderQR();});
+  $('qrFile').addEventListener('change',function(e){
+    var f=e.target.files&&e.target.files[0];if(!f)return;
+    var r=new FileReader();
+    r.onload=function(){var img=new Image();img.onload=function(){
+      var sc=Math.min(1,240/Math.max(img.width,img.height)),c=document.createElement('canvas');
+      c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      state.logo=c.toDataURL('image/png');save();renderQR();};img.src=r.result;};
+    r.readAsDataURL(f);
+  });
+  $('share').addEventListener('click',function(){
+    var d={title:'Survey Reward Drinks',text:'Complete the survey and claim a free drink!',url:SHARE};
+    if(navigator.share){navigator.share(d).catch(function(){});return;}
+    try{navigator.clipboard.writeText(SHARE).then(function(){$('msgNote').textContent='Link copied: '+SHARE;},function(){$('msgNote').textContent='Share this link: '+SHARE;});}
+    catch(e){$('msgNote').textContent='Share this link: '+SHARE;}
+  });
+
+  $('addBtn').addEventListener('click',function(){
+    var t=$('fTitle').value.trim().slice(0,60);
+    if(!t){$('addErr').textContent='Please enter what you are giving.';return;}
+    var it={name:t,by:$('fBy').value.trim().slice(0,40),note:$('fNote').value.trim().slice(0,120)};
+    state.mine=(state.mine||[]).filter(function(x){return x.name!==t;});state.mine.unshift(it);state.mine=state.mine.slice(0,20);state.sel=t;save();
+    $('fTitle').value='';$('fBy').value='';$('fNote').value='';
+    $('addErr').textContent='Added and selected. Your QR and message now include it.';
+    renderLists();renderLink();renderQR();
+  });
+
+  try{if(window.claude&&claude.use){claude.use('downloads').then(function(d){if(d){dlNs=d;renderQR();}}).catch(function(){});}}catch(e){}
+  $('dl').addEventListener('click',function(){
+    if(!dlNs||!cardCanvas)return;
+    cardCanvas.toBlob(function(b){
+      if(!b)return;
+      dlNs.save({filename:'whatsapp-qr-'+normalize(state.phone)+'.png',data:b}).catch(function(e){
+        if(!e||e.code!=='declined')$('msgNote').textContent='Could not save the image. Long-press the QR to save it instead.';
+      });
+    },'image/png');
+  });
+
+  renderLists();renderLink();renderQR();
+})();
+</script>
+</body>
+</html>

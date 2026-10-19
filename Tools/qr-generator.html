@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>QR Code Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --card-bg: #ffffff;
+    --text: #1a1a2e;
+    --muted: #9aa0ab;
+    --border: #d8dce3;
+    --accent: #5b6ee8;
+    --accent-dark: #4a5bd4;
+    --accent2: #22223b;
+    --error: #e05260;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14151c;
+      --card-bg: #1e1f29;
+      --text: #f0f1f5;
+      --muted: #8a8f9c;
+      --border: #333543;
+      --accent: #7c8cf0;
+      --accent-dark: #5b6ee8;
+      --accent2: #3a3b52;
+      --error: #ff8a95;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+    padding-top: calc(20px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    color: var(--text);
+  }
+  .card {
+    background: var(--card-bg);
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+    padding: 32px 28px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p.subtitle { font-size: 13px; color: var(--muted); margin: 0 0 20px; }
+  label {
+    display: block;
+    text-align: left;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--muted);
+    margin: 14px 0 6px;
+  }
+  input[type="text"] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    background: var(--card-bg);
+    color: var(--text);
+  }
+  input[type="text"]:focus { border-color: var(--accent); }
+
+  .bg-options { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+  .bg-swatch {
+    width: 36px; height: 36px; border-radius: 9px; cursor: pointer;
+    border: 2px solid transparent; flex-shrink: 0; background-size: cover; background-position: center;
+  }
+  .bg-swatch.selected { border-color: var(--accent); }
+  .bg-swatch.upload-swatch {
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg); border: 1.5px dashed var(--border);
+    font-size: 16px; color: var(--muted);
+  }
+  #customBgInput { display: none; }
+
+  button {
+    width: 100%; padding: 12px; border: none; border-radius: 10px;
+    background: var(--accent); color: #fff; font-size: 15px; font-weight: 600;
+    cursor: pointer; margin-top: 18px; transition: background 0.15s;
+  }
+  button:hover { background: var(--accent-dark); }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  #qrWrap {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 240px; margin-top: 20px; border-radius: 14px; overflow: hidden;
+  }
+  .placeholder { color: var(--muted); font-size: 13px; }
+  #previewCanvas { display: block; max-width: 100%; border-radius: 14px; }
+
+  #downloadBtn { display: none; background: var(--accent2); }
+  #downloadBtn:hover { filter: brightness(1.15); }
+
+  #errorMsg {
+    display: none;
+    margin-top: 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(224, 82, 96, 0.12);
+    color: var(--error);
+    font-size: 12.5px;
+    text-align: left;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>🔗 QR Code Generator</h1>
+  <p class="subtitle">Turn any link into a QR code with a custom background</p>
+
+  <label for="linkInput">Link</label>
+  <input type="text" id="linkInput" placeholder="https://example.com" />
+
+  <label>Background</label>
+  <div class="bg-options" id="bgOptions"></div>
+  <input type="file" id="customBgInput" accept="image/*" />
+
+  <button id="generateBtn">Generate QR Code</button>
+  <div id="errorMsg"></div>
+
+  <div id="qrWrap"><span class="placeholder">Your QR code will appear here</span></div>
+  <button id="downloadBtn">Download QR Code</button>
+</div>
+
+<script>
+  const linkInput = document.getElementById('linkInput');
+  const generateBtn = document.getElementById('generateBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const qrWrap = document.getElementById('qrWrap');
+  const bgOptions = document.getElementById('bgOptions');
+  const customBgInput = document.getElementById('customBgInput');
+  const errorMsg = document.getElementById('errorMsg');
+
+  const presets = [
+    { id: 'violet',   colors: ['#667eea', '#764ba2'] },
+    { id: 'sunset',   colors: ['#f6d365', '#fda085'] },
+    { id: 'ocean',    colors: ['#43cea2', '#185a9d'] },
+    { id: 'blush',    colors: ['#ff9a9e', '#fecfef'] },
+    { id: 'midnight', colors: ['#0f2027', '#203a43', '#2c5364'] },
+    { id: 'citrus',   colors: ['#f9ca24', '#f0932b'] },
+    { id: 'red',      colors: ['#eb3349', '#f45c43'] },
+    { id: 'blue',     colors: ['#2193b0', '#6dd5ed'] }
+  ];
+
+  let selectedPreset = presets[0];
+  let customBgImage = null;
+
+  function cssFor(p) {
+    return `linear-gradient(135deg, ${p.colors.join(', ')})`;
+  }
+
+  presets.forEach((p, i) => {
+    const el = document.createElement('div');
+    el.className = 'bg-swatch' + (i === 0 ? ' selected' : '');
+    el.style.background = cssFor(p);
+    el.addEventListener('click', () => {
+      customBgImage = null;
+      selectedPreset = p;
+      document.querySelectorAll('.bg-swatch').forEach(s => s.classList.remove('selected'));
+      el.classList.add('selected');
+    });
+    bgOptions.appendChild(el);
+  });
+
+  const uploadSwatch = document.createElement('div');
+  uploadSwatch.className = 'bg-swatch upload-swatch';
+  uploadSwatch.textContent = '+';
+  uploadSwatch.title = 'Upload custom background';
+  uploadSwatch.addEventListener('click', () => customBgInput.click());
+  bgOptions.appendChild(uploadSwatch);
+
+  customBgInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        customBgImage = img;
+        document.querySelectorAll('.bg-swatch').forEach(s => s.classList.remove('selected'));
+        uploadSwatch.style.backgroundImage = `url(${ev.target.result})`;
+        uploadSwatch.textContent = '';
+        uploadSwatch.classList.add('selected');
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    errorMsg.style.display = 'block';
+  }
+  function clearError() {
+    errorMsg.style.display = 'none';
+    errorMsg.textContent = '';
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function drawBackground(ctx, size) {
+    if (customBgImage) {
+      const scale = Math.max(size / customBgImage.width, size / customBgImage.height);
+      const w = customBgImage.width * scale;
+      const h = customBgImage.height * scale;
+      const x = (size - w) / 2;
+      const y = (size - h) / 2;
+      ctx.drawImage(customBgImage, x, y, w, h);
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.fillRect(0, 0, size, size);
+    } else {
+      const grad = ctx.createLinearGradient(0, 0, size, size);
+      const colors = selectedPreset.colors;
+      colors.forEach((c, i) => grad.addColorStop(i / (colors.length - 1 || 1), c));
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, size, size);
+    }
+  }
+
+  function generateQR() {
+    clearError();
+
+    const value = linkInput.value.trim();
+    if (!value) {
+      showError('Please enter a link first.');
+      return;
+    }
+
+    if (typeof qrcode !== 'function') {
+      showError('QR library failed to load. Please check your internet connection and try again.');
+      return;
+    }
+
+    try {
+      // Build the QR matrix directly — synchronous, no image round-trip needed.
+      const qr = qrcode(0, 'H'); // 0 = auto type number, H = high error correction
+      qr.addData(value);
+      qr.make();
+
+      const moduleCount = qr.getModuleCount();
+      const finalSize = 400;
+      const padding = 36;
+      const cardPad = 14;
+      const cardSize = finalSize - padding * 2;
+      const qrBoxSize = cardSize - cardPad * 2;
+      const moduleSize = qrBoxSize / moduleCount;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = finalSize;
+      canvas.height = finalSize;
+      const ctx = canvas.getContext('2d');
+
+      drawBackground(ctx, finalSize);
+
+      // white rounded card behind the QR for contrast
+      const cardX = (finalSize - cardSize) / 2;
+      const cardY = (finalSize - cardSize) / 2;
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.25)';
+      ctx.shadowBlur = 18;
+      ctx.fillStyle = '#ffffff';
+      roundRect(ctx, cardX, cardY, cardSize, cardSize, 18);
+      ctx.fill();
+      ctx.restore();
+
+      // draw the QR modules
+      const qrX = (finalSize - qrBoxSize) / 2;
+      const qrY = (finalSize - qrBoxSize) / 2;
+      ctx.fillStyle = '#1a1a2e';
+      for (let row = 0; row < moduleCount; row++) {
+        for (let col = 0; col < moduleCount; col++) {
+          if (qr.isDark(row, col)) {
+            const x = qrX + col * moduleSize;
+            const y = qrY + row * moduleSize;
+            ctx.fillRect(x, y, Math.ceil(moduleSize), Math.ceil(moduleSize));
+          }
+        }
+      }
+
+      qrWrap.innerHTML = '';
+      const previewCanvas = document.createElement('canvas');
+      previewCanvas.id = 'previewCanvas';
+      previewCanvas.width = finalSize;
+      previewCanvas.height = finalSize;
+      previewCanvas.getContext('2d').drawImage(canvas, 0, 0);
+      qrWrap.appendChild(previewCanvas);
+
+      downloadBtn.style.display = 'block';
+      downloadBtn.dataset.href = canvas.toDataURL('image/png');
+    } catch (err) {
+      console.error(err);
+      showError('Something went wrong while generating the QR code: ' + err.message);
+    }
+  }
+
+  generateBtn.addEventListener('click', generateQR);
+  linkInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') generateQR();
+  });
+
+  downloadBtn.addEventListener('click', () => {
+    const href = downloadBtn.dataset.href;
+    if (!href) return;
+    const a = document.createElement('a');
+    a.href = href;
+    a.download = 'qrcode-with-background.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  });
+</script>
+
+</body>
+</html>

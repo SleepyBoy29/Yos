@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quote of the Day</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Jost:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#ECEFEA;--panel:#F7F8F5;--ink:#1B2A2F;--mute:#5E6C70;--line:#CBD3CE;--gold:#8A6A2F;--btn:#1B2A2F;--btnt:#F7F8F5;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#11171A;--panel:#192125;--ink:#E9E7E0;--mute:#93A0A3;--line:#2B363B;--gold:#CBA860;--btn:#E9E7E0;--btnt:#11171A}}
+:root[data-theme="dark"]{--bg:#11171A;--panel:#192125;--ink:#E9E7E0;--mute:#93A0A3;--line:#2B363B;--gold:#CBA860;--btn:#E9E7E0;--btnt:#11171A}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{min-height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Jost,system-ui,sans-serif;line-height:1.5;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px 20px}
+.stage{width:100%;max-width:720px;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:56px 36px 36px;position:relative;text-align:center}
+.stage::before{content:"\201C";position:absolute;top:-6px;left:50%;transform:translateX(-50%);font:italic 500 120px/1 "Cormorant Garamond",Georgia,serif;color:var(--gold)}
+#quote{font:italic 500 clamp(26px,5vw,40px)/1.35 "Cormorant Garamond",Georgia,serif;margin:36px auto 0;max-width:30em;min-height:5.4em;display:flex;align-items:center;justify-content:center;transition:opacity .35s}
+#quote.out{opacity:0}
+#author{margin:20px 0 0;font-weight:500;font-size:15px;color:var(--gold);letter-spacing:.04em;transition:opacity .35s}
+#author::before{content:"";display:block;width:36px;height:1px;background:var(--gold);margin:0 auto 14px}
+#author.out{opacity:0}
+.actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:32px}
+button{font:500 14px Jost,sans-serif;cursor:pointer;border-radius:3px;padding:11px 22px;border:1px solid var(--line);background:transparent;color:var(--ink)}
+button.main{background:var(--btn);color:var(--btnt);border-color:var(--btn)}
+button:hover{border-color:var(--gold)}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.theme{position:absolute;top:12px;right:12px;padding:6px 10px;font-size:13px;color:var(--mute)}
+.toast{min-height:20px;color:var(--gold);font-size:13px;margin-top:14px}
+@media (prefers-reduced-motion:reduce){#quote,#author{transition:none}}
+</style>
+</head>
+<body>
+<section class="stage" aria-live="polite">
+  <button class="theme" id="theme" aria-label="Switch theme">Theme</button>
+  <blockquote id="quote" style="margin-inline:auto"></blockquote>
+  <p id="author"></p>
+  <div class="actions">
+    <button class="main" id="gen">Generate random quote</button>
+    <button id="copy">Copy</button>
+  </div>
+  <div class="toast" id="toast"></div>
+</section>
+
+<script>
+// Edit this list to change which quotes can appear.
+const QUOTES=[
+  {t:"The only way to do great work is to love what you do.",a:"Steve Jobs"},
+  {t:"Imagination is more important than knowledge.",a:"Albert Einstein"},
+  {t:"A journey of a thousand miles begins with a single step.",a:"Lao Tzu"},
+  {t:"It always seems impossible until it is done.",a:"Nelson Mandela"},
+  {t:"The unexamined life is not worth living.",a:"Socrates"},
+  {t:"Well done is better than well said.",a:"Benjamin Franklin"},
+  {t:"No one can make you feel inferior without your consent.",a:"Eleanor Roosevelt"},
+  {t:"Do what you can, with what you have, where you are.",a:"Theodore Roosevelt"},
+  {t:"Whether you think you can, or you think you can’t, you’re right.",a:"Henry Ford"},
+  {t:"Life is really simple, but we insist on making it complicated.",a:"Confucius"},
+  {t:"The way to get started is to quit talking and begin doing.",a:"Walt Disney"},
+  {t:"The pessimist sees difficulty in every opportunity. The optimist sees opportunity in every difficulty.",a:"Winston Churchill"},
+  {t:"Don’t let yesterday take up too much of today.",a:"Will Rogers"},
+  {t:"You learn more from failure than from success. Don’t let it stop you. Failure builds character.",a:"Unknown"},
+  {t:"It’s not whether you get knocked down, it’s whether you get up.",a:"Vince Lombardi"},
+  {t:"Live as if you were to die tomorrow. Learn as if you were to live forever.",a:"Mahatma Gandhi"},
+  {t:"Darkness cannot drive out darkness: only light can do that. Hate cannot drive out hate: only love can do that.",a:"Martin Luther King Jr."},
+  {t:"Strive not to be a success, but rather to be of value.",a:"Albert Einstein"},
+  {t:"I attribute my success to this: I never gave or took any excuse.",a:"Florence Nightingale"},
+  {t:"I’ve missed more than 9000 shots in my career. I’ve lost almost 300 games. 26 times I’ve been trusted to take the game winning shot and missed. I’ve failed over and over and over again in my life. And that is why I succeed.",a:"Michael Jordan"},
+  {t:"Life is what happens to you while you’re busy making other plans.",a:"John Lennon"},
+  {t:"We become what we think about.",a:"Earl Nightingale"},
+  {t:"Twenty years from now you will be more disappointed by the things that you didn’t do than by the ones you did do, so throw off the bowlines, sail away from safe harbor, catch the trade winds in your sails. Explore, Dream, Discover.",a:"Mark Twain"},
+  {t:"Life is 10% what happens to me and 90% of how I react to it.",a:"Charles Swindoll"},
+  {t:"The mind is everything. What you think you become.",a:"Buddha"},
+  {t:"The best time to plant a tree was 20 years ago. The second best time is now.",a:"Chinese Proverb"},
+  {t:"Your time is limited, so don’t waste it living someone else’s life.",a:"Steve Jobs"},
+  {t:"Winning isn’t everything, but wanting to win is.",a:"Vince Lombardi"},
+  {t:"I am not a product of my circumstances. I am a product of my decisions.",a:"Stephen Covey"},
+  {t:"You can never cross the ocean until you have the courage to lose sight of the shore.",a:"Christopher Columbus"},
+  {t:"I’ve learned that people will forget what you said, people will forget what you did, but people will never forget how you made them feel.",a:"Maya Angelou"},
+  {t:"The best revenge is massive success.",a:"Frank Sinatra"},
+  {t:"People often say that motivation doesn’t last. Well, neither does bathing. That’s why we recommend it daily.",a:"Zig Ziglar"},
+  {t:"There is only one way to avoid criticism: do nothing, say nothing, and be nothing.",a:"Aristotle"},
+  {t:"Ask and it will be given to you; search, and you will find; knock and the door will be opened for you.",a:"Jesus"},
+  {t:"The only person you are destined to become is the person you decide to be.",a:"Ralph Waldo Emerson"},
+  {t:"Go confidently in the direction of your dreams. Live the life you have imagined.",a:"Henry David Thoreau"},
+  {t:"When I stand before God at the end of my life, I would hope that I would not have a single bit of talent left and could say, I used everything you gave me.",a:"Erma Bombeck"},
+  {t:"Few things can help an individual more than to place responsibility on him, and to let him know that you trust him.",a:"Booker T. Washington"},
+  {t:"All our dreams can come true, if we have the courage to pursue them.",a:"Walt Disney"},
+  {t:"The secret of getting ahead is getting started.",a:"Mark Twain"},
+  {t:"Don’t limit yourself. Many people limit themselves to what they think they can do. You can go as far as your mind lets you. What you believe, remember, you can achieve.",a:"Mary Kay Ash"},
+  {t:"It’s hard to beat a person who never gives up.",a:"Babe Ruth"},
+  {t:"Work hard in silence, let your success be your noise.",a:"Frank Ocean"},
+  {t:"If people are doubting how far you can go, go so far that you can’t hear them anymore.",a:"Michele Ruiz"},
+  {t:"We need to accept that we won’t always make the right decisions, that we’ll screw up royally sometimes – understanding that failure is not the opposite of success, it’s part of success.",a:"Arianna Huffington"},
+  {t:"You’ve gotta dance like there’s nobody watching, love like you’ll never be hurt, sing like there’s nobody listening, and live like it’s heaven on earth.",a:"William W. Purkey"},
+  {t:"Fairy tales are more than true: not because they tell us that dragons exist, but because they tell us that dragons can be beaten.",a:"Neil Gaiman"},
+  {t:"Everything you can imagine is real.",a:"Pablo Picasso"},
+  {t:"When one door of happiness closes, another opens; but often we look so long at the closed door that we do not see the one which has been opened for us.",a:"Helen Keller"},
+  {t:"Do one thing every day that scares you.",a:"Eleanor Roosevelt"},
+  {t:"It’s no use going back to yesterday, because I was a different person then.",a:"Lewis Carroll"},
+  {t:"Smart people learn from everything and everyone, average people from their experiences, stupid people already have all the answers.",a:"Socrates"},
+  {t:"Do what you feel in your heart to be right – for you’ll be criticized anyway.",a:"Eleanor Roosevelt"},
+  {t:"Happiness is not something ready made. It comes from your own actions.",a:"Dalai Lama XIV"},
+  {t:"Whatever you are, be a good one.",a:"Abraham Lincoln"},
+  {t:"We suffer one of two things. Either the pain of discipline or the pain of regret. You’ve got to choose discipline, versus regret, because discipline weighs ounces and regret weighs tons.",a:"Jim Rohn"},
+  {t:"Your passion is waiting for your courage to catch up.",a:"Isabelle Lafleche"},
+  {t:"Magic is believing in yourself. If you can make that happen, you can make anything happen.",a:"Johann Wolfgang von Goethe"},
+  {t:"If something is important enough, even if the odds are stacked against you, you should still do it.",a:"Elon Musk"},
+  {t:"No one is to blame for your future situation but yourself. If you want to be successful, then become successful.",a:"Jaymin Shah"},
+  {t:"Things may come to those who wait, but only the things left by those who hustle.",a:"Abraham Lincoln"},
+  {t:"Without hustle, talent will only carry you so far.",a:"Gary Vaynerchuk"},
+  {t:"Work like there is someone working twenty four hours a day to take it away from you.",a:"Mark Cuban"},
+  {t:"If you hear a voice within you say ‘you cannot paint,’ then by all means paint and that voice will be silenced.",a:"Vincent van Gogh"},
+  {t:"Some people want it to happen, some wish it would happen, others make it happen.",a:"Michael Jordan"},
+  {t:"Great things are done by a series of small things brought together.",a:"Vincent van Gogh"},
+  {t:"The hard days are what make you stronger.",a:"Aly Raisman"},
+  {t:"Keep your eyes on the stars, and your feet on the ground.",a:"Theodore Roosevelt"},
+  {t:"You’ve got to get up every morning with determination if you’re going to go to bed with satisfaction.",a:"George Lorimer"},
+  {t:"In a gentle way, you can shake the world.",a:"Mahatma Gandhi"},
+  {t:"Don’t be pushed around by the fears in your mind. Be led by the dreams in your heart.",a:"Roy T. Bennett"},
+  {t:"Don’t say you don’t have enough time. You have exactly the same number of hours per day that were given to Helen Keller, Pasteur, Michelangelo, Mother Teresa, Leonardo Da Vinci, Thomas Jefferson, and Albert Einstein.",a:"H. Jackson Brown Jr."},
+  {t:"Hard work beats talent when talent doesn’t work hard.",a:"Tim Notke"},
+  {t:"If everything seems to be under control, you’re not going fast enough.",a:"Mario Andretti"},
+  {t:"The only difference between ordinary and extraordinary is that little extra.",a:"Jimmy Johnson"},
+  {t:"Unsuccessful people make their decisions based on their current situations. Successful people make their decisions based on where they want to be.",a:"Benjamin Hardy"},
+  {t:"Never stop doing your best just because someone doesn’t give you credit.",a:"Kamari aka Lyrikal"},
+  {t:"Things are never quite as scary when you’ve got a best friend.",a:"Dr. Seuss"},
+  {t:"You have brains in your head. You have feet in your shoes. You can steer yourself any direction you choose.",a:"Dr. Seuss"},
+  {t:"You do not like them. So you say. Try them! Try them! And you may!",a:"Dr. Seuss"},
+  {t:"Today was good. Today was fun. Tomorrow is another one.",a:"Dr. Seuss"},
+  {t:"Don’t cry because it’s over, smile because it happened.",a:"Dr. Seuss"},
+  {t:"Only you can control your future.",a:"Dr. Seuss"},
+  {t:"I have heard there are troubles of more than one kind. Some come from ahead and some come from behind. But I’ve bought a big bat. I’m all ready you see. Now my troubles are going to have troubles with me!",a:"Dr. Seuss"},
+  {t:"You’re on your own. And you know what you know. And you are the one who’ll decide where to go.",a:"Dr. Seuss"},
+  {t:"You have to be odd to be number one.",a:"Dr. Seuss"},
+  {t:"It is better to know how to learn than to know.",a:"Dr. Seuss"},
+  {t:"We are all a little weird and life’s a little weird, and when we find someone whose weirdness is compatible with ours, we join up with them and fall in mutual weirdness and call it love.",a:"Dr. Seuss"},
+  {t:"You’re never too old, too wacky, too wild, to pick up a book and read to a child.",a:"Dr. Seuss"},
+  {t:"I like nonsense, it wakes up the brain cells.",a:"Dr. Seuss"},
+  {t:"I’m afraid that sometimes you’ll play lonely games too. Games you can’t win ’cause you’ll play against you.",a:"Dr. Seuss"},
+  {t:"Be who you are and say what you feel because those who mind don’t matter and those who matter don’t mind.",a:"Dr. Seuss"},
+  {t:"You know when you’re in love when you can’t fall asleep because reality is finally better than your dreams.",a:"Dr. Seuss"},
+  {t:"Life is too short to wake up in the morning with regrets.",a:"Dr. Seuss"},
+  {t:"Fantasy is a necessary ingredient in living—it’s a way of looking at life through the wrong end of a telescope.",a:"Dr. Seuss"},
+  {t:"Reading can take you places you have never been before.",a:"Dr. Seuss"},
+  {t:"When something bad happens you have three choices. You can either let it define you, let it destroy you, or you can let it strengthen you.",a:"Dr. Seuss"},
+  {t:"I meant what I said and I said what I meant.",a:"Dr. Seuss"},
+  {t:"Today you are you, that is truer than true. There is no one alive that is youer than you.",a:"Dr. Seuss"},
+  {t:"Remember me and smile, for it’s better to forget than to remember me and cry.",a:"Dr. Seuss"},
+  {t:"Kid, you’ll move mountains.",a:"Dr. Seuss"},
+  {t:"I don’t care how you go. Just get.",a:"Dr. Seuss"},
+  {t:"Always remember you are braver than you believe, stronger than you seem, smarter than you think and twice as beautiful as you’ve ever imagined.",a:"Dr. Seuss"},
+  {t:"And will you succeed? Yes indeed, yes indeed! Ninety-eight and three-quarters percent guaranteed!",a:"Dr. Seuss"},
+  {t:"From there to here, and here to there, funny things are everywhere.",a:"Dr. Seuss"},
+  {t:"Take every chance, drop every fear.",a:"Dr. Seuss"},
+  {t:"Whenever things go a bit sour in a job I’m doing, I always tell myself, You can do better than this.",a:"Dr. Seuss"},
+  {t:"Some people are much more… oh, ever so much more… oh, muchly much-much more unlucky than you!",a:"Dr. Seuss"},
+  {t:"The storm starts, when the drops start dropping. When the drops stop dropping then the storm starts stopping.",a:"Dr. Seuss"},
+  {t:"Sometimes the questions are complicated and the answers are simple.",a:"Dr. Seuss"},
+  {t:"You’ll never be bored when you try something new. There’s really no limit to what you can do.",a:"Dr. Seuss"},
+  {t:"Cause when a guy does something stupid once, well that’s because he’s a guy. But if he does the same stupid thing twice, that’s usually to impress some girl.",a:"Dr. Seuss"},
+  {t:"Why fit in when you were born to stand out.",a:"Dr. Seuss"},
+  {t:"You can find magic wherever you look. Sit back and relax, all you need is a book.",a:"Dr. Seuss"},
+  {t:"When he worked, he really worked. But when he played, he really played.",a:"Dr. Seuss"},
+  {t:"All alone! Whether you like it or not, alone is something you’ll be quite a lot.",a:"Dr. Seuss"},
+  {t:"It is fun to have fun, but you have to know how.",a:"Dr. Seuss"},
+  {t:"Today I shall behave, as if this is the day I will be remembered.",a:"Dr. Seuss"},
+  {t:"Nothing is going to change, unless someone does something soon.",a:"Dr. Seuss"},
+  {t:"The more that you read, the more things you will know. The more that you learn, the more places you’ll go.",a:"Dr. Seuss"},
+  {t:"Work hard, be kind, and amazing things will happen.",a:"Conan O’Brien"},
+  {t:"The purpose of our lives is to be happy.",a:"Dalai Lama"},
+  {t:"Get busy living or get busy dying.",a:"Stephen King"},
+  {t:"You only live once, but if you do it right, once is enough.",a:"Mae West"},
+  {t:"Many of life’s failures are people who did not realize how close they were to success when they gave up.",a:"Thomas A. Edison"},
+  {t:"Not how long, but how well you have lived is the main thing.",a:"Seneca"},
+  {t:"If life were predictable it would cease to be life, and be without flavor.",a:"Eleanor Roosevelt"},
+  {t:"Life is not a problem to be solved, but a reality to be experienced.",a:"Søren Kierkegaard"},
+  {t:"Turn your wounds into wisdom.",a:"Oprah Winfrey"},
+  {t:"The way I see it, if you want the rainbow, you gotta put up with the rain.",a:"Dolly Parton"},
+  {t:"Everybody wants to be famous, but nobody wants to do the work. I live by that. You grind hard so you can play hard. At the end of the day, you put all the work in, and eventually it’ll pay off. It could be in a year, it could be in 30 years. Eventually, your hard work will pay off.",a:"Kevin Hart"},
+  {t:"I like criticism. It makes you strong.",a:"LeBron James"},
+  {t:"Life imposes things on you that you can’t control, but you still have the choice of how you’re going to live through this.",a:"Celine Dion"},
+  {t:"You never really learn much from hearing yourself speak.",a:"George Clooney"},
+  {t:"Live for each second without hesitation.",a:"Elton John"},
+  {t:"Life is like riding a bicycle. To keep your balance, you must keep moving.",a:"Albert Einstein"},
+  {t:"Watch your thoughts; they become words. Watch your words; they become actions. Watch your actions; they become habits. Watch your habits; they become character. Watch your character; it becomes your destiny.",a:"Lao Tzu"},
+  {t:"Know the enemy and know yourself in a hundred battles you will never be in peril. When you are ignorant of the enemy but know yourself, your chances of winning or losing are equal. If ignorant both of your enemy and of yourself, you are certain in every battle to be in peril.",a:"Sun Tzu"}
+];
+const $=id=>document.getElementById(id);
+let cur=-1;
+function generate(){
+  let i;
+  do{i=Math.floor(Math.random()*QUOTES.length)}while(i===cur&&QUOTES.length>1);
+  cur=i;const q=QUOTES[i],qe=$("quote"),ae=$("author");
+  qe.classList.add("out");ae.classList.add("out");
+  setTimeout(()=>{qe.textContent=q.t;ae.textContent="— "+q.a;qe.classList.remove("out");ae.classList.remove("out")},180);
+}
+function flash(m){$("toast").textContent=m;clearTimeout(flash.t);flash.t=setTimeout(()=>$("toast").textContent="",2200)}
+$("gen").onclick=generate;
+$("copy").onclick=async()=>{
+  const q=QUOTES[cur];if(!q)return;
+  try{await navigator.clipboard.writeText("\u201C"+q.t+"\u201D — "+q.a);flash("Quote copied.")}
+  catch(e){flash("Copy failed. Select the text and copy it manually.")}
+};
+$("theme").onclick=()=>{
+  const r=document.documentElement;
+  const dark=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme:dark)").matches;
+  r.dataset.theme=dark?"light":"dark";
+};
+generate();
+</script>
+</body>
+</html>

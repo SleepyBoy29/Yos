@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Identicon Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Jost:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#ECEFEA;--panel:#F7F8F5;--ink:#1B2A2F;--mute:#5E6C70;--line:#CBD3CE;--gold:#8A6A2F;--btn:#1B2A2F;--btnt:#F7F8F5;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#11171A;--panel:#192125;--ink:#E9E7E0;--mute:#93A0A3;--line:#2B363B;--gold:#CBA860;--btn:#E9E7E0;--btnt:#11171A;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#11171A;--panel:#192125;--ink:#E9E7E0;--mute:#93A0A3;--line:#2B363B;--gold:#CBA860;--btn:#E9E7E0;--btnt:#11171A;color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Jost,system-ui,sans-serif;line-height:1.5;padding:0 20px}
+main{max-width:820px;margin:0 auto;padding:48px 0 56px}
+.eyebrow{font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);text-align:center}
+h1{font:600 clamp(34px,7vw,52px)/1.05 "Cormorant Garamond",Georgia,serif;margin:10px 0 8px;text-align:center}
+.lead{text-align:center;color:var(--mute);margin:0 0 28px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:22px}
+.field{display:flex;gap:10px}
+input[type=text]{flex:1;min-width:0;font:400 17px Jost,sans-serif;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:3px;padding:12px 14px}
+button,select{font:500 14px Jost,sans-serif;cursor:pointer;border-radius:3px;border:1px solid var(--line);background:transparent;color:var(--ink);padding:10px 16px}
+select{background:var(--panel);padding:9px 10px}
+button.main{background:var(--btn);color:var(--btnt);border-color:var(--btn)}
+button:hover{border-color:var(--gold)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.opts{display:flex;flex-wrap:wrap;gap:18px 28px;margin-top:18px}
+.opt{display:flex;flex-direction:column;gap:6px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.seg button{border:0;border-radius:0;padding:8px 14px;font-size:13px;letter-spacing:0;text-transform:none;color:var(--mute)}
+.seg button[aria-pressed="true"]{background:var(--btn);color:var(--btnt)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin-top:20px}
+.item{text-align:center;padding:22px 16px 18px}
+.ico{width:min(168px,100%);aspect-ratio:1;margin:0 auto}
+.ico svg{width:100%;height:100%;display:block}
+.name{font:600 24px "Cormorant Garamond",Georgia,serif;margin:16px 0 0}
+.desc{font-size:12px;color:var(--mute);margin:0 0 14px}
+.btns{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.btns button{padding:7px 12px;font-size:13px}
+.toast{min-height:20px;text-align:center;color:var(--gold);font-size:13px;margin-top:16px}
+.note{font-size:12px;color:var(--mute);text-align:center;margin-top:8px}
+.hide{display:none!important}
+@media (max-width:480px){.field{flex-direction:column}}
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">Unique Avatars from Any Text</div>
+  <h1>Identicon Generator</h1>
+  <p class="lead">Type a name, email, or wallet address. The same input always produces the same icon.</p>
+
+  <div class="card">
+    <div class="field">
+      <input type="text" id="txt" value="yos" placeholder="Type anything..." maxlength="200" autocomplete="off" aria-label="Input text">
+      <button class="main" id="rnd">Randomize</button>
+    </div>
+    <div class="opts">
+      <div class="opt">Shape
+        <div class="seg" data-k="shape"><button data-v="square">Square</button><button data-v="rounded">Rounded</button><button data-v="circle">Circle</button></div></div>
+      <div class="opt">Background
+        <div class="seg" data-k="bg"><button data-v="none">None</button><button data-v="tint">Tint</button><button data-v="dark">Dark</button></div></div>
+      <div class="opt">Export size
+        <select id="size" aria-label="Export size"><option>128</option><option>256</option><option selected>512</option><option>1024</option></select></div>
+    </div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <div class="toast" id="toast" aria-live="polite"></div>
+  <p class="note">Styles are inspired by Minidenticons, Stellar Identicon, and Hashicon but are original designs, so the output will not match those libraries exactly.</p>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const S={shape:"rounded",bg:"tint"};
+let dl=null;
+
+/* ---- hashing & PRNG ---- */
+function cyrb53(s){let a=0xdeadbeef,b=0x41c6ce57;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);a=Math.imul(a^c,2654435761);b=Math.imul(b^c,1597334677)}
+  a=Math.imul(a^(a>>>16),2246822507)^Math.imul(b^(b>>>13),3266489909);b=Math.imul(b^(b>>>16),2246822507)^Math.imul(a^(a>>>13),3266489909);
+  return 4294967296*(2097151&b)+(a>>>0)}
+function rngFor(s){let a=cyrb53(s)|0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+/* ---- styles: each returns {hue, inner} drawn in a 100x100 box ---- */
+const fgL=()=>S.bg==="dark"?64:S.bg==="tint"?46:50;
+const STYLES=[
+ {id:"pixel",name:"Pixel",desc:"5×5 mirrored grid",draw(t){
+   const r=rngFor(t+"|pixel"),h=r()*360|0,c=`hsl(${h} 70% ${fgL()}%)`;let o="";
+   for(let y=0;y<5;y++){const row=[r()>.5,r()>.5,r()>.5];
+     [0,1,2,3,4].forEach(x=>{if(row[x<3?x:4-x])o+=`<rect x="${15+x*14}" y="${15+y*14}" width="14" height="14" fill="${c}"/>`})}
+   return{hue:h,inner:o}}},
+ {id:"mosaic",name:"Mosaic",desc:"6×6 tiles, three tones",draw(t){
+   const r=rngFor(t+"|mosaic"),h=r()*360|0,L=fgL();
+   const pal=[`hsl(${h} 68% ${L}%)`,`hsl(${(h+45)%360} 72% ${Math.min(L+14,78)}%)`,`hsl(${(h+200)%360} 60% ${Math.max(L-10,28)}%)`];
+   const w=80/6;let o="";
+   for(let y=0;y<6;y++){const row=[0,1,2].map(()=>{const v=r();return v<.28?-1:v<.52?0:v<.78?1:2});
+     for(let x=0;x<6;x++){const v=row[x<3?x:5-x];if(v>=0)o+=`<rect x="${(10+x*w+.6).toFixed(2)}" y="${(10+y*w+.6).toFixed(2)}" width="${(w-1.2).toFixed(2)}" height="${(w-1.2).toFixed(2)}" rx="2" fill="${pal[v]}"/>`}}
+   return{hue:h,inner:o}}},
+ {id:"gem",name:"Gem",desc:"Faceted polygon",draw(t){
+   const r=rngFor(t+"|gem"),h=r()*360|0,n=5+(r()*4|0),rot=r()*Math.PI*2,L=fgL();
+   const pt=(i,R,off)=>{const a=rot+off+i*2*Math.PI/n;return[(50+R*Math.cos(a)).toFixed(1),(50+R*Math.sin(a)).toFixed(1)]};
+   let o="";
+   for(let i=0;i<n;i++){const p=pt(i,46,0),q=pt(i+1,46,0),c=`hsl(${(h+(r()*100|0))%360} ${55+(r()*25|0)}% ${Math.max(32,L-8)+(r()*22|0)}%)`;
+     o+=`<path d="M50 50L${p[0]} ${p[1]}L${q[0]} ${q[1]}Z" fill="${c}"/>`}
+   const inner=Array.from({length:n},(_,i)=>pt(i,23,Math.PI/n).join(" ")).join("L");
+   o+=`<path d="M${inner}Z" fill="hsl(${(h+180)%360} 55% ${L+14}%)" opacity=".92"/><circle cx="50" cy="50" r="8" fill="hsl(${h} 40% 96%)"/>`;
+   return{hue:h,inner:o}}}
+];
+let uid=0;
+function build(st,text,size){
+  const{hue,inner}=st.draw(text),id=++uid;
+  const bg=S.bg==="tint"?`hsl(${hue} 38% 92%)`:S.bg==="dark"?`hsl(${hue} 30% 13%)`:null;
+  const clip=S.shape==="circle"?'<circle cx="50" cy="50" r="50"/>':`<rect width="100" height="100" rx="${S.shape==="rounded"?22:0}"/>`;
+  return`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="${size}" height="${size}"><defs><clipPath id="c${id}">${clip}</clipPath></defs><g clip-path="url(#c${id})">${bg?`<rect width="100" height="100" fill="${bg}"/>`:""}${inner}</g></svg>`;
+}
+
+/* ---- UI ---- */
+const text=()=>$("txt").value.trim()||"identicon";
+const slug=()=>(text().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40))||"identicon";
+function flash(m){$("toast").textContent=m;clearTimeout(flash.t);flash.t=setTimeout(()=>$("toast").textContent="",2400)}
+
+function render(){
+  const t=text();
+  STYLES.forEach(st=>{$("ico-"+st.id).innerHTML=build(st,t,168)});
+}
+STYLES.forEach(st=>{
+  const d=document.createElement("div");d.className="card item";
+  d.innerHTML=`<div class="ico" id="ico-${st.id}"></div><div class="name">${st.name}</div><p class="desc">${st.desc}</p>
+  <div class="btns"><button data-a="svg">SVG</button><button data-a="png">PNG</button><button data-a="copy">Copy SVG</button></div>`;
+  d.querySelectorAll("button").forEach(b=>{
+    if(b.dataset.a!=="copy")b.classList.add("hide","dl");
+    b.onclick=()=>act(st,b.dataset.a)});
+  $("grid").appendChild(d);
+});
+
+async function save(name,data){
+  try{await dl.save({filename:name,data});flash("Saved "+name)}
+  catch(e){if(e&&e.code!=="declined")flash("Could not save the file.")}
+}
+async function act(st,a){
+  const size=+$("size").value,t=text();
+  if(a==="copy"){
+    const svg=build(st,t,size);
+    try{await navigator.clipboard.writeText(svg)}
+    catch(e){const x=document.createElement("textarea");x.value=svg;document.body.appendChild(x);x.select();
+      try{document.execCommand("copy")}catch(_){flash("Copy failed.");x.remove();return}x.remove()}
+    flash("SVG code copied.");return;
+  }
+  if(!dl)return;
+  const svg=build(st,t,size),base=slug()+"-"+st.id;
+  if(a==="svg"){save(base+".svg",svg);return}
+  const img=new Image();
+  img.onload=()=>{
+    const c=document.createElement("canvas");c.width=c.height=size;
+    c.getContext("2d").drawImage(img,0,0,size,size);
+    c.toBlob(b=>b?save(base+".png",b):flash("PNG export failed."),"image/png");
+  };
+  img.onerror=()=>flash("PNG export failed.");
+  img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
+}
+
+document.querySelectorAll(".seg").forEach(seg=>{
+  const k=seg.dataset.k;
+  const sync=()=>seg.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===S[k]));
+  seg.querySelectorAll("button").forEach(b=>b.onclick=()=>{S[k]=b.dataset.v;sync();render()});
+  sync();
+});
+$("txt").oninput=render;
+$("rnd").onclick=()=>{
+  const a=new Uint32Array(2);crypto.getRandomValues(a);
+  $("txt").value=a[0].toString(36)+a[1].toString(36).slice(0,3);render();
+};
+if(window.claude&&claude.use){
+  claude.use("downloads").then(d=>{if(d){dl=d;document.querySelectorAll(".dl").forEach(b=>b.classList.remove("hide"))}}).catch(()=>{});
+}
+render();
+</script>
+</body>
+</html>

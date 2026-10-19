@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Omikuji おみくじ</title>
+<style>
+:root{--bg:#f7f1e6;--card:#fffdf8;--ink:#2a2220;--sub:#6b5d55;--red:#c0392b;--line:#e3d6c3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1816;--card:#262120;--ink:#f2e9dc;--sub:#b3a595;--red:#e8604f;--line:#3a3230}}
+:root[data-theme="dark"]{--bg:#1c1816;--card:#262120;--ink:#f2e9dc;--sub:#b3a595;--red:#e8604f;--line:#3a3230}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",Georgia,serif;text-align:center;padding:24px 16px 48px}
+main{max-width:460px;margin:0 auto}
+h1{font-size:1.6rem;margin:8px 0 2px;color:var(--red)}
+.sub{color:var(--sub);font-size:.9rem;margin:0 0 20px;font-family:system-ui,sans-serif}
+#box{width:110px;height:150px;margin:10px auto;background:var(--red);border-radius:12px 12px 18px 18px;position:relative;display:flex;align-items:center;justify-content:center;color:#fff;font-size:2.2rem;box-shadow:0 6px 0 rgba(0,0,0,.2)}
+#box::before{content:"";position:absolute;top:-22px;left:50%;width:6px;height:30px;background:#d9a441;transform:translateX(-50%);border-radius:3px}
+#box.shake{animation:sh .15s infinite}
+@keyframes sh{0%{transform:rotate(-9deg)}50%{transform:rotate(9deg)}100%{transform:rotate(-9deg)}}
+button{font:inherit;font-family:system-ui,sans-serif;background:var(--red);color:#fff;border:0;border-radius:999px;padding:12px 28px;font-size:1rem;margin-top:18px;cursor:pointer}
+button:disabled{opacity:.5}
+#slip{display:none;margin-top:24px;background:var(--card);border:1px solid var(--line);border-top:5px solid var(--red);border-radius:10px;padding:20px 18px;text-align:left}
+#slip.show{display:block;animation:in .5s}
+@keyframes in{from{opacity:0;transform:translateY(14px)}}
+.no{color:var(--sub);font-size:.85rem;text-align:center;font-family:system-ui,sans-serif}
+.lv{font-size:3rem;text-align:center;color:var(--red);margin:4px 0 0;line-height:1.1}
+.rm{text-align:center;color:var(--sub);font-family:system-ui,sans-serif;margin:0 0 14px}
+.poem{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:12px 0;margin:10px 0;text-align:center}
+.jp{font-size:1.05rem;margin:0}
+.en{font-size:.88rem;color:var(--sub);margin:2px 0 0;font-family:system-ui,sans-serif}
+.row{margin:12px 0}
+.lab{font-size:.8rem;color:var(--red);font-family:system-ui,sans-serif;font-weight:600}
+.note{font-size:.8rem;color:var(--sub);text-align:center;margin-top:14px;font-family:system-ui,sans-serif}
+</style>
+</head>
+<body>
+<main>
+<h1>おみくじ Omikuji</h1>
+<p class="sub">Shake the box to draw your fortune · 箱を振って運勢を引こう</p>
+<div id="box">⛩</div>
+<button id="btn">Shake 振る</button>
+<section id="slip" aria-live="polite"></section>
+</main>
+<script>
+const F=[
+{w:15,jp:"大吉",ro:"Daikichi",en:"Great Blessing",p:["春の風 心を運び 道ひらく","The spring wind carries your heart; a path opens."],
+ i:[["願い事","Wish","思いのほか早く叶うでしょう。","It will come true sooner than expected."],["恋愛","Love","素直な気持ちが実を結ぶ。","Honest feelings bear fruit."],["健康","Health","心も体も絶好調。","Mind and body are in top form."],["旅行","Travel","出かけるなら今。","If you plan to go, now is the time."]]},
+{w:20,jp:"中吉",ro:"Chūkichi",en:"Middle Blessing",p:["小川の水 ゆっくり進み 海に着く","A small stream flows slowly, yet reaches the sea."],
+ i:[["願い事","Wish","焦らず続ければ叶う。","Keep going patiently and it will come true."],["恋愛","Love","良い出会いが近づいている。","A good meeting is drawing near."],["健康","Health","規則正しい生活が吉。","A regular routine brings good luck."],["旅行","Travel","計画を立てれば順調。","Plan ahead and it goes smoothly."]]},
+{w:20,jp:"小吉",ro:"Shōkichi",en:"Small Blessing",p:["小さな花も 日を浴びて 咲き誇る","Even a small flower blooms in the sun."],
+ i:[["願い事","Wish","少し時間がかかる。","It will take a little time."],["恋愛","Love","身近な人を大切に。","Cherish those close to you."],["健康","Health","無理をしないこと。","Do not overdo it."],["旅行","Travel","近場に福がある。","Luck is found close to home."]]},
+{w:20,jp:"吉",ro:"Kichi",en:"Blessing",p:["朝の光 今日の一歩を 照らしている","Morning light shines on today's first step."],
+ i:[["願い事","Wish","努力が実を結ぶ。","Your effort will bear fruit."],["恋愛","Love","焦らなければ良縁あり。","Without rushing, a good bond awaits."],["健康","Health","睡眠をしっかりとろう。","Get enough sleep."],["旅行","Travel","良い道連れに恵まれる。","You will be blessed with good company."]]},
+{w:15,jp:"末吉",ro:"Suekichi",en:"Future Blessing",p:["冬の土に 眠る種あり 春を待て","A seed sleeps in winter soil; wait for spring."],
+ i:[["願い事","Wish","今は待つ時。後で叶う。","Now is the time to wait; it will come true later."],["恋愛","Love","時が来れば道は開く。","When the time comes, the way opens."],["健康","Health","冷えに気をつけて。","Beware of the cold."],["旅行","Travel","急がず、ゆっくりと。","Do not hurry; take it slow."]]},
+{w:10,jp:"凶",ro:"Kyō",en:"Bad Luck",p:["雲は晴れる 雨のあとには 虹が出る","The clouds will clear; after rain comes a rainbow."],
+ i:[["願い事","Wish","今は難しいが諦めない。","Hard right now, but do not give up."],["恋愛","Love","言葉を選べば道あり。","Choose your words and a way appears."],["健康","Health","早めに休むこと。","Rest early."],["旅行","Travel","今回は延期が吉。","Postponing is wise this time."]]}
+];
+const ALT=[
+{p:["晴れた空 追い風うけて 舞い上がれ","Under clear skies, ride the tailwind and soar."],i:[["望みは大きく叶うでしょう。","Your hopes will be fulfilled in a big way."],["運命の人が現れるかも。","You may meet someone destined for you."],["元気があふれる一年に。","A year overflowing with energy."],["遠くへ行くほど吉。","The farther you go, the better."]]},
+{p:["山の道 一歩ずつ行けば 頂に着く","Step by step on the mountain path, you reach the summit."],i:[["周りの助けで叶う。","Help from others will make it come true."],["会話を増やすと吉。","Talk more and luck follows."],["軽い運動が良い。","Light exercise does you good."],["友と行けば楽しい旅に。","Going with a friend makes a happy trip."]]},
+{p:["石の道 雨に濡れても 光る日あり","Even on a wet stone path, a shining day comes."],i:[["小さな一歩から始めよう。","Begin with one small step."],["相手の話をよく聞いて。","Listen well to the other person."],["食べすぎに注意。","Watch out for overeating."],["出発前に持ち物を確認。","Check your belongings before leaving."]]},
+{p:["月の夜 静かに待てば 道は見える","On a moonlit night, wait quietly and the path appears."],i:[["信じて進めば叶う。","Believe and move forward, and it will come true."],["笑顔が良縁を招く。","Your smile invites a good match."],["体を温めると良い。","Keeping warm will help."],["新しい場所に福あり。","Luck waits in a new place."]]},
+{p:["遅咲きの 桜も同じ 春を待つ","Late-blooming cherry trees also wait for their spring."],i:[["あせらず準備を続けて。","Keep preparing without haste."],["今は自分を磨く時。","Now is the time to improve yourself."],["少しずつ整えていこう。","Mend things little by little."],["天気を確かめてから。","Check the weather first."]]},
+{p:["嵐の夜 明けない夜は ないものだ","After the stormy night, the dawn always comes."],i:[["計画を見直すと良い。","Review your plan."],["今は一人の時間を大切に。","Value your time alone for now."],["無理せず医者に相談を。","Do not push; consult a doctor if unsure."],["遠出は控えめに。","Keep trips short for now."]]}
+];
+const box=document.getElementById("box"),btn=document.getElementById("btn"),slip=document.getElementById("slip");
+const LV=[];F.forEach((f,k)=>{for(let j=0;j<f.w;j++)LV.push(k)});
+function fortune(n){const f=F[LV[(n*37)%100]],a=ALT[F.indexOf(f)],b=k=>(n>>k)&1;
+ return {...f,p:b(0)?a.p:f.p,i:f.i.map((x,k)=>b(k+1)?[x[0],x[1],a.i[k][0],a.i[k][1]]:x)}}
+btn.onclick=()=>{
+  btn.disabled=true;slip.className="";box.classList.add("shake");
+  setTimeout(()=>{
+    box.classList.remove("shake");
+    const n=1+Math.floor(Math.random()*100),f=fortune(n);
+    slip.innerHTML=`<div class="no">第${n}番 · No. ${n}</div>
+    <div class="lv">${f.jp}</div><p class="rm">${f.ro} — ${f.en}</p>
+    <div class="poem"><p class="jp">${f.p[0]}</p><p class="en">${f.p[1]}</p></div>`+
+    f.i.map(x=>`<div class="row"><div class="lab">${x[0]} ${x[1]}</div><p class="jp">${x[2]}</p><p class="en">${x[3]}</p></div>`).join("")+
+    `<p class="note">${f.jp==="凶"?"Tradition: tie this slip to a tree or rack at the shrine to leave bad luck behind. 結んで帰ろう。":"Tradition: keep good fortunes with you, or tie them at the shrine. 大切に持ち帰ろう。"}</p>`;
+    slip.className="show";btn.disabled=false;btn.textContent="Draw again もう一度";
+    slip.scrollIntoView({behavior:"smooth",block:"start"});
+  },1200);
+};
+</script>
+</body>
+</html>

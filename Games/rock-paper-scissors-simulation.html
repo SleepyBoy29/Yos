@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rock Paper Scissors Simulation</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background: #111;
+    color: #eee;
+    font-family: 'Courier New', Courier, monospace;
+  }
+
+  /* ---------- Layout ---------- */
+  #app {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+  }
+  #arena-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #111;
+    padding: 20px;
+    min-width: 0;
+  }
+  #canvas {
+    background: #808080;
+    border: 2px solid #333;
+    border-radius: 6px;
+    display: block;
+  }
+
+  #sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: #1b1b1b;
+    border-left: 2px solid #333;
+    padding: 20px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    overflow-y: auto;
+  }
+  #sidebar h1 {
+    font-size: 15px;
+    letter-spacing: 1px;
+    color: #ffcc00;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+  }
+
+  .section { display: flex; flex-direction: column; gap: 8px; }
+  .section .title { font-size: 11px; letter-spacing: 1px; color: #999; text-transform: uppercase; }
+
+  .stat-row { display: flex; justify-content: space-between; font-size: 14px; }
+
+  .speed-row { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
+  .speed-row .val { width: 74px; flex-shrink: 0; text-align: center; font-size: 13px; }
+  .icon-btn { flex-shrink: 0; }
+
+  button { font-family: inherit; cursor: pointer; }
+  .btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid #444;
+    color: #eee;
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    text-align: center;
+  }
+  .btn:hover { background: rgba(255,255,255,0.14); }
+  .btn.primary { background: #b8272c; border-color: #b8272c; font-weight: bold; }
+  .btn.primary:hover { background: #d13138; }
+  .icon-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid #444;
+    color: #eee;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+  .icon-btn:hover { background: rgba(255,255,255,0.14); }
+
+  .spawn-fields { display: flex; flex-direction: column; gap: 6px; }
+  .spawn-fields label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+  }
+  .spawn-fields input {
+    width: 64px;
+    background: #0f0f0f;
+    border: 1px solid #444;
+    color: #eee;
+    font-family: inherit;
+    padding: 4px 6px;
+    border-radius: 4px;
+    text-align: right;
+  }
+
+  .hint { font-size: 11px; color: #777; line-height: 1.5; }
+
+  /* ---------- Setup overlay ---------- */
+  #setup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+  }
+  #setup-card {
+    background: #1b1b1b;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 32px 36px;
+    width: 380px;
+    text-align: center;
+  }
+  #setup-card h2 {
+    color: #ffcc00;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    margin-bottom: 6px;
+  }
+  #setup-card p.sub {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 22px;
+  }
+  .setup-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    font-size: 15px;
+  }
+  .setup-row .emoji { font-size: 20px; margin-right: 8px; }
+  .setup-row .name { flex: 1; text-align: left; }
+  .setup-row input {
+    width: 70px;
+    background: #0f0f0f;
+    border: 1px solid #444;
+    color: #eee;
+    font-family: inherit;
+    font-size: 15px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    text-align: center;
+  }
+  #startBtn {
+    width: 100%;
+    margin-top: 14px;
+    padding: 10px;
+    font-size: 14px;
+  }
+  #setup-total {
+    font-size: 12px;
+    color: #777;
+    margin-top: 10px;
+  }
+  .hidden { display: none !important; }
+
+  /* ---------- Winner overlay ---------- */
+  #winner-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 60;
+  }
+  #winner-card {
+    background: #1b1b1b;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 36px 40px;
+    width: 360px;
+    text-align: center;
+  }
+  #winner-card .label {
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: #999;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  #winner-card .emoji-big {
+    font-size: 56px;
+    margin-bottom: 10px;
+  }
+  #winner-card .winner-name {
+    font-size: 22px;
+    color: #ffcc00;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+  #winner-card .winner-count {
+    font-size: 14px;
+    color: #ccc;
+    margin-bottom: 22px;
+  }
+  #winner-card button {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+<div id="setup-overlay">
+  <div id="setup-card">
+    <h2>ROCK · PAPER · SCISSORS</h2>
+    <p class="sub">Set how many of each to start the simulation</p>
+
+    <div class="setup-row">
+      <span class="emoji">🪨</span>
+      <span class="name">Rocks</span>
+      <input type="number" id="setupRock" min="0" max="200" value="10">
+    </div>
+    <div class="setup-row">
+      <span class="emoji">📄</span>
+      <span class="name">Papers</span>
+      <input type="number" id="setupPaper" min="0" max="200" value="10">
+    </div>
+    <div class="setup-row">
+      <span class="emoji">✂️</span>
+      <span class="name">Scissors</span>
+      <input type="number" id="setupScissors" min="0" max="200" value="10">
+    </div>
+
+    <button class="btn primary" id="startBtn">START SIMULATION</button>
+    <div id="setup-total">Total: 30 objects</div>
+  </div>
+</div>
+
+<div id="winner-overlay" class="hidden">
+  <div id="winner-card">
+    <div class="label">Simulation Over</div>
+    <div class="emoji-big" id="winnerEmoji">🪨</div>
+    <div class="winner-name" id="winnerName">Rock Wins!</div>
+    <div class="winner-count" id="winnerCount">0 rocks remaining</div>
+    <button class="btn primary" id="winnerRestartBtn">NEW SETUP</button>
+  </div>
+</div>
+
+<div id="app">
+  <div id="arena-wrap">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <div id="sidebar">
+    <h1>RPS SIMULATION</h1>
+
+    <div class="section">
+      <div class="title">Population</div>
+      <div class="stat-row"><span>🪨 Rocks</span><span id="countRock">0</span></div>
+      <div class="stat-row"><span>📄 Papers</span><span id="countPaper">0</span></div>
+      <div class="stat-row"><span>✂️ Scissors</span><span id="countScissors">0</span></div>
+    </div>
+
+    <div class="section">
+      <div class="title">Playback</div>
+      <div class="speed-row">
+        <button class="icon-btn" id="pauseBtn">▶</button>
+        <button class="icon-btn" id="speedDown">−</button>
+        <span class="val">Speed: <span id="speedVal">1</span>x</span>
+        <button class="icon-btn" id="speedUp">+</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="title">Add More</div>
+      <div class="spawn-fields">
+        <label>🪨 Rocks <input type="number" id="spawnRock" min="0" max="200" value="5"></label>
+        <label>📄 Papers <input type="number" id="spawnPaper" min="0" max="200" value="5"></label>
+        <label>✂️ Scissors <input type="number" id="spawnScissors" min="0" max="200" value="5"></label>
+      </div>
+      <button class="btn" id="spawnBtn">SPAWN</button>
+    </div>
+
+    <div class="section">
+      <div class="title">Simulation</div>
+      <button class="btn" id="clearBtn">CLEAR ALL</button>
+      <button class="btn" id="restartBtn">NEW SETUP</button>
+    </div>
+
+    <div class="hint">Rock beats scissors, scissors beats paper, paper beats rock. On collision, the loser converts to the winner's type.</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const arenaWrap = document.getElementById('arena-wrap');
+
+  const EMOJI = { rock: '🪨', paper: '📄', scissors: '✂️' };
+  const BEATS = { rock: 'scissors', paper: 'rock', scissors: 'paper' };
+  const RADIUS = 14;
+  const FONT_SIZE = 24;
+
+  let entities = [];
+  let paused = true;
+  let speed = 1;
+
+  function resizeCanvas() {
+    const w = arenaWrap.clientWidth - 40;
+    const h = arenaWrap.clientHeight - 40;
+    canvas.width = Math.max(200, w);
+    canvas.height = Math.max(200, h);
+  }
+  window.addEventListener('resize', resizeCanvas);
+
+  function rand(min, max) { return Math.random() * (max - min) + min; }
+
+  function makeEntity(type) {
+    const angle = rand(0, Math.PI * 2);
+    const speedMag = rand(1, 2);
+    return {
+      type,
+      x: rand(RADIUS, canvas.width - RADIUS),
+      y: rand(RADIUS, canvas.height - RADIUS),
+      vx: Math.cos(angle) * speedMag,
+      vy: Math.sin(angle) * speedMag,
+    };
+  }
+
+  function addBatch(counts) {
+    for (let i = 0; i < counts.rock; i++) entities.push(makeEntity('rock'));
+    for (let i = 0; i < counts.paper; i++) entities.push(makeEntity('paper'));
+    for (let i = 0; i < counts.scissors; i++) entities.push(makeEntity('scissors'));
+  }
+
+  function updateCounts() {
+    let r = 0, p = 0, s = 0;
+    for (const e of entities) {
+      if (e.type === 'rock') r++;
+      else if (e.type === 'paper') p++;
+      else s++;
+    }
+    document.getElementById('countRock').textContent = r;
+    document.getElementById('countPaper').textContent = p;
+    document.getElementById('countScissors').textContent = s;
+    return { rock: r, paper: p, scissors: s };
+  }
+
+  const winnerOverlay = document.getElementById('winner-overlay');
+  const winnerEmoji = document.getElementById('winnerEmoji');
+  const winnerName = document.getElementById('winnerName');
+  const winnerCount = document.getElementById('winnerCount');
+  const NAMES = { rock: 'Rock', paper: 'Paper', scissors: 'Scissors' };
+
+  function checkWinner(counts) {
+    const total = counts.rock + counts.paper + counts.scissors;
+    if (total === 0) return false;
+    const active = Object.keys(counts).filter(k => counts[k] > 0);
+    if (active.length === 1) {
+      const winType = active[0];
+      paused = true;
+      pauseBtn.textContent = '▶';
+      winnerEmoji.textContent = EMOJI[winType];
+      winnerName.textContent = NAMES[winType] + ' Wins!';
+      winnerCount.textContent = `${counts[winType]} ${NAMES[winType].toLowerCase()}${counts[winType] === 1 ? '' : 's'} remaining`;
+      winnerOverlay.classList.remove('hidden');
+      return true;
+    }
+    return false;
+  }
+
+  function step() {
+    for (const e of entities) {
+      e.x += e.vx * speed;
+      e.y += e.vy * speed;
+      if (e.x < RADIUS) { e.x = RADIUS; e.vx *= -1; }
+      if (e.x > canvas.width - RADIUS) { e.x = canvas.width - RADIUS; e.vx *= -1; }
+      if (e.y < RADIUS) { e.y = RADIUS; e.vy *= -1; }
+      if (e.y > canvas.height - RADIUS) { e.y = canvas.height - RADIUS; e.vy *= -1; }
+    }
+
+    const n = entities.length;
+    for (let i = 0; i < n; i++) {
+      const a = entities[i];
+      if (!a) continue;
+      for (let j = i + 1; j < n; j++) {
+        const b = entities[j];
+        if (!b || a.type === b.type) continue;
+        const dx = a.x - b.x, dy = a.y - b.y;
+        const distSq = dx * dx + dy * dy;
+        const minDist = RADIUS * 1.6;
+        if (distSq < minDist * minDist) {
+          if (BEATS[a.type] === b.type) {
+            b.type = a.type;
+          } else if (BEATS[b.type] === a.type) {
+            a.type = b.type;
+          }
+          const dist = Math.sqrt(distSq) || 1;
+          const nx = dx / dist, ny = dy / dist;
+          a.vx += nx * 0.15; a.vy += ny * 0.15;
+          b.vx -= nx * 0.15; b.vy -= ny * 0.15;
+        }
+      }
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = FONT_SIZE + 'px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (const e of entities) {
+      ctx.fillText(EMOJI[e.type], e.x, e.y);
+    }
+  }
+
+  function loop() {
+    if (!paused) {
+      step();
+      const counts = updateCounts();
+      checkWinner(counts);
+    }
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  // ---- Sidebar controls ----
+  const pauseBtn = document.getElementById('pauseBtn');
+  pauseBtn.addEventListener('click', () => {
+    paused = !paused;
+    pauseBtn.textContent = paused ? '▶' : '❚❚';
+  });
+
+  document.getElementById('speedDown').addEventListener('click', () => {
+    speed = Math.max(1, speed - 1);
+    document.getElementById('speedVal').textContent = speed;
+  });
+  document.getElementById('speedUp').addEventListener('click', () => {
+    speed = Math.min(10, speed + 1);
+    document.getElementById('speedVal').textContent = speed;
+  });
+
+  document.getElementById('spawnBtn').addEventListener('click', () => {
+    const counts = {
+      rock: Math.max(0, +document.getElementById('spawnRock').value || 0),
+      paper: Math.max(0, +document.getElementById('spawnPaper').value || 0),
+      scissors: Math.max(0, +document.getElementById('spawnScissors').value || 0),
+    };
+    addBatch(counts);
+    updateCounts();
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    entities = [];
+    updateCounts();
+  });
+
+  function goToSetup() {
+    paused = true;
+    pauseBtn.textContent = '▶';
+    entities = [];
+    updateCounts();
+    winnerOverlay.classList.add('hidden');
+    document.getElementById('setup-overlay').classList.remove('hidden');
+  }
+
+  document.getElementById('restartBtn').addEventListener('click', goToSetup);
+  document.getElementById('winnerRestartBtn').addEventListener('click', goToSetup);
+
+  // ---- Setup overlay ----
+  const setupOverlay = document.getElementById('setup-overlay');
+  const setupRock = document.getElementById('setupRock');
+  const setupPaper = document.getElementById('setupPaper');
+  const setupScissors = document.getElementById('setupScissors');
+  const setupTotal = document.getElementById('setup-total');
+
+  function updateSetupTotal() {
+    const total = (+setupRock.value || 0) + (+setupPaper.value || 0) + (+setupScissors.value || 0);
+    setupTotal.textContent = `Total: ${total} objects`;
+  }
+  [setupRock, setupPaper, setupScissors].forEach(el => el.addEventListener('input', updateSetupTotal));
+  updateSetupTotal();
+
+  document.getElementById('startBtn').addEventListener('click', () => {
+    resizeCanvas();
+    entities = [];
+    addBatch({
+      rock: Math.max(0, +setupRock.value || 0),
+      paper: Math.max(0, +setupPaper.value || 0),
+      scissors: Math.max(0, +setupScissors.value || 0),
+    });
+    updateCounts();
+    setupOverlay.classList.add('hidden');
+    winnerOverlay.classList.add('hidden');
+    paused = false;
+    pauseBtn.textContent = '❚❚';
+  });
+
+  // init
+  resizeCanvas();
+  updateCounts();
+  requestAnimationFrame(loop);
+})();
+</script>
+
+</body>
+</html>

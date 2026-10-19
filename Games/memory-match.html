@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pairs — A Memory Match Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --felt-dark:#0C2E27;
+    --felt:#123C34;
+    --felt-light:#1B4E44;
+    --cream:#FBF5E9;
+    --cream-dim:#EFE6D4;
+    --ink:#1C2B24;
+    --ink-soft:#4A5A52;
+    --navy:#1F3352;
+    --navy-light:#2B4770;
+    --gold:#D4AF37;
+    --gold-light:#E8CB6A;
+    --amber:#E3A008;
+    --rose:#C1446E;
+    --teal:#2F9E8F;
+    --violet:#7C6FC4;
+    --danger:#B4453A;
+    --radius-card:10px;
+    --radius-panel:16px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse at 50% -10%, #1C5548 0%, var(--felt) 45%, var(--felt-dark) 100%);
+    font-family:'Work Sans', sans-serif;
+    color:var(--cream);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:28px 16px 60px;
+  }
+
+  h1,h2,h3, .display{
+    font-family:'Fredoka', sans-serif;
+    font-weight:600;
+    margin:0;
+  }
+
+  /* ---------- Top brand ---------- */
+  .brand{
+    text-align:center;
+    margin-bottom:22px;
+  }
+  .brand .mark{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    font-size:34px;
+    letter-spacing:0.5px;
+    color:var(--cream);
+  }
+  .brand .mark svg{ display:block; }
+  .brand p{
+    margin-top:6px;
+    color:var(--cream-dim);
+    font-size:14px;
+    letter-spacing:0.3px;
+  }
+
+  /* ---------- Screens ---------- */
+  .screen{ width:100%; max-width:920px; }
+  .hidden{ display:none !important; }
+
+  /* ---------- Setup panel ---------- */
+  .panel{
+    background:linear-gradient(180deg, #143F36, #0F332B);
+    border:1px solid rgba(212,175,55,0.25);
+    border-radius:var(--radius-panel);
+    padding:32px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.03);
+  }
+
+  .field-group{ margin-bottom:26px; }
+  .field-group:last-child{ margin-bottom:0; }
+  .field-label{
+    font-size:13px;
+    color:var(--gold-light);
+    font-weight:600;
+    margin-bottom:12px;
+    display:block;
+  }
+
+  .choice-row{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:12px;
+  }
+  .choice-row.three{ grid-template-columns:repeat(3, 1fr); }
+
+  .choice-btn{
+    background:var(--felt-light);
+    border:1.5px solid rgba(251,245,233,0.12);
+    color:var(--cream);
+    border-radius:12px;
+    padding:16px 14px;
+    font-family:'Work Sans', sans-serif;
+    font-weight:600;
+    font-size:15px;
+    cursor:pointer;
+    transition:transform 0.12s ease, border-color 0.15s ease, background 0.15s ease;
+    text-align:left;
+  }
+  .choice-btn .sub{
+    display:block;
+    font-weight:400;
+    font-size:12.5px;
+    color:var(--cream-dim);
+    margin-top:3px;
+  }
+  .choice-btn:hover{ transform:translateY(-2px); border-color:rgba(212,175,55,0.4); }
+  .choice-btn.active{
+    background:linear-gradient(135deg, var(--gold), var(--amber));
+    color:var(--ink);
+    border-color:transparent;
+  }
+  .choice-btn.active .sub{ color:rgba(28,43,36,0.75); }
+
+  .players-stepper{
+    display:flex;
+    align-items:center;
+    gap:16px;
+  }
+  .stepper-btn{
+    width:40px; height:40px;
+    border-radius:50%;
+    border:1.5px solid rgba(212,175,55,0.4);
+    background:transparent;
+    color:var(--gold-light);
+    font-size:20px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:background 0.15s ease;
+  }
+  .stepper-btn:hover{ background:rgba(212,175,55,0.15); }
+  .players-count{ font-size:22px; font-weight:600; min-width:20px; text-align:center; }
+  .players-preview{
+    display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;
+  }
+  .player-chip{
+    display:flex; align-items:center; gap:7px;
+    background:rgba(0,0,0,0.2);
+    border-radius:20px;
+    padding:6px 12px 6px 6px;
+    font-size:13px;
+    font-weight:500;
+  }
+  .player-dot{ width:16px; height:16px; border-radius:50%; flex-shrink:0; }
+
+  .start-btn{
+    width:100%;
+    margin-top:30px;
+    padding:16px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(135deg, var(--gold-light), var(--gold));
+    color:var(--ink);
+    font-family:'Fredoka', sans-serif;
+    font-weight:600;
+    font-size:18px;
+    letter-spacing:0.3px;
+    cursor:pointer;
+    transition:transform 0.12s ease, box-shadow 0.15s ease;
+    box-shadow:0 8px 20px rgba(212,175,55,0.25);
+  }
+  .start-btn:hover{ transform:translateY(-2px); box-shadow:0 12px 26px rgba(212,175,55,0.35); }
+  .start-btn:active{ transform:translateY(0); }
+
+  /* ---------- Game HUD ---------- */
+  .hud{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:14px;
+    margin-bottom:20px;
+    padding:14px 20px;
+    background:rgba(0,0,0,0.18);
+    border-radius:14px;
+    border:1px solid rgba(212,175,55,0.15);
+  }
+  .hud-left{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+  .hud-stat{ font-size:14px; color:var(--cream-dim); }
+  .hud-stat b{ color:var(--cream); font-size:16px; font-weight:600; }
+  .hud-btn{
+    background:transparent;
+    border:1.5px solid rgba(251,245,233,0.25);
+    color:var(--cream-dim);
+    padding:9px 16px;
+    border-radius:9px;
+    font-family:'Work Sans', sans-serif;
+    font-weight:500;
+    font-size:13px;
+    cursor:pointer;
+    transition:border-color 0.15s ease, color 0.15s ease;
+  }
+  .hud-btn:hover{ border-color:var(--gold); color:var(--gold-light); }
+
+  .scoreboard{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+  }
+  .score-card{
+    flex:1;
+    min-width:130px;
+    background:rgba(0,0,0,0.18);
+    border:2px solid transparent;
+    border-radius:12px;
+    padding:12px 16px;
+    transition:border-color 0.2s ease, background 0.2s ease;
+  }
+  .score-card.turn{
+    background:rgba(255,255,255,0.06);
+  }
+  .score-card .name-row{
+    display:flex; align-items:center; gap:8px;
+    font-size:13px; font-weight:600; color:var(--cream-dim);
+  }
+  .score-card .dot{ width:10px; height:10px; border-radius:50%; }
+  .score-card .points{
+    font-family:'Fredoka', sans-serif;
+    font-size:26px;
+    margin-top:4px;
+  }
+  .score-card .turn-tag{
+    font-size:11px;
+    color:var(--gold-light);
+    margin-top:2px;
+    font-weight:600;
+    letter-spacing:0.3px;
+    height:14px;
+  }
+
+  /* ---------- Board ---------- */
+  .board-wrap{
+    display:flex;
+    justify-content:center;
+  }
+  .board{
+    display:grid;
+    gap:12px;
+    width:100%;
+  }
+  .board.easy{ grid-template-columns:repeat(4, 1fr); max-width:520px; }
+  .board.medium{ grid-template-columns:repeat(6, 1fr); max-width:680px; }
+  .board.hard{ grid-template-columns:repeat(8, 1fr); max-width:840px; }
+
+  .card{
+    aspect-ratio:3/4;
+    perspective:800px;
+    cursor:pointer;
+  }
+  .card-inner{
+    position:relative;
+    width:100%; height:100%;
+    transition:transform 0.45s cubic-bezier(.4,.2,.2,1);
+    transform-style:preserve-3d;
+  }
+  .card.flipped .card-inner{ transform:rotateY(180deg); }
+  .card.matched .card-inner{ transform:rotateY(180deg); }
+  .card.matched .card-face.front{
+    box-shadow:0 0 0 3px var(--gold), 0 6px 16px rgba(212,175,55,0.3);
+  }
+  .card.wrong .card-inner{ animation:shake 0.4s ease; }
+  @keyframes shake{
+    20%{ transform:rotateY(180deg) translateX(-6px); }
+    40%{ transform:rotateY(180deg) translateX(6px); }
+    60%{ transform:rotateY(180deg) translateX(-4px); }
+    80%{ transform:rotateY(180deg) translateX(4px); }
+    100%{ transform:rotateY(180deg) translateX(0); }
+  }
+
+  .card-face{
+    position:absolute;
+    inset:0;
+    border-radius:var(--radius-card);
+    backface-visibility:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .card-face.back{
+    background:
+      repeating-linear-gradient(45deg, var(--navy) 0 8px, var(--navy-light) 8px 16px);
+    border:2px solid rgba(212,175,55,0.35);
+  }
+  .card-face.back::after{
+    content:'';
+    width:38%; height:38%;
+    border:2px solid var(--gold);
+    border-radius:50%;
+    opacity:0.6;
+  }
+  .card-face.front{
+    background:var(--cream);
+    border:2px solid rgba(28,43,36,0.08);
+    transform:rotateY(180deg);
+    font-size:clamp(22px, 5vw, 34px);
+  }
+  .card.matched .card-face.front{ background:var(--cream-dim); }
+
+  .card:not(.flipped):not(.matched):hover .card-face.back{
+    filter:brightness(1.15);
+  }
+
+  /* ---------- Win overlay ---------- */
+  .overlay{
+    position:fixed; inset:0;
+    background:rgba(6,20,17,0.82);
+    backdrop-filter:blur(3px);
+    display:flex; align-items:center; justify-content:center;
+    z-index:50;
+    padding:20px;
+  }
+  .win-card{
+    background:linear-gradient(180deg, #143F36, #0F332B);
+    border:1px solid rgba(212,175,55,0.3);
+    border-radius:20px;
+    padding:36px;
+    max-width:420px;
+    width:100%;
+    text-align:center;
+    box-shadow:0 30px 70px rgba(0,0,0,0.5);
+  }
+  .win-card .trophy{ font-size:52px; margin-bottom:8px; }
+  .win-card h2{ font-size:26px; margin-bottom:8px; }
+  .win-card p{ color:var(--cream-dim); font-size:14px; margin:0 0 22px; }
+  .win-stats{
+    display:flex;
+    justify-content:center;
+    gap:24px;
+    margin-bottom:24px;
+  }
+  .win-stats div{ text-align:center; }
+  .win-stats .num{ font-family:'Fredoka', sans-serif; font-size:24px; color:var(--gold-light); }
+  .win-stats .lbl{ font-size:11.5px; color:var(--cream-dim); margin-top:2px; }
+  .win-actions{ display:flex; gap:10px; }
+  .win-actions button{ flex:1; }
+
+  .btn-primary{
+    padding:13px;
+    border:none;
+    border-radius:10px;
+    background:linear-gradient(135deg, var(--gold-light), var(--gold));
+    color:var(--ink);
+    font-family:'Fredoka', sans-serif;
+    font-weight:600;
+    font-size:15px;
+    cursor:pointer;
+  }
+  .btn-secondary{
+    padding:13px;
+    border:1.5px solid rgba(251,245,233,0.25);
+    border-radius:10px;
+    background:transparent;
+    color:var(--cream);
+    font-family:'Work Sans', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+  }
+
+  @media (max-width:480px){
+    .board.easy{ grid-template-columns:repeat(4, 1fr); }
+    .board.medium{ grid-template-columns:repeat(4, 1fr); }
+    .board.hard{ grid-template-columns:repeat(6, 1fr); }
+    .panel{ padding:22px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .card-inner, .choice-btn, .start-btn{ transition:none !important; }
+    .card.wrong .card-inner{ animation:none !important; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="brand">
+    <div class="mark">
+      <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+        <rect x="2" y="6" width="14" height="20" rx="3" fill="#1F3352" stroke="#D4AF37" stroke-width="1.5" transform="rotate(-8 9 16)"/>
+        <rect x="18" y="6" width="14" height="20" rx="3" fill="#FBF5E9" stroke="#1C2B24" stroke-width="1" transform="rotate(8 25 16)"/>
+      </svg>
+      Pairs
+    </div>
+    <p>A classic memory matching game</p>
+  </div>
+
+  <!-- ============ SETUP SCREEN ============ -->
+  <div class="screen" id="setup-screen">
+    <div class="panel">
+
+      <div class="field-group">
+        <span class="field-label">Game mode</span>
+        <div class="choice-row" id="mode-row">
+          <button class="choice-btn" data-mode="single">Single player
+            <span class="sub">Race your own best time and moves</span>
+          </button>
+          <button class="choice-btn" data-mode="multi">Multiplayer
+            <span class="sub">Take turns, most pairs wins</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="field-group hidden" id="players-field">
+        <span class="field-label">Number of players</span>
+        <div class="players-stepper">
+          <button class="stepper-btn" id="players-minus">−</button>
+          <span class="players-count" id="players-count">2</span>
+          <button class="stepper-btn" id="players-plus">+</button>
+        </div>
+        <div class="players-preview" id="players-preview"></div>
+      </div>
+
+      <div class="field-group">
+        <span class="field-label">Difficulty</span>
+        <div class="choice-row three">
+          <button class="choice-btn" data-level="easy">Easy
+            <span class="sub">16 cards · 8 pairs</span>
+          </button>
+          <button class="choice-btn" data-level="medium">Medium
+            <span class="sub">32 cards · 16 pairs</span>
+          </button>
+          <button class="choice-btn" data-level="hard">Hard
+            <span class="sub">64 cards · 32 pairs</span>
+          </button>
+        </div>
+      </div>
+
+      <button class="start-btn" id="start-btn">Deal the cards</button>
+    </div>
+  </div>
+
+  <!-- ============ GAME SCREEN ============ -->
+  <div class="screen hidden" id="game-screen">
+
+    <div class="hud">
+      <div class="hud-left" id="hud-left"></div>
+      <button class="hud-btn" id="restart-btn">New game</button>
+    </div>
+
+    <div class="scoreboard hidden" id="scoreboard"></div>
+
+    <div class="board-wrap">
+      <div class="board" id="board"></div>
+    </div>
+  </div>
+
+  <!-- ============ WIN OVERLAY ============ -->
+  <div class="overlay hidden" id="overlay">
+    <div class="win-card">
+      <div class="trophy" id="win-emoji">🏆</div>
+      <h2 id="win-title">You did it!</h2>
+      <p id="win-subtitle">Every pair found.</p>
+      <div class="win-stats" id="win-stats"></div>
+      <div class="win-actions">
+        <button class="btn-secondary" id="win-menu-btn">Main menu</button>
+        <button class="btn-primary" id="win-again-btn">Play again</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Config ----------
+  var SYMBOLS = [
+    '🎈','🎲','🎯','🎨','🎧','🚀','🌟','🍕','🍩','🍉','🌵','🐙','🦊','🐼','🦋','🎸',
+    '🌈','⛄','🍔','🍟','🍪','🍭','🎃','🐳','🐸','🦉','🎺','🎁','⚽','🏀','🎳','🧩'
+  ];
+  var LEVELS = {
+    easy:   { count: 8,  cls: 'easy'   },
+    medium: { count: 16, cls: 'medium' },
+    hard:   { count: 32, cls: 'hard'   }
+  };
+  var PLAYER_COLORS = ['#E3A008','#C1446E','#2F9E8F','#7C6FC4'];
+  var PLAYER_NAMES  = ['Player 1','Player 2','Player 3','Player 4'];
+
+  // ---------- State ----------
+  var state = {
+    mode: 'single',
+    level: null,
+    numPlayers: 2,
+    cards: [],
+    flipped: [],
+    lock: false,
+    matchesFound: 0,
+    totalPairs: 0,
+    moves: 0,
+    startTime: null,
+    timerId: null,
+    players: [],
+    currentPlayer: 0
+  };
+
+  // ---------- Elements ----------
+  var el = {
+    setupScreen: document.getElementById('setup-screen'),
+    gameScreen: document.getElementById('game-screen'),
+    modeRow: document.getElementById('mode-row'),
+    playersField: document.getElementById('players-field'),
+    playersCount: document.getElementById('players-count'),
+    playersPreview: document.getElementById('players-preview'),
+    playersMinus: document.getElementById('players-minus'),
+    playersPlus: document.getElementById('players-plus'),
+    startBtn: document.getElementById('start-btn'),
+    hudLeft: document.getElementById('hud-left'),
+    restartBtn: document.getElementById('restart-btn'),
+    scoreboard: document.getElementById('scoreboard'),
+    board: document.getElementById('board'),
+    overlay: document.getElementById('overlay'),
+    winEmoji: document.getElementById('win-emoji'),
+    winTitle: document.getElementById('win-title'),
+    winSubtitle: document.getElementById('win-subtitle'),
+    winStats: document.getElementById('win-stats'),
+    winMenuBtn: document.getElementById('win-menu-btn'),
+    winAgainBtn: document.getElementById('win-again-btn')
+  };
+
+  var levelChoiceButtons = document.querySelectorAll('[data-level]');
+  var modeChoiceButtons = document.querySelectorAll('[data-mode]');
+
+  // ---------- Setup screen interactions ----------
+  function selectMode(mode){
+    state.mode = mode;
+    modeChoiceButtons.forEach(function(b){
+      b.classList.toggle('active', b.dataset.mode === mode);
+    });
+    el.playersField.classList.toggle('hidden', mode !== 'multi');
+    renderPlayersPreview();
+  }
+
+  function selectLevel(level){
+    state.level = level;
+    levelChoiceButtons.forEach(function(b){
+      b.classList.toggle('active', b.dataset.level === level);
+    });
+  }
+
+  modeChoiceButtons.forEach(function(btn){
+    btn.addEventListener('click', function(){ selectMode(btn.dataset.mode); });
+  });
+  levelChoiceButtons.forEach(function(btn){
+    btn.addEventListener('click', function(){ selectLevel(btn.dataset.level); });
+  });
+
+  el.playersMinus.addEventListener('click', function(){
+    if(state.numPlayers > 2){ state.numPlayers--; refreshPlayersStepper(); }
+  });
+  el.playersPlus.addEventListener('click', function(){
+    if(state.numPlayers < 4){ state.numPlayers++; refreshPlayersStepper(); }
+  });
+  function refreshPlayersStepper(){
+    el.playersCount.textContent = state.numPlayers;
+    renderPlayersPreview();
+  }
+  function renderPlayersPreview(){
+    el.playersPreview.innerHTML = '';
+    if(state.mode !== 'multi') return;
+    for(var i=0;i<state.numPlayers;i++){
+      var chip = document.createElement('div');
+      chip.className = 'player-chip';
+      chip.innerHTML = '<span class="player-dot" style="background:'+PLAYER_COLORS[i]+'"></span>' + PLAYER_NAMES[i];
+      el.playersPreview.appendChild(chip);
+    }
+  }
+
+  selectMode('single');
+  selectLevel('medium');
+
+  el.startBtn.addEventListener('click', function(){
+    if(!state.level){ selectLevel('medium'); }
+    startGame();
+  });
+  el.restartBtn.addEventListener('click', backToMenu);
+  el.winMenuBtn.addEventListener('click', function(){
+    hideOverlay();
+    backToMenu();
+  });
+  el.winAgainBtn.addEventListener('click', function(){
+    hideOverlay();
+    startGame();
+  });
+
+  function backToMenu(){
+    stopTimer();
+    el.gameScreen.classList.add('hidden');
+    el.setupScreen.classList.remove('hidden');
+  }
+
+  // ---------- Game setup ----------
+  function buildDeck(pairCount){
+    var chosen = SYMBOLS.slice(0, pairCount);
+    var deck = chosen.concat(chosen);
+    for(var i = deck.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i+1));
+      var tmp = deck[i]; deck[i] = deck[j]; deck[j] = tmp;
+    }
+    return deck.map(function(sym, idx){
+      return { id: idx, symbol: sym };
+    });
+  }
+
+  function startGame(){
+    var cfg = LEVELS[state.level];
+    state.cards = buildDeck(cfg.count);
+    state.totalPairs = cfg.count;
+    state.matchesFound = 0;
+    state.moves = 0;
+    state.flipped = [];
+    state.lock = false;
+    state.currentPlayer = 0;
+
+    state.players = [];
+    if(state.mode === 'multi'){
+      for(var i=0;i<state.numPlayers;i++){
+        state.players.push({ name: PLAYER_NAMES[i], color: PLAYER_COLORS[i], score: 0 });
+      }
+    }
+
+    el.setupScreen.classList.add('hidden');
+    el.gameScreen.classList.remove('hidden');
+
+    renderBoard(cfg.cls);
+    renderHud();
+    renderScoreboard();
+
+    if(state.mode === 'single'){
+      state.startTime = Date.now();
+      startTimer();
+    } else {
+      stopTimer();
+    }
+  }
+
+  function renderBoard(cls){
+    el.board.className = 'board ' + cls;
+    el.board.innerHTML = '';
+    state.cards.forEach(function(card){
+      var cardEl = document.createElement('div');
+      cardEl.className = 'card';
+      cardEl.dataset.id = card.id;
+      cardEl.innerHTML =
+        '<div class="card-inner">' +
+          '<div class="card-face back"></div>' +
+          '<div class="card-face front">' + card.symbol + '</div>' +
+        '</div>';
+      cardEl.addEventListener('click', function(){ handleCardClick(card.id, cardEl); });
+      el.board.appendChild(cardEl);
+    });
+  }
+
+  function renderHud(){
+    el.hudLeft.innerHTML = '';
+    var levelLabel = state.level.charAt(0).toUpperCase() + state.level.slice(1);
+    addHudStat('Level', levelLabel);
+    addHudStat('Pairs', state.matchesFound + ' / ' + state.totalPairs);
+    if(state.mode === 'single'){
+      addHudStat('Moves', String(state.moves), 'moves-stat');
+      addHudStat('Time', '0:00', 'time-stat');
+    } else {
+      addHudStat('Moves', String(state.moves), 'moves-stat');
+    }
+  }
+  function addHudStat(label, value, id){
+    var s = document.createElement('span');
+    s.className = 'hud-stat';
+    if(id) s.id = id;
+    s.innerHTML = label + ': <b>' + value + '</b>';
+    el.hudLeft.appendChild(s);
+  }
+  function updateHudStat(id, value){
+    var elS = document.getElementById(id);
+    if(elS){
+      var b = elS.querySelector('b');
+      if(b) b.textContent = value;
+    }
+  }
+  function updatePairsStat(){
+    var stats = el.hudLeft.children;
+    if(stats[1]){ stats[1].querySelector('b').textContent = state.matchesFound + ' / ' + state.totalPairs; }
+  }
+
+  function renderScoreboard(){
+    if(state.mode !== 'multi'){
+      el.scoreboard.classList.add('hidden');
+      el.scoreboard.innerHTML = '';
+      return;
+    }
+    el.scoreboard.classList.remove('hidden');
+    el.scoreboard.innerHTML = '';
+    state.players.forEach(function(p, idx){
+      var card = document.createElement('div');
+      card.className = 'score-card' + (idx === state.currentPlayer ? ' turn' : '');
+      card.id = 'score-card-' + idx;
+      card.innerHTML =
+        '<div class="name-row"><span class="dot" style="background:'+p.color+'"></span>' + p.name + '</div>' +
+        '<div class="points">' + p.score + '</div>' +
+        '<div class="turn-tag">' + (idx === state.currentPlayer ? "Your turn" : "") + '</div>';
+      el.scoreboard.appendChild(card);
+    });
+  }
+
+  // ---------- Timer ----------
+  function startTimer(){
+    stopTimer();
+    state.timerId = setInterval(function(){
+      var elapsed = Math.floor((Date.now() - state.startTime) / 1000);
+      var mins = Math.floor(elapsed / 60);
+      var secs = elapsed % 60;
+      updateHudStat('time-stat', mins + ':' + (secs < 10 ? '0' : '') + secs);
+    }, 1000);
+  }
+  function stopTimer(){
+    if(state.timerId){ clearInterval(state.timerId); state.timerId = null; }
+  }
+  function getElapsedSeconds(){
+    return state.startTime ? Math.floor((Date.now() - state.startTime) / 1000) : 0;
+  }
+
+  // ---------- Gameplay ----------
+  function handleCardClick(id, cardEl){
+    if(state.lock) return;
+    if(cardEl.classList.contains('flipped') || cardEl.classList.contains('matched')) return;
+    if(state.flipped.length === 2) return;
+
+    cardEl.classList.add('flipped');
+    state.flipped.push({ id: id, el: cardEl });
+
+    if(state.flipped.length === 2){
+      state.moves++;
+      updateHudStat('moves-stat', String(state.moves));
+      state.lock = true;
+      checkMatch();
+    }
+  }
+
+  function checkMatch(){
+    var a = state.flipped[0], b = state.flipped[1];
+    var cardA = state.cards[a.id], cardB = state.cards[b.id];
+    var isMatch = cardA.symbol === cardB.symbol;
+
+    setTimeout(function(){
+      if(isMatch){
+        a.el.classList.add('matched');
+        b.el.classList.add('matched');
+        state.matchesFound++;
+        updatePairsStat();
+
+        if(state.mode === 'multi'){
+          state.players[state.currentPlayer].score++;
+          renderScoreboard();
+        }
+
+        state.flipped = [];
+        state.lock = false;
+
+        if(state.matchesFound === state.totalPairs){
+          endGame();
+          return;
+        }
+        // matching player keeps their turn in multiplayer
+      } else {
+        a.el.classList.add('wrong');
+        b.el.classList.add('wrong');
+        setTimeout(function(){
+          a.el.classList.remove('flipped','wrong');
+          b.el.classList.remove('flipped','wrong');
+          state.flipped = [];
+          state.lock = false;
+
+          if(state.mode === 'multi'){
+            state.currentPlayer = (state.currentPlayer + 1) % state.players.length;
+            renderScoreboard();
+          }
+        }, 650);
+      }
+    }, 550);
+  }
+
+  // ---------- End game ----------
+  function endGame(){
+    stopTimer();
+    if(state.mode === 'single'){
+      var secs = getElapsedSeconds();
+      var mins = Math.floor(secs / 60);
+      var rem = secs % 60;
+      el.winEmoji.textContent = '🏆';
+      el.winTitle.textContent = 'All pairs found!';
+      el.winSubtitle.textContent = 'Nice memory — here is how you did.';
+      el.winStats.innerHTML =
+        statBlock(state.moves, 'Moves') +
+        statBlock(mins + ':' + (rem<10?'0':'') + rem, 'Time');
+    } else {
+      var top = state.players[0];
+      var tie = false;
+      state.players.forEach(function(p){
+        if(p.score > top.score) top = p;
+      });
+      var winners = state.players.filter(function(p){ return p.score === top.score; });
+      tie = winners.length > 1;
+
+      el.winEmoji.textContent = tie ? '🤝' : '🏆';
+      el.winTitle.textContent = tie ? "It's a tie!" : top.name + ' wins!';
+      el.winSubtitle.textContent = tie ? 'Great memories all around.' : 'Most pairs matched takes the round.';
+      el.winStats.innerHTML = state.players.map(function(p){
+        return statBlock(p.score, p.name);
+      }).join('');
+    }
+    showOverlay();
+  }
+
+  function statBlock(num, label){
+    return '<div><div class="num">' + num + '</div><div class="lbl">' + label + '</div></div>';
+  }
+
+  function showOverlay(){ el.overlay.classList.remove('hidden'); }
+  function hideOverlay(){ el.overlay.classList.add('hidden'); }
+
+})();
+</script>
+</body>
+</html>

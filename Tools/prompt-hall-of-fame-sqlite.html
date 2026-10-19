@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Prompt Hall of Fame (SQLite)</title>
+<style>
+  :root {
+    --bg: #0f0f14;
+    --card: #1a1a24;
+    --card-border: #2a2a38;
+    --accent: #ffb703;
+    --accent2: #8ecae6;
+    --text: #f2f2f5;
+    --text-dim: #9a9aa8;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: radial-gradient(circle at top, #1c1c28 0%, #0f0f14 60%);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 60px;
+  }
+
+  header {
+    text-align: center;
+    padding: 40px 20px 10px;
+  }
+
+  header h1 {
+    font-size: 2.2em;
+    margin: 0;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: 1px;
+  }
+
+  header p { color: var(--text-dim); margin-top: 6px; }
+
+  #dbStatus {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+
+  #dbStatus span { color: var(--accent2); font-weight: 600; }
+
+  #toolbar {
+    max-width: 1100px;
+    margin: 0 auto 20px;
+    padding: 0 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  #searchBox {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  .btn {
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: transform 0.15s, opacity 0.15s;
+  }
+
+  .btn:hover { transform: translateY(-1px); opacity: 0.9; }
+  .btn-primary { background: var(--accent); color: #1a1a1a; }
+  .btn-secondary { background: var(--card-border); color: var(--text); }
+  .btn-danger { background: #e63946; color: #fff; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  #gallery {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 22px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+
+  .card:hover { box-shadow: 0 8px 24px rgba(255, 183, 3, 0.15); transform: translateY(-3px); }
+
+  .rank {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.6);
+    color: var(--accent);
+    font-weight: bold;
+    font-size: 12px;
+    padding: 4px 9px;
+    border-radius: 20px;
+    z-index: 2;
+  }
+
+  .card img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+    background: #000;
+    cursor: zoom-in;
+  }
+
+  .card-body { padding: 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .card-title { font-weight: 700; font-size: 14px; color: var(--accent2); }
+  .card-prompt { font-size: 13px; color: var(--text-dim); line-height: 1.4; max-height: 4.2em; overflow: hidden; }
+  .card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { font-size: 11px; background: rgba(142, 202, 230, 0.15); color: var(--accent2); padding: 2px 8px; border-radius: 20px; }
+  .card-actions { display: flex; gap: 6px; margin-top: auto; padding-top: 8px; }
+
+  .icon-btn {
+    flex: 1;
+    background: var(--card-border);
+    border: none;
+    color: var(--text);
+    padding: 7px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .icon-btn:hover { background: #34344a; }
+  .icon-btn.danger:hover { background: #e63946; }
+
+  #emptyState { text-align: center; color: var(--text-dim); padding: 60px 20px; display: none; }
+  #loadingState { text-align: center; color: var(--text-dim); padding: 60px 20px; }
+
+  #modalOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  #modalOverlay.show { display: flex; }
+
+  #modal {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 24px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  #modal h2 { margin-top: 0; font-size: 18px; }
+  #modal label { display: block; font-size: 13px; color: var(--text-dim); margin: 14px 0 6px; }
+
+  #modal input[type="text"], #modal textarea {
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: 7px;
+    border: 1px solid var(--card-border);
+    background: #12121a;
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+  }
+
+  #modal textarea { min-height: 80px; }
+
+  #imgPreview { margin-top: 10px; max-width: 100%; max-height: 200px; border-radius: 8px; display: none; }
+
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .modal-actions .btn { flex: 1; }
+
+  #lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 20px;
+    cursor: zoom-out;
+  }
+
+  #lightbox.show { display: flex; }
+  #lightbox img { max-width: 90vw; max-height: 80vh; border-radius: 10px; }
+  #lightbox p { color: var(--text-dim); max-width: 600px; text-align: center; margin-top: 16px; }
+
+  #fabAdd {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #1a1a1a;
+    font-size: 28px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(255,183,3,0.4);
+    z-index: 50;
+  }
+
+  #toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #222;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s;
+    z-index: 300;
+  }
+
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  #sqlPanel {
+    max-width: 1100px;
+    margin: 30px auto 0;
+    padding: 0 20px;
+  }
+
+  #sqlPanel details {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 12px 16px;
+  }
+
+  #sqlPanel summary { cursor: pointer; font-size: 13px; color: var(--text-dim); }
+  #sqlInput { width: 100%; margin-top: 10px; min-height: 70px; background: #12121a; color: #9ef01a; font-family: monospace; border: 1px solid var(--card-border); border-radius: 7px; padding: 10px; font-size: 13px; }
+  #sqlResult { margin-top: 10px; font-size: 12px; color: var(--text-dim); white-space: pre-wrap; max-height: 200px; overflow: auto; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏆 Prompt Hall of Fame</h1>
+  <p>Koleksi prompt gambar AI, disimpan di database SQLite asli — langsung di browser</p>
+</header>
+
+<div id="dbStatus">Memuat mesin SQLite... <span id="dbStatusText"></span></div>
+
+<div id="toolbar">
+  <input type="text" id="searchBox" placeholder="Cari prompt, judul, atau tag..." disabled>
+  <div style="display:flex; gap:10px; flex-wrap: wrap;">
+    <button class="btn btn-secondary" id="exportDbBtn" disabled>⬇ Export .sqlite</button>
+    <button class="btn btn-secondary" id="importDbBtn" disabled>⬆ Import .sqlite</button>
+    <input type="file" id="importDbFile" accept=".sqlite,.db" style="display:none">
+    <button class="btn btn-primary" id="addBtn" disabled>+ Tambah</button>
+  </div>
+</div>
+
+<div id="loadingState">⏳ Menyiapkan database SQLite di browser...</div>
+<div id="gallery"></div>
+<div id="emptyState">Belum ada koleksi. Klik tombol "+ Tambah" untuk mulai menyimpan prompt favoritmu.</div>
+
+<div id="sqlPanel">
+  <details>
+    <summary>⚙ Mode SQL manual (untuk yang mau query langsung)</summary>
+    <textarea id="sqlInput" placeholder="mis. SELECT title, prompt FROM prompts WHERE title LIKE '%cyberpunk%';"></textarea>
+    <button class="btn btn-secondary" id="runSqlBtn" style="margin-top:8px;">Jalankan SQL</button>
+    <div id="sqlResult"></div>
+  </details>
+</div>
+
+<button id="fabAdd" title="Tambah prompt baru" disabled>+</button>
+
+<div id="modalOverlay">
+  <div id="modal">
+    <h2 id="modalTitle">Tambah Prompt Baru</h2>
+    <label>Gambar Hasil</label>
+    <input type="file" id="imgInput" accept="image/*">
+    <img id="imgPreview">
+    <label>Judul</label>
+    <input type="text" id="titleInput" placeholder="mis. Cyberpunk Alley">
+    <label>Prompt</label>
+    <textarea id="promptInput" placeholder="Tulis prompt lengkap di sini..."></textarea>
+    <label>Tags (pisahkan dengan koma)</label>
+    <input type="text" id="tagsInput" placeholder="mis. midjourney, cyberpunk, neon">
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="cancelBtn">Batal</button>
+      <button class="btn btn-primary" id="saveBtn">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<div id="lightbox">
+  <img id="lightboxImg">
+  <p id="lightboxCaption"></p>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<script>
+  const LS_KEY = 'prompt_hall_of_fame_sqlite_v1';
+  let SQL = null;
+  let db = null;
+  let editingId = null;
+  let pendingImageData = null;
+
+  const gallery = document.getElementById('gallery');
+  const emptyState = document.getElementById('emptyState');
+  const loadingState = document.getElementById('loadingState');
+  const searchBox = document.getElementById('searchBox');
+  const modalOverlay = document.getElementById('modalOverlay');
+  const modalTitle = document.getElementById('modalTitle');
+  const imgInput = document.getElementById('imgInput');
+  const imgPreview = document.getElementById('imgPreview');
+  const titleInput = document.getElementById('titleInput');
+  const promptInput = document.getElementById('promptInput');
+  const tagsInput = document.getElementById('tagsInput');
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
+  const lightboxCaption = document.getElementById('lightboxCaption');
+  const toast = document.getElementById('toast');
+  const dbStatusText = document.getElementById('dbStatusText');
+  const sqlInput = document.getElementById('sqlInput');
+  const sqlResult = document.getElementById('sqlResult');
+
+  const controls = ['searchBox','exportDbBtn','importDbBtn','addBtn','fabAdd'].map(id => document.getElementById(id));
+
+  function enableControls() {
+    controls.forEach(el => el.disabled = false);
+  }
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 1800);
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  function persistToLocalStorage() {
+    try {
+      const data = db.export();
+      let binary = '';
+      for (let i = 0; i < data.length; i++) binary += String.fromCharCode(data[i]);
+      localStorage.setItem(LS_KEY, btoa(binary));
+    } catch (e) {
+      console.warn('Gagal simpan ke localStorage (mungkin kepenuhan):', e);
+    }
+  }
+
+  function loadFromLocalStorage() {
+    const b64 = localStorage.getItem(LS_KEY);
+    if (!b64) return null;
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+  }
+
+  function initSchema() {
+    db.run(`
+      CREATE TABLE IF NOT EXISTS prompts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT,
+        prompt TEXT NOT NULL,
+        tags TEXT,
+        image TEXT NOT NULL,
+        created_at TEXT DEFAULT (datetime('now'))
+      );
+    `);
+  }
+
+  function queryAll(where, params) {
+    const stmt = db.prepare(`SELECT * FROM prompts ${where || ''} ORDER BY id DESC`);
+    if (params) stmt.bind(params);
+    const rows = [];
+    while (stmt.step()) rows.push(stmt.getAsObject());
+    stmt.free();
+    return rows;
+  }
+
+  function render() {
+    const query = searchBox.value.trim();
+    let rows;
+    if (query) {
+      const like = `%${query}%`;
+      rows = queryAll('WHERE title LIKE ? OR prompt LIKE ? OR tags LIKE ?', [like, like, like]);
+    } else {
+      rows = queryAll();
+    }
+
+    gallery.innerHTML = '';
+    emptyState.style.display = rows.length === 0 ? 'block' : 'none';
+
+    const total = queryAll().length;
+
+    rows.forEach(r => {
+      const tags = (r.tags || '').split(',').map(t => t.trim()).filter(Boolean);
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <span class="rank">#${r.id}</span>
+        <img src="${r.image}" alt="${escapeHtml(r.title)}" data-id="${r.id}">
+        <div class="card-body">
+          <div class="card-title">${escapeHtml(r.title || 'Tanpa Judul')}</div>
+          <div class="card-prompt">${escapeHtml(r.prompt)}</div>
+          <div class="card-tags">${tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
+          <div class="card-actions">
+            <button class="icon-btn" data-action="copy" data-id="${r.id}">📋 Copy</button>
+            <button class="icon-btn" data-action="edit" data-id="${r.id}">✏️ Edit</button>
+            <button class="icon-btn danger" data-action="delete" data-id="${r.id}">🗑️</button>
+          </div>
+        </div>
+      `;
+      gallery.appendChild(card);
+    });
+
+    dbStatusText.textContent = `SQLite aktif — ${total} entri tersimpan`;
+  }
+
+  gallery.addEventListener('click', (e) => {
+    const img = e.target.closest('img[data-id]');
+    if (img) {
+      const rows = queryAll('WHERE id = ?', [img.dataset.id]);
+      if (rows[0]) {
+        lightboxImg.src = rows[0].image;
+        lightboxCaption.textContent = rows[0].prompt;
+        lightbox.classList.add('show');
+      }
+      return;
+    }
+
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    const action = btn.dataset.action;
+
+    if (action === 'copy') {
+      const rows = queryAll('WHERE id = ?', [id]);
+      if (rows[0]) navigator.clipboard.writeText(rows[0].prompt).then(() => showToast('Prompt disalin!'));
+    } else if (action === 'delete') {
+      if (confirm('Hapus item ini dari database?')) {
+        db.run('DELETE FROM prompts WHERE id = ?', [id]);
+        persistToLocalStorage();
+        render();
+        showToast('Item dihapus');
+      }
+    } else if (action === 'edit') {
+      const rows = queryAll('WHERE id = ?', [id]);
+      if (rows[0]) openModal(rows[0]);
+    }
+  });
+
+  lightbox.addEventListener('click', () => lightbox.classList.remove('show'));
+
+  function openModal(row) {
+    editingId = row ? row.id : null;
+    modalTitle.textContent = row ? 'Edit Prompt' : 'Tambah Prompt Baru';
+    titleInput.value = row ? row.title : '';
+    promptInput.value = row ? row.prompt : '';
+    tagsInput.value = row ? row.tags : '';
+    pendingImageData = row ? row.image : null;
+    imgPreview.src = pendingImageData || '';
+    imgPreview.style.display = pendingImageData ? 'block' : 'none';
+    imgInput.value = '';
+    modalOverlay.classList.add('show');
+  }
+
+  function closeModal() { modalOverlay.classList.remove('show'); }
+
+  document.getElementById('addBtn').addEventListener('click', () => openModal(null));
+  document.getElementById('fabAdd').addEventListener('click', () => openModal(null));
+  document.getElementById('cancelBtn').addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
+
+  imgInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      pendingImageData = ev.target.result;
+      imgPreview.src = pendingImageData;
+      imgPreview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('saveBtn').addEventListener('click', () => {
+    if (!pendingImageData) { alert('Silakan upload gambar contoh hasil dulu.'); return; }
+    if (!promptInput.value.trim()) { alert('Prompt tidak boleh kosong.'); return; }
+
+    const tags = tagsInput.value.split(',').map(t => t.trim()).filter(Boolean).join(',');
+
+    if (editingId) {
+      db.run('UPDATE prompts SET title=?, prompt=?, tags=?, image=? WHERE id=?',
+        [titleInput.value.trim(), promptInput.value.trim(), tags, pendingImageData, editingId]);
+    } else {
+      db.run('INSERT INTO prompts (title, prompt, tags, image) VALUES (?, ?, ?, ?)',
+        [titleInput.value.trim(), promptInput.value.trim(), tags, pendingImageData]);
+    }
+
+    persistToLocalStorage();
+    render();
+    closeModal();
+    showToast('Tersimpan ke database!');
+  });
+
+  searchBox.addEventListener('input', render);
+
+  document.getElementById('exportDbBtn').addEventListener('click', () => {
+    const data = db.export();
+    const blob = new Blob([data], { type: 'application/x-sqlite3' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'prompt-hall-of-fame.sqlite';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('File .sqlite di-download!');
+  });
+
+  document.getElementById('importDbBtn').addEventListener('click', () => {
+    document.getElementById('importDbFile').click();
+  });
+
+  document.getElementById('importDbFile').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const bytes = new Uint8Array(ev.target.result);
+        db = new SQL.Database(bytes);
+        initSchema();
+        persistToLocalStorage();
+        render();
+        showToast('Database berhasil diimport!');
+      } catch (err) {
+        alert('File .sqlite tidak valid: ' + err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  document.getElementById('runSqlBtn').addEventListener('click', () => {
+    const query = sqlInput.value.trim();
+    if (!query) return;
+    try {
+      const res = db.exec(query);
+      if (query.toLowerCase().startsWith('select')) {
+        sqlResult.textContent = res.length ? JSON.stringify(res[0], null, 2) : '(kosong)';
+      } else {
+        persistToLocalStorage();
+        render();
+        sqlResult.textContent = 'Query berhasil dijalankan.';
+      }
+    } catch (err) {
+      sqlResult.textContent = 'Error: ' + err.message;
+    }
+  });
+
+  // Init sql.js
+  initSqlJs({ locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${file}` })
+    .then(sql => {
+      SQL = sql;
+      const saved = loadFromLocalStorage();
+      db = saved ? new SQL.Database(saved) : new SQL.Database();
+      initSchema();
+      loadingState.style.display = 'none';
+      enableControls();
+      render();
+    })
+    .catch(err => {
+      loadingState.textContent = '⚠ Gagal memuat mesin SQLite: ' + err.message + ' (cek koneksi internet, sql.js dimuat dari CDN)';
+      dbStatusText.textContent = 'Gagal dimuat';
+    });
+</script>
+
+</body>
+</html>

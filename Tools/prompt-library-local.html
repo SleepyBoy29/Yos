@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>My Prompt Library</title>
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--desk:#16142a;--desk2:#201d3b;--paper:#f6f2ea;--ink:#2a2433;--soft:#6d6578;--gold:#efd79a;--line:#d9d2c3;
+--head:'Young Serif',Georgia,serif;--body:'Newsreader',Georgia,serif}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:radial-gradient(120% 90% at 50% 0,var(--desk2),var(--desk));background-color:var(--desk);color:#ece8f5;font-family:var(--body);font-size:17px;min-height:100vh}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 60px}
+.top h1{font-family:var(--head);font-weight:400;font-size:clamp(2rem,5vw,3.2rem);margin:12px 0 6px;color:var(--gold)}
+.top p{margin:0 0 28px;color:#b9b2cc;max-width:46ch}
+.shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:30px 24px;padding-bottom:20px}
+.cover{position:relative;aspect-ratio:3/4;border:0;border-radius:4px 10px 10px 4px;background:var(--c);color:var(--gold);text-align:left;padding:18px 14px 16px 24px;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;overflow:hidden;box-shadow:0 14px 22px -8px #000a,inset -3px 0 0 #0003;transition:transform .2s}
+.cover:hover{transform:translateY(-6px) rotate(-1deg)}
+.cover::before{content:"";position:absolute;inset:0 auto 0 0;width:14px;background:linear-gradient(90deg,#0005,#fff2 70%,#0002)}
+.cover img{position:absolute;left:26px;right:12px;top:14px;height:56%;width:calc(100% - 38px);object-fit:cover;border-radius:3px;border:2px solid #f6f2ea;box-shadow:0 3px 8px #0006}
+.cover strong{position:relative;font-family:var(--head);font-weight:400;font-size:1.15rem;line-height:1.15;word-break:break-word}
+.cover em{position:relative;font-size:.85rem;opacity:.8}
+.newbook{aspect-ratio:3/4;border:2px dashed #5b5580;border-radius:10px;background:transparent;color:#b9b2cc;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.newbook span{font-size:2.4rem;line-height:1}
+.newbook:hover{border-color:var(--gold);color:var(--gold)}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+.bar .sp{flex:1}
+.btn{border:1px solid #5b5580;background:#ffffff10;border-radius:999px;padding:8px 16px}
+.btn:hover{background:#ffffff1c}
+.btn.main{background:var(--gold);color:#2a2433;border-color:var(--gold)}
+.btn.warn{border-color:#c0617a;color:#f0a9bb}
+.spread{display:grid;grid-template-columns:1fr 1fr;background:var(--paper);color:var(--ink);border-radius:6px 14px 14px 6px;box-shadow:0 30px 50px -20px #000c;min-height:min(640px,72vh);position:relative}
+.spread::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:60px;margin-left:-30px;background:linear-gradient(90deg,transparent,#0000001f 48%,#00000026 50%,#0000001f 52%,transparent);pointer-events:none}
+.pg{padding:34px 36px;display:flex;flex-direction:column;min-width:0}
+.pg.r{transform-origin:left center;animation:turn .45s ease}
+@keyframes turn{from{transform:perspective(1800px) rotateY(-75deg);opacity:.3}to{transform:none;opacity:1}}
+.frame{flex:1;display:flex;align-items:center;justify-content:center;background:#fff;padding:10px;border-radius:3px;box-shadow:0 2px 10px #0002;min-height:260px}
+.frame img{max-width:100%;max-height:560px;object-fit:contain;display:block}
+.pg h2{font-family:var(--head);font-weight:400;font-size:1.5rem;margin:0 0 14px}
+.label{font-style:italic;color:var(--soft);margin:0 0 8px}
+.prompt{font-size:1.18rem;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;margin:0;flex:1}
+.meta{color:var(--soft);font-style:italic;margin:16px 0 0;padding-top:12px;border-top:1px solid var(--line)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.pg .btn{border-color:var(--line);background:#0000000a;color:var(--ink)}
+.pg .btn:hover{background:#00000014}
+.pg .btn.warn{color:#a3324f;border-color:#d7a0ae}
+.cvr{flex:1;border-radius:4px 10px 10px 4px;background:var(--c);color:var(--gold);padding:28px 24px 24px 38px;display:flex;flex-direction:column;justify-content:flex-end;position:relative;overflow:hidden;min-height:300px}
+.cvr::before{content:"";position:absolute;inset:0 auto 0 0;width:18px;background:linear-gradient(90deg,#0005,#fff2 70%,#0002)}
+.cvr img{position:absolute;left:40px;right:24px;top:24px;height:58%;width:calc(100% - 64px);object-fit:cover;border:3px solid var(--paper);border-radius:3px}
+.cvr h1{position:relative;font-family:var(--head);font-weight:400;font-size:2rem;margin:0;line-height:1.1}
+.nav{display:flex;justify-content:center;align-items:center;gap:18px;margin-top:20px;color:#b9b2cc}
+.nav .btn:disabled{opacity:.3;cursor:default}
+dialog{border:0;border-radius:14px;background:var(--paper);color:var(--ink);padding:24px;width:min(480px,92vw)}
+dialog::backdrop{background:#0009}
+dialog h3{font-family:var(--head);font-weight:400;margin:0 0 14px;font-size:1.4rem}
+dialog label{display:block;margin:12px 0 4px;font-weight:600}
+dialog input[type=text],dialog textarea{width:100%;border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 11px}
+dialog textarea{min-height:130px;resize:vertical}
+.sw{display:flex;gap:10px;margin-top:6px}
+.sw input{position:absolute;opacity:0}
+.sw span{display:block;width:30px;height:30px;border-radius:50%;background:var(--c);border:3px solid transparent}
+.sw input:checked+span{border-color:var(--ink)}
+.sw input:focus-visible+span{outline:2px solid var(--ink);outline-offset:2px}
+.sw label{margin:0}
+.prev{max-height:150px;margin-top:8px;border-radius:6px;display:none}
+.dact{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+dialog .btn{border-color:var(--line);background:#0000000a}
+dialog .btn.main{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+dialog .btn.warn{color:#a3324f;border-color:#d7a0ae;margin-right:auto}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--gold);color:#2a2433;padding:9px 18px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+.note{color:#8f88a6;font-size:.9rem;margin-top:30px}
+@media(max-width:760px){.spread{grid-template-columns:1fr}.spread::after{display:none}.pg{padding:22px 20px}.pg.r{border-top:1px solid var(--line)}}
+@media(prefers-reduced-motion:reduce){.pg.r{animation:none}.cover{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<dialog id="dBook">
+  <h3 id="dBookT">New book</h3>
+  <label for="bTitle">Title</label>
+  <input type="text" id="bTitle" maxlength="60" placeholder="e.g. Neon Cities">
+  <label>Cover color</label>
+  <div class="sw" id="bColors"></div>
+  <div class="dact"><button class="btn warn" id="bDel" hidden>Delete book</button><button class="btn" data-close>Cancel</button><button class="btn main" id="bSave">Save book</button></div>
+</dialog>
+
+<dialog id="dPage">
+  <h3 id="dPageT">Add a page</h3>
+  <label for="pFile">Image</label>
+  <input type="file" id="pFile" accept="image/*">
+  <img class="prev" id="pPrev" alt="Preview">
+  <label for="pPrompt">Prompt</label>
+  <textarea id="pPrompt" placeholder="Paste the prompt you used to generate this image"></textarea>
+  <label for="pModel">Made with (optional)</label>
+  <input type="text" id="pModel" maxlength="60" placeholder="e.g. Gemini, Midjourney v7">
+  <div class="dact"><button class="btn warn" id="pDel" hidden>Delete page</button><button class="btn" data-close>Cancel</button><button class="btn main" id="pSave">Save page</button></div>
+</dialog>
+<input type="file" id="impFile" accept=".json,application/json" hidden>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const COLORS=['#2f4b7c','#7a3e65','#2e6b5e','#9c3d54','#a8782a','#4a3f8f'];
+let lib={books:[]},cur=null,spread=0,editBook=null,editPage=null,newImg=null,armed=null,turned=false;
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2200)}
+const idb=()=>new Promise((res,rej)=>{const r=indexedDB.open('promptlib',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+async function load(){try{const db=await idb();return await new Promise((res,rej)=>{const q=db.transaction('kv').objectStore('kv').get('lib');q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}catch(e){return null}}
+async function save(){try{const db=await idb();await new Promise((res,rej)=>{const t=db.transaction('kv','readwrite');t.objectStore('kv').put(lib,'lib');t.oncomplete=res;t.onerror=()=>rej(t.error)})}catch(e){toast('Could not save in this browser')}}
+function shrink(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),i=new Image();i.onload=()=>{const s=Math.min(1,1400/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=Math.round(i.width*s);c.height=Math.round(i.height*s);c.getContext('2d').drawImage(i,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.88))};i.onerror=rej;i.src=u})}
+
+function coverBtn(b){const img=b.pages[0]&&b.pages[0].img,n=b.pages.length;
+ return `<button class="cover" data-open="${b.id}" style="--c:${b.color}">${img?`<img src="${img}" alt="">`:''}<strong>${esc(b.title)}</strong><em>${n} ${n==1?'page':'pages'}</em></button>`}
+
+function render(){cur?bookView():shelfView()}
+function shelfView(){
+ $('#app').innerHTML=`<header class="top"><h1>My Prompt Library</h1><p>Shelve every AI image you generate next to the exact words that made it.</p></header>
+ <div class="bar"><button class="btn" data-act="exportall">Export all books</button><button class="btn" data-act="import">Import backup</button></div>
+ <div class="shelf">${lib.books.map(coverBtn).join('')}<button class="newbook" data-act="newbook"><span>+</span>New book</button></div>
+ <p class="note">Library size: about ${mb(libSize())}. Books are saved in this browser only, so export a backup before clearing site data or switching computers.</p>`}
+
+function bookView(){
+ const b=cur,n=b.pages.length,p=spread>0?b.pages[spread-1]:null;
+ let L,R;
+ if(!p){
+  const img=b.pages[0]&&b.pages[0].img;
+  L=`<div class="pg"><div class="cvr" style="--c:${b.color}">${img?`<img src="${img}" alt="">`:''}<h1>${esc(b.title)}</h1></div></div>`;
+  R=`<div class="pg r"><h2>${esc(b.title)}</h2><p class="label">${n?`${n} ${n==1?'page':'pages'} inside. Turn the page to start reading.`:'This book is empty.'}</p><p class="prompt">${n?'':'Add your first image and the prompt behind it.'}</p><div class="acts"><button class="btn" data-act="addpage">Add a page</button><button class="btn" data-act="editbook">Edit book</button></div></div>`;
+ }else{
+  L=`<div class="pg"><div class="frame"><img src="${p.img}" alt="AI image for page ${spread}"></div></div>`;
+  R=`<div class="pg r"><h2>Prompt</h2><p class="prompt">${esc(p.prompt)||'<span class="label">No prompt saved.</span>'}</p>${p.model?`<p class="meta">Made with ${esc(p.model)}</p>`:''}<div class="acts"><button class="btn" data-act="copy">Copy prompt</button><button class="btn" data-act="editpage">Edit page</button></div></div>`;
+ }
+ $('#app').innerHTML=`<div class="bar"><button class="btn" data-act="shelf">Back to shelf</button><span class="sp"></span><button class="btn" data-act="exportbook">Export book</button><button class="btn" data-act="editbook">Edit book</button><button class="btn main" data-act="addpage">Add a page</button></div>
+ <div class="spread">${L}${R}</div>
+ <div class="nav"><button class="btn" data-act="prev" ${spread<=0?'disabled':''} aria-label="Previous page">Previous</button><span>${spread==0?'Cover':spread+' of '+n}</span><button class="btn" data-act="next" ${spread>=n?'disabled':''} aria-label="Next page">Next</button></div>`;
+ if(!turned){const r=document.querySelector('.pg.r');if(r)r.style.animation='none'}turned=false}
+
+function go(d){const n=spread+d;if(n<0||n>cur.pages.length)return;spread=n;turned=true;render()}
+function openBookDlg(b){editBook=b||null;$('#dBookT').textContent=b?'Edit book':'New book';$('#bTitle').value=b?b.title:'';$('#bDel').hidden=!b;$('#bDel').textContent='Delete book';armed=null;
+ const sel=b?b.color:COLORS[lib.books.length%COLORS.length];
+ $('#bColors').innerHTML=COLORS.map(c=>`<label><input type="radio" name="bc" value="${c}" ${c==sel?'checked':''}><span style="--c:${c}"></span></label>`).join('');
+ $('#dBook').showModal();$('#bTitle').focus()}
+function openPageDlg(p){editPage=p||null;newImg=null;$('#dPageT').textContent=p?'Edit page':'Add a page';$('#pFile').value='';$('#pPrompt').value=p?p.prompt:'';$('#pModel').value=p?p.model:'';$('#pDel').hidden=!p;$('#pDel').textContent='Delete page';armed=null;
+ const pv=$('#pPrev');if(p){pv.src=p.img;pv.style.display='block'}else{pv.style.display='none'}$('#dPage').showModal()}
+
+$('#pFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{newImg=await shrink(f);const pv=$('#pPrev');pv.src=newImg;pv.style.display='block'}catch(x){toast('That file could not be read as an image')}});
+$('#bSave').onclick=async()=>{const t=$('#bTitle').value.trim();if(!t){toast('Give your book a title');return}
+ const c=(document.querySelector('input[name=bc]:checked')||{}).value||COLORS[0];
+ if(editBook){editBook.title=t;editBook.color=c}else{const b={id:uid(),title:t,color:c,pages:[]};lib.books.push(b);cur=b;spread=0}
+ await save();$('#dBook').close();render();toast('Book saved')};
+$('#bDel').onclick=async()=>{if(armed!=='b'){armed='b';$('#bDel').textContent='Tap again to delete';return}
+ lib.books=lib.books.filter(b=>b!==editBook);cur=null;await save();$('#dBook').close();render();toast('Book deleted')};
+$('#pSave').onclick=async()=>{const img=newImg||(editPage&&editPage.img);if(!img){toast('Choose an image first');return}
+ const d={img,prompt:$('#pPrompt').value.trim(),model:$('#pModel').value.trim()};
+ if(editPage)Object.assign(editPage,d);else{cur.pages.push({id:uid(),...d});spread=cur.pages.length}
+ await save();$('#dPage').close();turned=true;render();toast('Page saved')};
+$('#pDel').onclick=async()=>{if(armed!=='p'){armed='p';$('#pDel').textContent='Tap again to delete';return}
+ cur.pages=cur.pages.filter(p=>p!==editPage);spread=Math.min(spread,cur.pages.length);await save();$('#dPage').close();render();toast('Page deleted')};
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
+
+document.addEventListener('click',async e=>{
+ const o=e.target.closest('[data-open]');if(o){cur=lib.books.find(b=>b.id===o.dataset.open);spread=0;render();return}
+ const a=e.target.closest('[data-act]');if(!a)return;const k=a.dataset.act;
+ if(k==='newbook')openBookDlg();
+ else if(k==='shelf'){cur=null;render()}
+ else if(k==='editbook')openBookDlg(cur);
+ else if(k==='addpage')openPageDlg();
+ else if(k==='editpage')openPageDlg(cur.pages[spread-1]);
+ else if(k==='prev')go(-1);
+ else if(k==='next')go(1);
+ else if(k==='exportall')exportBooks(lib.books,'prompt-library-'+today()+'.json');
+ else if(k==='exportbook')exportBooks([cur],slug(cur.title)+'-'+today()+'.json');
+ else if(k==='import')$('#impFile').click();
+ else if(k==='copy'){const t=cur.pages[spread-1].prompt;try{await navigator.clipboard.writeText(t)}catch(x){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy')}catch(y){}ta.remove()}toast('Prompt copied')}
+});
+document.addEventListener('keydown',e=>{if(!cur||document.querySelector('dialog[open]'))return;if(e.key==='ArrowRight')go(1);if(e.key==='ArrowLeft')go(-1)});
+
+const mb=n=>(n/1048576).toFixed(1)+' MB';
+const today=()=>new Date().toISOString().slice(0,10);
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'book';
+const libSize=()=>lib.books.reduce((a,b)=>a+b.pages.reduce((c,p)=>c+p.img.length+p.prompt.length,0),0);
+async function exportBooks(books,name){
+ if(!books.length){toast('Nothing to export yet');return}
+ let dl=null;try{dl=window.claude?await window.claude.use('downloads'):null}catch(x){}
+ if(!dl){const b=new Blob([JSON.stringify({app:'prompt-library',version:1,exported:new Date().toISOString(),books})],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast('Backup ready ('+mb(b.size)+')');return}
+ const blob=new Blob([JSON.stringify({app:'prompt-library',version:1,exported:new Date().toISOString(),books})],{type:'application/json'});
+ try{await dl.save({filename:name,data:blob});toast('Backup ready ('+mb(blob.size)+')')}
+ catch(x){if(x.code==='declined')return;toast(x.code==='too_large'?'Too large. Try exporting one book at a time.':'Could not save the backup')}}
+const IMG=/^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+\/=]+$/;
+const str=(v,m)=>String(v==null?'':v).slice(0,m);
+const safeId=v=>str(v,40).replace(/[^\w-]/g,'')||uid();
+function clean(b){if(!b||typeof b!=='object'||!Array.isArray(b.pages))return null;
+ return{id:safeId(b.id),title:str(b.title,60)||'Untitled',color:/^#[0-9a-f]{6}$/i.test(b.color)?b.color:COLORS[0],
+ pages:b.pages.filter(p=>p&&typeof p.img==='string'&&IMG.test(p.img)).map(p=>({id:safeId(p.id),img:p.img,prompt:str(p.prompt,5000),model:str(p.model,60)}))}}
+$('#impFile').addEventListener('change',async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+ try{const d=JSON.parse(await f.text());const src=Array.isArray(d.books)?d.books:[];let nb=0,np=0;
+  for(const raw of src){const b=clean(raw);if(!b)continue;const ex=lib.books.find(x=>x.id===b.id);
+   if(ex){const have=new Set(ex.pages.map(p=>p.id));for(const p of b.pages)if(!have.has(p.id)){ex.pages.push(p);np++}}
+   else{lib.books.push(b);nb++;np+=b.pages.length}}
+  if(!nb&&!np){toast('Nothing new to import');return}
+  await save();cur=null;render();toast('Imported '+nb+(nb==1?' new book, ':' new books, ')+np+(np==1?' page':' pages'))
+ }catch(x){toast('That file is not a valid backup')}});
+(async()=>{const d=await load();if(d&&d.books)lib=d;render()})();
+</script>
+</body>
+</html>

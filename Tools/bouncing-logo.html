@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Bouncing Logo Screensaver</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+  }
+
+  #stage {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+  }
+
+  #logo {
+    position: absolute;
+    top: 0;
+    left: 0;
+    user-select: none;
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  #logo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  #placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: #6c63ff;
+    color: #fff;
+    font-weight: bold;
+    border-radius: 12px;
+    box-sizing: border-box;
+    text-align: center;
+    padding: 6px;
+  }
+
+  #panel {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    background: rgba(20,20,20,0.85);
+    color: #fff;
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 220px;
+    transition: opacity 0.3s;
+  }
+
+  #panel label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  #panel input[type="number"] {
+    width: 60px;
+  }
+
+  #panel button, #panel input[type="file"] {
+    font-size: 12px;
+  }
+
+  #toggleBtn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 10;
+    background: rgba(20,20,20,0.85);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="logo">
+    <div id="placeholder">LOGO<br>ANDA</div>
+  </div>
+</div>
+
+<button id="toggleBtn">Sembunyikan Panel</button>
+
+<div id="panel">
+  <label>Upload Logo
+    <input type="file" id="fileInput" accept="image/*">
+  </label>
+  <label>Lebar (px)
+    <input type="number" id="widthInput" value="150" min="20" max="1000">
+  </label>
+  <label>Tinggi (px)
+    <input type="number" id="heightInput" value="150" min="20" max="1000">
+  </label>
+  <label>Kecepatan
+    <input type="number" id="speedInput" value="3" min="0.5" max="15" step="0.5">
+  </label>
+  <label>Warna Acak
+    <input type="checkbox" id="colorToggle" checked>
+  </label>
+  <button id="resetBtn">Reset Posisi</button>
+</div>
+
+<script>
+  const stage = document.getElementById('stage');
+  const logo = document.getElementById('logo');
+  const placeholder = document.getElementById('placeholder');
+  const fileInput = document.getElementById('fileInput');
+  const widthInput = document.getElementById('widthInput');
+  const heightInput = document.getElementById('heightInput');
+  const speedInput = document.getElementById('speedInput');
+  const colorToggle = document.getElementById('colorToggle');
+  const resetBtn = document.getElementById('resetBtn');
+  const toggleBtn = document.getElementById('toggleBtn');
+  const panel = document.getElementById('panel');
+
+  let width = parseInt(widthInput.value, 10);
+  let height = parseInt(heightInput.value, 10);
+  let speed = parseFloat(speedInput.value);
+
+  let x = 50, y = 50;
+  let dx = speed, dy = speed;
+
+  const colors = ['#ff6b6b', '#feca57', '#1dd1a1', '#54a0ff', '#5f27cd', '#ff9ff3', '#00d2d3', '#ff793f'];
+
+  function applySize() {
+    logo.style.width = width + 'px';
+    logo.style.height = height + 'px';
+  }
+
+  function randomizeColor() {
+    if (colorToggle.checked) {
+      const c = colors[Math.floor(Math.random() * colors.length)];
+      placeholder.style.background = c;
+    }
+  }
+
+  function resetPosition() {
+    x = Math.random() * (window.innerWidth - width);
+    y = Math.random() * (window.innerHeight - height);
+  }
+
+  applySize();
+  resetPosition();
+  randomizeColor();
+
+  widthInput.addEventListener('input', () => {
+    width = parseInt(widthInput.value, 10) || 20;
+    applySize();
+  });
+
+  heightInput.addEventListener('input', () => {
+    height = parseInt(heightInput.value, 10) || 20;
+    applySize();
+  });
+
+  speedInput.addEventListener('input', () => {
+    speed = parseFloat(speedInput.value) || 1;
+    dx = dx < 0 ? -speed : speed;
+    dy = dy < 0 ? -speed : speed;
+  });
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      logo.innerHTML = '<img src="' + ev.target.result + '" alt="logo">';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  resetBtn.addEventListener('click', resetPosition);
+
+  toggleBtn.addEventListener('click', () => {
+    panel.classList.toggle('hidden');
+    toggleBtn.textContent = panel.classList.contains('hidden') ? 'Tampilkan Panel' : 'Sembunyikan Panel';
+  });
+
+  function animate() {
+    x += dx;
+    y += dy;
+
+    const maxX = window.innerWidth - width;
+    const maxY = window.innerHeight - height;
+
+    if (x <= 0) {
+      x = 0;
+      dx = Math.abs(dx);
+      randomizeColor();
+    } else if (x >= maxX) {
+      x = maxX;
+      dx = -Math.abs(dx);
+      randomizeColor();
+    }
+
+    if (y <= 0) {
+      y = 0;
+      dy = Math.abs(dy);
+      randomizeColor();
+    } else if (y >= maxY) {
+      y = maxY;
+      dy = -Math.abs(dy);
+      randomizeColor();
+    }
+
+    logo.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+    requestAnimationFrame(animate);
+  }
+
+  window.addEventListener('resize', () => {
+    x = Math.min(x, window.innerWidth - width);
+    y = Math.min(y, window.innerHeight - height);
+  });
+
+  animate();
+</script>
+
+</body>
+</html>

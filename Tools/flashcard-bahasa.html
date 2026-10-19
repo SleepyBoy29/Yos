@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashcard // Bahasa Dunia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;600&family=Noto+Sans+Devanagari:wght@400;600&family=Noto+Sans+Arabic:wght@400;600&family=Noto+Sans+Bengali:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0c0f;
+    --bg-grid: #0e1114;
+    --panel: #14171c;
+    --panel-2: #191d23;
+    --border: #262b33;
+    --border-soft: #1d2129;
+    --text: #e9ebee;
+    --muted: #7d8695;
+    --muted-2: #4c525c;
+    --accent: #7dd3fc;
+    --accent-dim: rgba(125,211,252,0.12);
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --sans: 'Noto Sans','Noto Sans SC','Noto Sans Devanagari','Noto Sans Arabic','Noto Sans Bengali', 'Segoe UI', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 20% -10%, rgba(125,211,252,0.06), transparent 40%),
+      radial-gradient(circle at 90% 110%, rgba(196,181,253,0.05), transparent 40%),
+      repeating-linear-gradient(0deg, var(--bg-grid) 0px, var(--bg-grid) 1px, var(--bg) 1px, var(--bg) 32px),
+      repeating-linear-gradient(90deg, var(--bg-grid) 0px, var(--bg-grid) 1px, var(--bg) 1px, var(--bg) 32px);
+    background-color:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:28px 14px 60px;
+  }
+  .app{ width:100%; max-width:620px; }
+
+  /* header */
+  .head{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:8px;}
+  .brand{ font-family:var(--mono); font-size:12px; letter-spacing:.14em; color:var(--muted); text-transform:uppercase;}
+  .brand b{ color:var(--accent); }
+  h1{
+    font-family:var(--sans); font-weight:700; font-size:26px; margin:4px 0 0; letter-spacing:-0.01em;
+  }
+  .sub{ font-family:var(--mono); font-size:11.5px; color:var(--muted-2); margin-top:4px; }
+
+  /* language tabs */
+  .tabs{
+    display:flex; flex-wrap:wrap; gap:6px; padding:4px 2px 14px; margin-bottom:6px;
+  }
+  .tab{
+    flex:0 0 auto; font-family:var(--mono); font-size:12px; padding:8px 12px; border-radius:7px;
+    background:var(--panel); border:1px solid var(--border-soft); color:var(--muted);
+    cursor:pointer; display:flex; align-items:center; gap:7px; transition:all .15s ease; white-space:nowrap;
+  }
+  .tab .dot{ width:6px; height:6px; border-radius:50%; background:var(--dot,#555); }
+  .tab:hover{ border-color:var(--border); color:var(--text); }
+  .tab.active{ background:var(--accent-dim); border-color:var(--tab-color); color:var(--text); }
+
+  /* stage */
+  .stage{ position:relative; margin-top:6px; }
+  .meta-row{
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:var(--mono); font-size:11px; color:var(--muted-2); margin-bottom:10px; padding:0 2px;
+  }
+  .meta-row .freq{ color:var(--accent); }
+  .meta-row .idx{ letter-spacing:.05em; }
+
+  .perspective{ perspective:1600px; width:100%; }
+  .card{
+    position:relative; width:100%; height:320px; cursor:pointer;
+    transform-style:preserve-3d; transition:transform .55s cubic-bezier(.22,.68,.2,1.06);
+    animation:enter .35s ease;
+  }
+  @keyframes enter{ from{ opacity:0; transform:translateY(8px) scale(.985);} to{opacity:1; transform:translateY(0) scale(1);} }
+  .card.flipped{ transform:rotateY(180deg); }
+  .card.flipped.enter-anim{ animation:none; }
+
+  .face{
+    position:absolute; inset:0; backface-visibility:hidden;
+    border-radius:16px; border:1px solid var(--border);
+    background:linear-gradient(155deg, var(--panel), var(--panel-2));
+    display:flex; flex-direction:column;
+    padding:22px 22px 18px;
+    box-shadow: 0 20px 40px -18px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.02);
+  }
+  .face::before{
+    content:''; position:absolute; left:0; right:0; top:0; height:3px; border-radius:16px 16px 0 0;
+    background:var(--tab-color);
+  }
+  .face-front{ align-items:flex-start; justify-content:center; }
+  .face-back{ transform:rotateY(180deg); align-items:flex-start; justify-content:center; }
+
+  .tag-row{ position:absolute; top:16px; left:20px; right:20px; display:flex; justify-content:space-between; align-items:center; }
+  .lang-chip{
+    font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; color:var(--tab-color);
+    border:1px solid var(--tab-color); padding:3px 7px; border-radius:5px; background:rgba(255,255,255,0.02);
+  }
+  .card-no{ font-family:var(--mono); font-size:10.5px; color:var(--muted-2); }
+
+  .content-wrap{ width:100%; margin-top:20px; }
+  .main-text{
+    font-size:30px; font-weight:600; line-height:1.35; color:var(--text); word-break:break-word;
+  }
+  .face-back .main-text{ color:var(--text); font-size:26px; }
+  .pron{
+    font-family:var(--mono); font-size:13.5px; color:var(--muted); margin-top:10px; letter-spacing:.01em;
+  }
+  .id-label{
+    font-family:var(--mono); font-size:10.5px; color:var(--tab-color); letter-spacing:.15em; margin-bottom:8px; text-transform:uppercase;
+  }
+  .flip-hint{
+    position:absolute; bottom:14px; right:20px; font-family:var(--mono); font-size:10px; color:var(--muted-2);
+    display:flex; align-items:center; gap:5px;
+  }
+
+  /* progress */
+  .progress-track{
+    height:3px; background:var(--border-soft); border-radius:3px; margin:18px 2px 4px; overflow:hidden;
+  }
+  .progress-fill{ height:100%; background:var(--tab-color); transition:width .3s ease; }
+
+  /* controls */
+  .controls{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:18px; }
+  .side-controls{ display:flex; gap:8px; }
+  btn{ display:none; }
+  .ctrl-btn{
+    font-family:var(--mono); font-size:13px; color:var(--text); background:var(--panel);
+    border:1px solid var(--border); padding:11px 14px; border-radius:9px; cursor:pointer;
+    display:flex; align-items:center; gap:6px; transition:all .15s ease;
+  }
+  .ctrl-btn:hover{ border-color:var(--tab-color); color:var(--tab-color); }
+  .ctrl-btn:active{ transform:scale(.96); }
+  .ctrl-btn.primary{ background:var(--tab-color); color:#0a0c0f; border-color:var(--tab-color); font-weight:600; flex:1; justify-content:center; }
+  .ctrl-btn.primary:hover{ opacity:.9; color:#0a0c0f; }
+  .ctrl-btn.icon{ padding:11px 13px; }
+  .ctrl-btn.small{ font-size:11px; padding:9px 11px; color:var(--muted); }
+
+  .footer-note{
+    font-family:var(--mono); font-size:10.5px; color:var(--muted-2); text-align:center; margin-top:22px; line-height:1.7;
+  }
+  kbd{ background:var(--panel); border:1px solid var(--border); border-radius:4px; padding:1px 5px; font-family:var(--mono); font-size:10px; color:var(--muted);}
+
+  @media (max-width:480px){
+    .card{ height:300px; }
+    .main-text{ font-size:24px; }
+    h1{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="head">
+    <div>
+      <div class="brand">flashcard.exe &mdash; <b>12 bahasa → Indonesia</b></div>
+      <h1>Kartu Bahasa Dunia</h1>
+      <div class="sub">terurut dari kalimat paling umum → paling jarang</div>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="stage">
+    <div class="meta-row">
+      <span class="idx" id="idxLabel">001 / 020</span>
+      <span class="freq" id="freqLabel">● sangat umum</span>
+    </div>
+
+    <div class="perspective">
+      <div class="card" id="card">
+        <div class="face face-front" id="faceFront">
+          <div class="tag-row">
+            <span class="lang-chip" id="chipFront">EN</span>
+            <span class="card-no" id="cardNoFront">#001</span>
+          </div>
+          <div class="content-wrap">
+            <div class="main-text" id="textFront">Hello</div>
+            <div class="pron" id="pronFront"></div>
+          </div>
+          <div class="flip-hint">tap untuk membalik ↻</div>
+        </div>
+        <div class="face face-back" id="faceBack">
+          <div class="tag-row">
+            <span class="lang-chip" style="--tab-color:#9CA3AF; color:#c9cdd3; border-color:#3a3f47;">ID</span>
+            <span class="card-no" id="cardNoBack">#001</span>
+          </div>
+          <div class="content-wrap">
+            <div class="id-label">artinya</div>
+            <div class="main-text" id="textBack">Halo</div>
+          </div>
+          <div class="flip-hint">tap untuk kembali ↻</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:5%"></div></div>
+
+    <div class="controls">
+      <button class="ctrl-btn icon" id="prevBtn" title="Sebelumnya (←)">←</button>
+      <button class="ctrl-btn primary" id="flipBtn">Balik kartu <span style="opacity:.6">(spasi)</span></button>
+      <button class="ctrl-btn icon" id="nextBtn" title="Berikutnya (→)">→</button>
+    </div>
+    <div class="controls" style="margin-top:8px;">
+      <button class="ctrl-btn small" id="shuffleBtn">⤮ Acak urutan</button>
+      <button class="ctrl-btn small" id="resetBtn">↺ Urutkan ulang</button>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    <kbd>←</kbd> <kbd>→</kbd> pindah kartu &nbsp;•&nbsp; <kbd>space</kbd> balik kartu &nbsp;•&nbsp; pilih tab bahasa di atas untuk berganti bahasa
+  </div>
+
+</div>
+
+<script>
+const LANGS = [
+  { code:'EN', name:'Inggris', color:'#7DD3FC', words:[
+    {t:'Hello', p:'', id:'Halo'},
+    {t:'Thank you', p:'', id:'Terima kasih'},
+    {t:'Please', p:'', id:'Tolong / Silakan'},
+    {t:'Yes', p:'', id:'Ya'},
+    {t:'No', p:'', id:'Tidak'},
+    {t:'My name is...', p:'', id:'Nama saya...'},
+    {t:'What is your name?', p:'', id:'Siapa nama Anda?'},
+    {t:'How are you?', p:'', id:'Apa kabar?'},
+    {t:"I'm fine, thank you", p:'', id:'Saya baik-baik saja, terima kasih'},
+    {t:'Nice to meet you', p:'', id:'Senang bertemu dengan Anda'},
+    {t:"I don't understand", p:'', id:'Saya tidak mengerti'},
+    {t:'Excuse me', p:'', id:'Permisi'},
+    {t:"I'm sorry", p:'', id:'Maaf'},
+    {t:'Goodbye', p:'', id:'Selamat tinggal'},
+    {t:'Where is the bathroom?', p:'', id:'Di mana kamar mandi?'},
+    {t:'How much does this cost?', p:'', id:'Berapa harganya?'},
+    {t:'Can you help me?', p:'', id:'Bisakah Anda membantu saya?'},
+    {t:'I love you', p:'', id:'Aku cinta kamu'},
+    {t:'I am hungry', p:'', id:'Saya lapar'},
+    {t:'See you later', p:'', id:'Sampai jumpa lagi'},
+  ]},
+  { code:'ZH', name:'Mandarin', color:'#FCA5A5', words:[
+    {t:'你好', p:'Nǐ hǎo', id:'Halo'},
+    {t:'谢谢', p:'Xièxiè', id:'Terima kasih'},
+    {t:'请', p:'Qǐng', id:'Tolong / Silakan'},
+    {t:'是', p:'Shì', id:'Ya'},
+    {t:'不', p:'Bù', id:'Tidak'},
+    {t:'我叫...', p:'Wǒ jiào...', id:'Nama saya...'},
+    {t:'你叫什么名字？', p:'Nǐ jiào shénme míngzì?', id:'Siapa nama Anda?'},
+    {t:'你好吗？', p:'Nǐ hǎo ma?', id:'Apa kabar?'},
+    {t:'我很好，谢谢', p:'Wǒ hěn hǎo, xièxiè', id:'Saya baik-baik saja, terima kasih'},
+    {t:'很高兴认识你', p:'Hěn gāoxìng rènshi nǐ', id:'Senang bertemu dengan Anda'},
+    {t:'我不明白', p:'Wǒ bù míngbái', id:'Saya tidak mengerti'},
+    {t:'打扰一下', p:'Dǎrǎo yīxià', id:'Permisi'},
+    {t:'对不起', p:'Duìbùqǐ', id:'Maaf'},
+    {t:'再见', p:'Zàijiàn', id:'Selamat tinggal'},
+    {t:'洗手间在哪里？', p:'Xǐshǒujiān zài nǎlǐ?', id:'Di mana kamar mandi?'},
+    {t:'这个多少钱？', p:'Zhège duōshǎo qián?', id:'Berapa harganya?'},
+    {t:'你能帮我吗？', p:'Nǐ néng bāng wǒ ma?', id:'Bisakah Anda membantu saya?'},
+    {t:'我爱你', p:'Wǒ ài nǐ', id:'Aku cinta kamu'},
+    {t:'我饿了', p:'Wǒ è le', id:'Saya lapar'},
+    {t:'回头见', p:'Huítóu jiàn', id:'Sampai jumpa lagi'},
+  ]},
+  { code:'HI', name:'Hindi', color:'#FDE68A', words:[
+    {t:'नमस्ते', p:'Namaste', id:'Halo'},
+    {t:'धन्यवाद', p:'Dhanyavaad', id:'Terima kasih'},
+    {t:'कृपया', p:'Kripya', id:'Tolong / Silakan'},
+    {t:'हाँ', p:'Haan', id:'Ya'},
+    {t:'नहीं', p:'Nahin', id:'Tidak'},
+    {t:'मेरा नाम... है', p:'Mera naam... hai', id:'Nama saya...'},
+    {t:'आपका नाम क्या है?', p:'Aapka naam kya hai?', id:'Siapa nama Anda?'},
+    {t:'आप कैसे हैं?', p:'Aap kaise hain?', id:'Apa kabar?'},
+    {t:'मैं ठीक हूँ, धन्यवाद', p:'Main theek hoon, dhanyavaad', id:'Saya baik-baik saja, terima kasih'},
+    {t:'आपसे मिलकर खुशी हुई', p:'Aapse milkar khushi hui', id:'Senang bertemu dengan Anda'},
+    {t:'मुझे समझ नहीं आया', p:'Mujhe samajh nahin aaya', id:'Saya tidak mengerti'},
+    {t:'माफ़ कीजिए', p:'Maaf kijiye', id:'Permisi'},
+    {t:'मुझे खेद है', p:'Mujhe khed hai', id:'Maaf'},
+    {t:'अलविदा', p:'Alvida', id:'Selamat tinggal'},
+    {t:'बाथरूम कहाँ है?', p:'Bathroom kahan hai?', id:'Di mana kamar mandi?'},
+    {t:'यह कितने का है?', p:'Yeh kitne ka hai?', id:'Berapa harganya?'},
+    {t:'क्या आप मेरी मदद कर सकते हैं?', p:'Kya aap meri madad kar sakte hain?', id:'Bisakah Anda membantu saya?'},
+    {t:'मैं तुमसे प्यार करता हूँ', p:'Main tumse pyaar karta hoon', id:'Aku cinta kamu'},
+    {t:'मुझे भूख लगी है', p:'Mujhe bhookh lagi hai', id:'Saya lapar'},
+    {t:'फिर मिलेंगे', p:'Phir milenge', id:'Sampai jumpa lagi'},
+  ]},
+  { code:'ES', name:'Spanyol', color:'#FDBA74', words:[
+    {t:'Hola', p:'', id:'Halo'},
+    {t:'Gracias', p:'', id:'Terima kasih'},
+    {t:'Por favor', p:'', id:'Tolong / Silakan'},
+    {t:'Sí', p:'', id:'Ya'},
+    {t:'No', p:'', id:'Tidak'},
+    {t:'Me llamo...', p:'', id:'Nama saya...'},
+    {t:'¿Cómo te llamas?', p:'', id:'Siapa nama Anda?'},
+    {t:'¿Cómo estás?', p:'', id:'Apa kabar?'},
+    {t:'Estoy bien, gracias', p:'', id:'Saya baik-baik saja, terima kasih'},
+    {t:'Mucho gusto', p:'', id:'Senang bertemu dengan Anda'},
+    {t:'No entiendo', p:'', id:'Saya tidak mengerti'},
+    {t:'Disculpe', p:'', id:'Permisi'},
+    {t:'Lo siento', p:'', id:'Maaf'},
+    {t:'Adiós', p:'', id:'Selamat tinggal'},
+    {t:'¿Dónde está el baño?', p:'', id:'Di mana kamar mandi?'},
+    {t:'¿Cuánto cuesta esto?', p:'', id:'Berapa harganya?'},
+    {t:'¿Puedes ayudarme?', p:'', id:'Bisakah Anda membantu saya?'},
+    {t:'Te amo', p:'', id:'Aku cinta kamu'},
+    {t:'Tengo hambre', p:'', id:'Saya lapar'},
+    {t:'Hasta luego', p:'', id:'Sampai jumpa lagi'},
+  ]},
+  { code:'AR', name:'Arab', color:'#C4B5FD', words:[
+    {t:'مرحبا', p:'Marhaban', id:'Halo'},
+    {t:'شكرا', p:'Shukran', id:'Terima kasih'},
+    {t:'من فضلك', p:'Min fadlik', id:'Tolong / Silakan'},
+    {t:'نعم', p:"Na'am", id:'Ya'},
+    {t:'لا', p:'La', id:'Tidak'},
+    {t:'اسمي...', p:'Ismi...', id:'Nama saya...'},
+    {t:'ما اسمك؟', p:'Ma ismuka?', id:'Siapa nama Anda?'},
+    {t:'كيف حالك؟', p:'Kayfa haluka?', id:'Apa kabar?'},
+    {t:'أنا بخير، شكرا', p:'Ana bikhayr, shukran', id:'Saya baik-baik saja, terima kasih'},
+    {t:'تشرفنا', p:'Tasharrafna', id:'Senang bertemu dengan Anda'},
+    {t:'لا أفهم', p:'La afham', id:'Saya tidak mengerti'},
+    {t:'المعذرة', p:'Al-ma\'dhira', id:'Permisi'},
+    {t:'آسف', p:'Asif', id:'Maaf'},
+    {t:'مع السلامة', p:'Ma\'a as-salama', id:'Selamat tinggal'},
+    {t:'أين الحمام؟', p:'Ayna al-hammam?', id:'Di mana kamar mandi?'},
+    {t:'كم يكلف هذا؟', p:'Kam yukallif hadha?', id:'Berapa harganya?'},
+    {t:'هل يمكنك مساعدتي؟', p:'Hal yumkinuka musa\'adati?', id:'Bisakah Anda membantu saya?'},
+    {t:'أحبك', p:'Uhibbuka', id:'Aku cinta kamu'},
+    {t:'أنا جائع', p:"Ana ja'i'", id:'Saya lapar'},
+    {t:'أراك لاحقا', p:'Araka lahiqan', id:'Sampai jumpa lagi'},
+  ]},
+  { code:'FR', name:'Prancis', color:'#93C5FD', words:[
+    {t:'Bonjour', p:'', id:'Halo'},
+    {t:'Merci', p:'', id:'Terima kasih'},
+    {t:"S'il vous plaît", p:'', id:'Tolong / Silakan'},
+    {t:'Oui', p:'', id:'Ya'},
+    {t:'Non', p:'', id:'Tidak'},
+    {t:"Je m'appelle...", p:'', id:'Nama saya...'},
+    {t:'Comment vous appelez-vous?', p:'', id:'Siapa nama Anda?'},
+    {t:'Comment allez-vous?', p:'', id:'Apa kabar?'},
+    {t:'Je vais bien, merci', p:'', id:'Saya baik-baik saja, terima kasih'},
+    {t:'Enchanté(e)', p:'', id:'Senang bertemu dengan Anda'},
+    {t:'Je ne comprends pas', p:'', id:'Saya tidak mengerti'},
+    {t:'Excusez-moi', p:'', id:'Permisi'},
+    {t:'Je suis désolé(e)', p:'', id:'Maaf'},
+    {t:'Au revoir', p:'', id:'Selamat tinggal'},
+    {t:'Où sont les toilettes?', p:'', id:'Di mana kamar mandi?'},
+    {t:'Combien ça coûte?', p:'', id:'Berapa harganya?'},
+    {t:"Pouvez-vous m'aider?", p:'', id:'Bisakah Anda membantu saya?'},
+    {t:"Je t'aime", p:'', id:'Aku cinta kamu'},
+    {t:"J'ai faim", p:'', id:'Saya lapar'},
+    {t:'À bientôt', p:'', id:'Sampai jumpa lagi'},
+  ]},
+  { code:'BN', name:'Bengali', color:'#6EE7B7', words:[
+    {t:'নমস্কার', p:'Nomoshkar', id:'Halo'},
+    {t:'ধন্যবাদ', p:'Dhonnobad', id:'Terima kasih'},
+    {t:'অনুগ্রহ করে', p:'Onugroho kore', id:'Tolong / Silakan'},
+    {t:'হ্যাঁ', p:'Hae', id:'Ya'},
+    {t:'না', p:'Na', id:'Tidak'},
+    {t:'আমার নাম...', p:'Amar naam...', id:'Nama saya...'},
+    {t:'আপনার নাম কি?', p:'Apnar naam ki?', id:'Siapa nama Anda?'},
+    {t:'আপনি কেমন আছেন?', p:'Apni kemon achen?', id:'Apa kabar?'},
+    {t:'আমি ভালো আছি, ধন্যবাদ', p:'Ami bhalo achi, dhonnobad', id:'Saya baik-baik saja, terima kasih'},
+    {t:'আপনার সাথে দেখা হয়ে ভালো লাগলো', p:'Apnar sathe dekha hoye bhalo laglo', id:'Senang bertemu dengan Anda'},
+    {t:'আমি বুঝতে পারছি না', p:'Ami bujhte parchi na', id:'Saya tidak mengerti'},
+    {t:'মাফ করবেন', p:'Maf korben', id:'Permisi'},
+    {t:'দুঃখিত', p:'Dukkhito', id:'Maaf'},
+    {t:'বিদায়', p:'Biday', id:'Selamat tinggal'},
+    {t:'বাথরুম কোথায়?', p:'Bathroom kothay?', id:'Di mana kamar mandi?'},
+    {t:'এটার দাম কত?', p:'Etar dam koto?', id:'Berapa harganya?'},
+    {t:'আপনি কি আমাকে সাহায্য করতে পারেন?', p:'Apni ki amake sahajjo korte paren?', id:'Bisakah Anda membantu saya?'},
+    {t:'আমি তোমাকে ভালোবাসি', p:'Ami tomake bhalobashi', id:'Aku cinta kamu'},
+    {t:'আমার ক্ষুধা লেগেছে', p:'Amar khudha legeche', id:'Saya lapar'},
+    {t:'পরে দেখা হবে', p:'Pore dekha hobe', id:'Sampai jumpa lagi'},
+  ]},
+  { code:'PT', name:'Portugis', color:'#5EEAD4', words:[
+    {t:'Olá', p:'', id:'Halo'},
+    {t:'Obrigado / Obrigada', p:'', id:'Terima kasih'},
+    {t:'Por favor', p:'', id:'Tolong / Silakan'},
+    {t:'Sim', p:'', id:'Ya'},
+    {t:'Não', p:'', id:'Tidak'},
+    {t:'Meu nome é...', p:'', id:'Nama saya...'},
+    {t:'Qual é o seu nome?', p:'', id:'Siapa nama Anda?'},
+    {t:'Como você está?', p:'', id:'Apa kabar?'},
+    {t:'Estou bem, obrigado', p:'', id:'Saya baik-baik saja, terima kasih'},
+    {t:'Prazer em conhecê-lo', p:'', id:'Senang bertemu dengan Anda'},
+    {t:'Não entendo', p:'', id:'Saya tidak mengerti'},
+    {t:'Com licença', p:'', id:'Permisi'},
+    {t:'Desculpe', p:'', id:'Maaf'},
+    {t:'Adeus', p:'', id:'Selamat tinggal'},
+    {t:'Onde fica o banheiro?', p:'', id:'Di mana kamar mandi?'},
+    {t:'Quanto custa isso?', p:'', id:'Berapa harganya?'},
+    {t:'Você pode me ajudar?', p:'', id:'Bisakah Anda membantu saya?'},
+    {t:'Eu te amo', p:'', id:'Aku cinta kamu'},
+    {t:'Estou com fome', p:'', id:'Saya lapar'},
+    {t:'Até logo', p:'', id:'Sampai jumpa lagi'},
+  ]},
+  { code:'RU', name:'Rusia', color:'#F0ABFC', words:[
+    {t:'Привет', p:'Privet', id:'Halo'},
+    {t:'Спасибо', p:'Spasibo', id:'Terima kasih'},
+    {t:'Пожалуйста', p:'Pozhaluysta', id:'Tolong / Silakan'},
+    {t:'Да', p:'Da', id:'Ya'},
+    {t:'Нет', p:'Net', id:'Tidak'},
+    {t:'Меня зовут...', p:'Menya zovut...', id:'Nama saya...'},
+    {t:'Как вас зовут?', p:'Kak vas zovut?', id:'Siapa nama Anda?'},
+    {t:'Как дела?', p:'Kak dela?', id:'Apa kabar?'},
+    {t:'У меня всё хорошо, спасибо', p:"U menya vsyo khorosho, spasibo", id:'Saya baik-baik saja, terima kasih'},
+    {t:'Приятно познакомиться', p:"Priyatno poznakomit'sya", id:'Senang bertemu dengan Anda'},
+    {t:'Я не понимаю', p:'Ya ne ponimayu', id:'Saya tidak mengerti'},
+    {t:'Извините', p:'Izvinite', id:'Permisi'},
+    {t:'Мне жаль', p:"Mne zhal'", id:'Maaf'},
+    {t:'До свидания', p:'Do svidaniya', id:'Selamat tinggal'},
+    {t:'Где туалет?', p:'Gde tualet?', id:'Di mana kamar mandi?'},
+    {t:'Сколько это стоит?', p:'Skol\'ko eto stoit?', id:'Berapa harganya?'},
+    {t:'Вы можете мне помочь?', p:"Vy mozhete mne pomoch'?", id:'Bisakah Anda membantu saya?'},
+    {t:'Я тебя люблю', p:'Ya tebya lyublyu', id:'Aku cinta kamu'},
+    {t:'Я голоден', p:'Ya goloden', id:'Saya lapar'},
+    {t:'Увидимся позже', p:'Uvidimsya pozzhe', id:'Sampai jumpa lagi'},
+  ]},
+  { code:'DE', name:'Jerman', color:'#FACC15', words:[
+    {t:'Hallo', p:'', id:'Halo'},
+    {t:'Danke', p:'', id:'Terima kasih'},
+    {t:'Bitte', p:'', id:'Tolong / Silakan'},
+    {t:'Ja', p:'', id:'Ya'},
+    {t:'Nein', p:'', id:'Tidak'},
+    {t:'Ich heiße...', p:'', id:'Nama saya...'},
+    {t:'Wie heißen Sie?', p:'', id:'Siapa nama Anda?'},
+    {t:'Wie geht es Ihnen?', p:'', id:'Apa kabar?'},
+    {t:'Mir geht es gut, danke', p:'', id:'Saya baik-baik saja, terima kasih'},
+    {t:'Freut mich, Sie kennenzulernen', p:'', id:'Senang bertemu dengan Anda'},
+    {t:'Ich verstehe nicht', p:'', id:'Saya tidak mengerti'},
+    {t:'Entschuldigung', p:'', id:'Permisi'},
+    {t:'Es tut mir leid', p:'', id:'Maaf'},
+    {t:'Auf Wiedersehen', p:'', id:'Selamat tinggal'},
+    {t:'Wo ist die Toilette?', p:'', id:'Di mana kamar mandi?'},
+    {t:'Wie viel kostet das?', p:'', id:'Berapa harganya?'},
+    {t:'Können Sie mir helfen?', p:'', id:'Bisakah Anda membantu saya?'},
+    {t:'Ich liebe dich', p:'', id:'Aku cinta kamu'},
+    {t:'Ich habe Hunger', p:'', id:'Saya lapar'},
+    {t:'Bis später', p:'', id:'Sampai jumpa lagi'},
+  ]},
+  { code:'JA', name:'Jepang', color:'#FB7185', words:[
+    {t:'こんにちは', p:'Konnichiwa', id:'Halo'},
+    {t:'ありがとう', p:'Arigatou', id:'Terima kasih'},
+    {t:'お願いします', p:'Onegaishimasu', id:'Tolong / Silakan'},
+    {t:'はい', p:'Hai', id:'Ya'},
+    {t:'いいえ', p:'Iie', id:'Tidak'},
+    {t:'私の名前は...です', p:'Watashi no namae wa... desu', id:'Nama saya...'},
+    {t:'お名前は何ですか？', p:'Onamae wa nan desu ka?', id:'Siapa nama Anda?'},
+    {t:'お元気ですか？', p:'Ogenki desu ka?', id:'Apa kabar?'},
+    {t:'元気です、ありがとう', p:'Genki desu, arigatou', id:'Saya baik-baik saja, terima kasih'},
+    {t:'はじめまして', p:'Hajimemashite', id:'Senang bertemu dengan Anda'},
+    {t:'わかりません', p:'Wakarimasen', id:'Saya tidak mengerti'},
+    {t:'すみません', p:'Sumimasen', id:'Permisi'},
+    {t:'ごめんなさい', p:'Gomennasai', id:'Maaf'},
+    {t:'さようなら', p:'Sayounara', id:'Selamat tinggal'},
+    {t:'トイレはどこですか？', p:'Toire wa doko desu ka?', id:'Di mana kamar mandi?'},
+    {t:'これはいくらですか？', p:'Kore wa ikura desu ka?', id:'Berapa harganya?'},
+    {t:'手伝ってもらえますか？', p:'Tetsudatte moraemasu ka?', id:'Bisakah Anda membantu saya?'},
+    {t:'愛してる', p:'Aishiteru', id:'Aku cinta kamu'},
+    {t:'お腹が空きました', p:'Onaka ga sukimashita', id:'Saya lapar'},
+    {t:'また後で', p:'Mata ato de', id:'Sampai jumpa lagi'},
+  ]},
+  { code:'MS', name:'Malaysia', color:'#22D3EE', words:[
+    {t:'Helo', p:'', id:'Halo'},
+    {t:'Terima kasih', p:'', id:'Terima kasih'},
+    {t:'Tolong / Sila', p:'', id:'Tolong / Silakan'},
+    {t:'Ya', p:'', id:'Ya'},
+    {t:'Tidak', p:'', id:'Tidak'},
+    {t:'Nama saya...', p:'', id:'Nama saya...'},
+    {t:'Siapa nama awak?', p:'', id:'Siapa nama Anda?'},
+    {t:'Apa khabar?', p:'', id:'Apa kabar?'},
+    {t:'Saya sihat, terima kasih', p:'', id:'Saya baik-baik saja, terima kasih'},
+    {t:'Selamat berkenalan', p:'', id:'Senang bertemu dengan Anda'},
+    {t:'Saya tidak faham', p:'', id:'Saya tidak mengerti'},
+    {t:'Maafkan saya', p:'', id:'Permisi'},
+    {t:'Saya minta maaf', p:'', id:'Maaf'},
+    {t:'Selamat tinggal', p:'', id:'Selamat tinggal'},
+    {t:'Di mana tandas?', p:'', id:'Di mana kamar mandi?'},
+    {t:'Berapa harganya?', p:'', id:'Berapa harganya?'},
+    {t:'Bolehkah awak tolong saya?', p:'', id:'Bisakah Anda membantu saya?'},
+    {t:'Saya sayang awak', p:'', id:'Aku cinta kamu'},
+    {t:'Saya lapar', p:'', id:'Saya lapar'},
+    {t:'Jumpa lagi', p:'', id:'Sampai jumpa lagi'},
+  ]},
+];
+
+let currentLangIdx = 0;
+let order = [];
+let cursor = 0;
+let flipped = false;
+
+const tabsEl = document.getElementById('tabs');
+const cardEl = document.getElementById('card');
+const chipFront = document.getElementById('chipFront');
+const textFront = document.getElementById('textFront');
+const pronFront = document.getElementById('pronFront');
+const textBack = document.getElementById('textBack');
+const cardNoFront = document.getElementById('cardNoFront');
+const cardNoBack = document.getElementById('cardNoBack');
+const idxLabel = document.getElementById('idxLabel');
+const freqLabel = document.getElementById('freqLabel');
+const progressFill = document.getElementById('progressFill');
+
+function buildTabs(){
+  tabsEl.innerHTML = '';
+  LANGS.forEach((l, i)=>{
+    const tab = document.createElement('div');
+    tab.className = 'tab' + (i===currentLangIdx ? ' active' : '');
+    tab.style.setProperty('--dot', l.color);
+    tab.style.setProperty('--tab-color', l.color);
+    tab.innerHTML = `<span class="dot"></span>${l.code} · ${l.name}`;
+    tab.onclick = ()=> switchLang(i);
+    tabsEl.appendChild(tab);
+  });
+}
+
+function switchLang(i){
+  currentLangIdx = i;
+  resetOrder();
+  buildTabs();
+  render(true);
+}
+
+function resetOrder(){
+  order = LANGS[currentLangIdx].words.map((_, i)=>i);
+  cursor = 0;
+  flipped = false;
+}
+
+function shuffleOrder(){
+  for(let i=order.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  cursor = 0;
+  flipped = false;
+  render(true);
+}
+
+function freqTag(pos, total){
+  const ratio = pos/total;
+  if(ratio < 0.35) return '● sangat umum';
+  if(ratio < 0.7) return '● umum';
+  return '● jarang digunakan';
+}
+
+function render(animate){
+  const lang = LANGS[currentLangIdx];
+  const wIdx = order[cursor];
+  const word = lang.words[wIdx];
+  const total = lang.words.length;
+
+  document.documentElement.style.setProperty('--tab-color', lang.color);
+  document.querySelectorAll('.face').forEach(f=> f.style.setProperty('--tab-color', lang.color));
+  document.querySelectorAll('.ctrl-btn').forEach(b=> b.style.setProperty('--tab-color', lang.color));
+  document.getElementById('progressFill').style.setProperty('--tab-color', lang.color);
+
+  chipFront.textContent = lang.code;
+  chipFront.style.setProperty('--tab-color', lang.color);
+  chipFront.style.color = lang.color;
+  chipFront.style.borderColor = lang.color;
+
+  textFront.textContent = word.t;
+  pronFront.textContent = word.p ? `/ ${word.p} /` : '';
+  textBack.textContent = word.id;
+
+  const num = String(wIdx+1).padStart(3,'0');
+  cardNoFront.textContent = '#' + num;
+  cardNoBack.textContent = '#' + num;
+  idxLabel.textContent = `${String(cursor+1).padStart(3,'0')} / ${String(total).padStart(3,'0')}`;
+  freqLabel.textContent = freqTag(wIdx, total);
+  progressFill.style.width = ((cursor+1)/total*100) + '%';
+
+  flipped = false;
+  cardEl.classList.remove('flipped');
+  if(animate){
+    cardEl.style.animation = 'none';
+    void cardEl.offsetWidth;
+    cardEl.style.animation = '';
+  }
+}
+
+function flipCard(){
+  flipped = !flipped;
+  cardEl.classList.toggle('flipped', flipped);
+}
+
+function next(){
+  cursor = (cursor + 1) % order.length;
+  render(true);
+}
+function prev(){
+  cursor = (cursor - 1 + order.length) % order.length;
+  render(true);
+}
+
+cardEl.addEventListener('click', flipCard);
+document.getElementById('flipBtn').addEventListener('click', flipCard);
+document.getElementById('nextBtn').addEventListener('click', next);
+document.getElementById('prevBtn').addEventListener('click', prev);
+document.getElementById('shuffleBtn').addEventListener('click', shuffleOrder);
+document.getElementById('resetBtn').addEventListener('click', ()=>{ resetOrder(); render(true); });
+
+document.addEventListener('keydown', (e)=>{
+  if(e.code === 'ArrowRight'){ next(); }
+  else if(e.code === 'ArrowLeft'){ prev(); }
+  else if(e.code === 'Space' || e.code === 'Enter'){ e.preventDefault(); flipCard(); }
+});
+
+// simple swipe support
+let touchStartX = null;
+cardEl.addEventListener('touchstart', e=>{ touchStartX = e.touches[0].clientX; }, {passive:true});
+cardEl.addEventListener('touchend', e=>{
+  if(touchStartX === null) return;
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if(Math.abs(dx) > 50){ dx > 0 ? prev() : next(); }
+  touchStartX = null;
+});
+
+buildTabs();
+resetOrder();
+render(false);
+</script>
+</body>
+</html>

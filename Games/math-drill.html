@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Drill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a1420;
+    --panel:#0f1c2e;
+    --panel-2:#132438;
+    --border:#1c3049;
+    --amber:#f2a541;
+    --amber-dim:#8a6a2f;
+    --text:#d7e2ef;
+    --muted:#6f88a3;
+    --green:#4ade80;
+    --red:#f2635a;
+    --mono:'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 50% -10%, #142943 0%, transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--mono);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:24px 14px 40px;
+  }
+  .wrap{width:100%;max-width:640px;}
+
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    border-bottom:1px solid var(--border);
+    padding-bottom:12px;
+    margin-bottom:20px;
+  }
+  header h1{
+    font-size:15px;
+    letter-spacing:.22em;
+    font-weight:700;
+    color:var(--amber);
+    margin:0;
+  }
+  header span{
+    font-size:11px;
+    color:var(--muted);
+    letter-spacing:.08em;
+  }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:22px;
+  }
+  .hidden{display:none !important;}
+
+  /* ---- setup ---- */
+  .section-label{
+    font-size:11px;
+    color:var(--muted);
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+  .op-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+    margin-bottom:20px;
+  }
+  .op-btn{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--muted);
+    font-family:var(--mono);
+    font-size:20px;
+    font-weight:700;
+    padding:14px 0;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  .op-btn.active{
+    border-color:var(--amber);
+    color:var(--amber);
+    background:#1a2a3f;
+  }
+
+  .presets{
+    display:flex;
+    gap:8px;
+    margin-bottom:18px;
+  }
+  .preset-btn{
+    flex:1;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--muted);
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.05em;
+    padding:9px 6px;
+    border-radius:5px;
+    cursor:pointer;
+    text-align:center;
+  }
+  .preset-btn.active{
+    border-color:var(--amber);
+    color:var(--amber);
+    background:#1a2a3f;
+  }
+
+  .field{margin-bottom:16px;}
+  .field label{
+    display:flex;
+    justify-content:space-between;
+    font-size:11px;
+    color:var(--muted);
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  .field label b{color:var(--amber);font-weight:600;}
+  input[type=range]{width:100%;accent-color:var(--amber);}
+
+  .estimate{
+    font-size:11px;
+    color:var(--muted);
+    border-top:1px dashed var(--border);
+    padding-top:12px;
+    margin-top:6px;
+    line-height:1.7;
+  }
+  .estimate b{color:var(--text);}
+  .warn{
+    color:var(--red);
+    font-size:11px;
+    margin-top:8px;
+    display:none;
+  }
+
+  button.primary{
+    width:100%;
+    margin-top:16px;
+    background:var(--amber);
+    color:#1a1206;
+    border:none;
+    font-family:var(--mono);
+    font-weight:700;
+    letter-spacing:.08em;
+    font-size:13px;
+    padding:14px;
+    border-radius:5px;
+    cursor:pointer;
+    text-transform:uppercase;
+  }
+  button.primary:disabled{opacity:.4;cursor:not-allowed;}
+  button.ghost{
+    width:100%;
+    margin-top:10px;
+    background:transparent;
+    color:var(--muted);
+    border:1px solid var(--border);
+    font-family:var(--mono);
+    font-size:12px;
+    padding:11px;
+    border-radius:5px;
+    cursor:pointer;
+  }
+
+  /* ---- test screen ---- */
+  .test-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+    font-size:12px;
+    color:var(--muted);
+    letter-spacing:.05em;
+  }
+  .test-top .q-label{color:var(--amber);font-weight:700;}
+  .timer-num{font-variant-numeric:tabular-nums;font-weight:700;color:var(--text);}
+  .timer-num.low{color:var(--red);}
+  .bar-track{height:4px;background:var(--panel-2);border-radius:2px;overflow:hidden;margin-bottom:30px;}
+  .bar-fill{height:100%;background:var(--amber);width:100%;transition:width .1s linear;}
+  .bar-fill.low{background:var(--red);}
+
+  .question-box{
+    text-align:center;
+    padding:30px 10px 20px;
+  }
+  .question-text{
+    font-size:40px;
+    font-weight:700;
+    color:var(--text);
+    letter-spacing:.02em;
+  }
+  .answer-slot{
+    margin-top:18px;
+    font-size:34px;
+    font-weight:700;
+    min-height:44px;
+    color:var(--amber);
+    border-bottom:2px solid var(--amber-dim);
+    display:inline-block;
+    min-width:60px;
+    padding-bottom:4px;
+  }
+  .answer-slot.locked{color:var(--muted);border-bottom-color:var(--border);}
+  .answer-slot.correct{color:var(--green);border-bottom-color:var(--green);}
+  .answer-slot.wrong{color:var(--red);border-bottom-color:var(--red);}
+
+  .keypad{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:8px;
+    margin-top:20px;
+  }
+  .keypad button{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    font-family:var(--mono);
+    font-size:16px;
+    font-weight:600;
+    padding:12px 0;
+    border-radius:6px;
+  }
+  .keypad button:disabled{opacity:.35;}
+  .keypad button:active:not(:disabled){background:#1c3049;border-color:var(--amber);}
+
+  .hint{text-align:center;font-size:10px;color:var(--muted);margin-top:14px;letter-spacing:.04em;}
+
+  .flash{position:fixed;inset:0;background:var(--amber);opacity:0;pointer-events:none;z-index:50;}
+  .flash.go{animation:flashfade .3s ease-out;}
+  @keyframes flashfade{0%{opacity:.4;}100%{opacity:0;}}
+
+  /* ---- results ---- */
+  .metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+  .metric{background:var(--panel-2);border:1px solid var(--border);border-radius:6px;padding:12px 14px;}
+  .metric .label{font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;}
+  .metric .value{font-size:20px;font-weight:700;color:var(--amber);}
+  .metric .value small{font-size:11px;color:var(--muted);font-weight:400;}
+
+  .op-breakdown{margin-bottom:18px;}
+  .op-row{
+    display:grid;
+    grid-template-columns:34px 1fr 60px;
+    align-items:center;
+    gap:10px;
+    margin-bottom:8px;
+    font-size:12px;
+  }
+  .op-row .op-sym{color:var(--amber);font-weight:700;font-size:16px;text-align:center;}
+  .op-row .bar-bg{height:8px;background:var(--panel-2);border-radius:4px;overflow:hidden;}
+  .op-row .bar-in{height:100%;background:var(--amber);}
+  .op-row .op-pct{text-align:right;color:var(--muted);}
+
+  table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:18px;}
+  th,td{padding:6px 4px;text-align:center;border-bottom:1px solid var(--border);}
+  th{color:var(--muted);font-weight:500;letter-spacing:.05em;text-transform:uppercase;font-size:9px;}
+  .scroll-table{max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;}
+  .scroll-table table{margin-bottom:0;}
+  .scroll-table thead th{position:sticky;top:0;background:var(--panel-2);}
+
+  footer.note{font-size:10px;color:var(--muted);text-align:center;margin-top:18px;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="flash" id="flash"></div>
+<div class="wrap">
+  <header>
+    <h1>MATH DRILL</h1>
+    <span id="headerRight">SETUP</span>
+  </header>
+
+  <!-- SETUP -->
+  <div class="panel" id="setupScreen">
+    <div class="section-label">Operators (pick at least one)</div>
+    <div class="op-grid">
+      <button class="op-btn active" data-op="+">+</button>
+      <button class="op-btn active" data-op="−">−</button>
+      <button class="op-btn active" data-op="×">×</button>
+      <button class="op-btn active" data-op="÷">÷</button>
+    </div>
+
+    <div class="section-label">Length</div>
+    <div class="presets">
+      <button class="preset-btn" data-p="short">Short<br>30 q</button>
+      <button class="preset-btn active" data-p="medium">Medium<br>75 q</button>
+      <button class="preset-btn" data-p="long">Long<br>150 q</button>
+    </div>
+
+    <div class="field">
+      <label>Number of questions <b id="qVal">75</b></label>
+      <input type="range" id="qRange" min="5" max="300" value="75">
+    </div>
+    <div class="field">
+      <label>Seconds per question <b id="secVal">2</b></label>
+      <input type="range" id="secRange" min="1" max="10" value="2" step="0.5">
+    </div>
+
+    <div class="estimate" id="estimate"></div>
+    <div class="warn" id="warnMsg">Select at least one operator.</div>
+
+    <button class="primary" id="startBtn">Start Test</button>
+  </div>
+
+  <!-- TEST -->
+  <div class="panel hidden" id="testScreen">
+    <div class="test-top">
+      <span class="q-label" id="qLabel">QUESTION 1 / 75</span>
+      <span><span class="timer-num" id="timerNum">2.0</span>s</span>
+    </div>
+    <div class="bar-track"><div class="bar-fill" id="barFill"></div></div>
+
+    <div class="question-box">
+      <div class="question-text" id="questionText">–</div>
+      <div class="answer-slot" id="answerSlot">&nbsp;</div>
+    </div>
+
+    <div class="keypad" id="keypad"></div>
+    <div class="hint">answer is always a single digit 0–9 — tap or use your keyboard</div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="panel hidden" id="resultsScreen">
+    <div class="metrics">
+      <div class="metric"><div class="label">Accuracy</div><div class="value" id="mAcc">–</div></div>
+      <div class="metric"><div class="label">Answered</div><div class="value" id="mAns">–</div></div>
+      <div class="metric"><div class="label">Avg Reaction</div><div class="value" id="mReact">–</div></div>
+      <div class="metric"><div class="label">Skipped</div><div class="value" id="mSkip">–</div></div>
+    </div>
+
+    <div class="section-label">Accuracy by operator</div>
+    <div class="op-breakdown" id="opBreakdown"></div>
+
+    <div class="scroll-table">
+      <table>
+        <thead><tr><th>#</th><th>Question</th><th>Your ans</th><th>Correct</th><th>Result</th></tr></thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    </div>
+
+    <button class="primary" id="restartBtn">New Test</button>
+    <button class="ghost" id="exportBtn">Copy summary as text</button>
+  </div>
+
+  <footer class="note">No data leaves this page — nothing is stored or sent anywhere. Refreshing resets everything.</footer>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+
+  // ---------- setup state ----------
+  const activeOps = new Set(['+','−','×','÷']);
+  document.querySelectorAll('.op-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const op = btn.dataset.op;
+      if(activeOps.has(op)){
+        if(activeOps.size===1) return; // keep at least one
+        activeOps.delete(op);
+        btn.classList.remove('active');
+      } else {
+        activeOps.add(op);
+        btn.classList.add('active');
+      }
+      syncLabels();
+    });
+  });
+
+  const presets = {
+    short:  {q:30,  sec:2},
+    medium: {q:75,  sec:2},
+    long:   {q:150, sec:2}
+  };
+  const qRange = $('qRange'), secRange = $('secRange');
+  const qVal = $('qVal'), secVal = $('secVal');
+  const estimate = $('estimate');
+  const warnMsg = $('warnMsg');
+  const startBtn = $('startBtn');
+
+  function syncLabels(){
+    qVal.textContent = qRange.value;
+    secVal.textContent = parseFloat(secRange.value).toFixed(1);
+    const totalSec = qRange.value * parseFloat(secRange.value);
+    const m = Math.floor(totalSec/60), s = Math.round(totalSec%60);
+    estimate.innerHTML = `<b>${qRange.value}</b> questions × <b>${parseFloat(secRange.value).toFixed(1)}s</b> each &middot; total test time ≈ <b>${m}m ${s}s</b> &middot; operators: <b>${[...activeOps].join(' ')}</b>`;
+    const ok = activeOps.size>0;
+    warnMsg.style.display = ok ? 'none' : 'block';
+    startBtn.disabled = !ok;
+  }
+  [qRange,secRange].forEach(r=>r.addEventListener('input', ()=>{
+    document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+    syncLabels();
+  }));
+  document.querySelectorAll('.preset-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const p = presets[btn.dataset.p];
+      qRange.value=p.q; secRange.value=p.sec;
+      document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      syncLabels();
+    });
+  });
+  syncLabels();
+
+  // ---------- question generation ----------
+  function rand(min,max){ return min + Math.floor(Math.random()*(max-min+1)); }
+
+  function genQuestion(op){
+    let a,b,ans,text;
+    if(op==='+'){
+      a=rand(1,9); b=rand(1,9);
+      ans = (a+b)%10;
+      text = `${a} + ${b} =`;
+    } else if(op==='×'){
+      a=rand(1,9); b=rand(1,9);
+      ans = (a*b)%10;
+      text = `${a} × ${b} =`;
+    } else if(op==='−'){
+      const d = rand(0,9);
+      b = rand(1,9);
+      a = b + d;
+      ans = d;
+      text = `${a} − ${b} =`;
+    } else { // ÷
+      const q = rand(1,9);
+      b = rand(1,9);
+      a = q*b;
+      ans = q;
+      text = `${a} ÷ ${b} =`;
+    }
+    return {op, text, answer: ans, given:null, reactionMs:null};
+  }
+
+  let questions = [];
+  let curIdx = 0;
+  let secsPerQ = 2;
+  let tickHandle = null;
+  let qStartTime = 0;
+  let locked = false;
+
+  function buildQuestions(n){
+    const opsArr = [...activeOps];
+    questions = [];
+    for(let i=0;i<n;i++){
+      const op = opsArr[rand(0, opsArr.length-1)];
+      questions.push(genQuestion(op));
+    }
+  }
+
+  // ---------- keypad ----------
+  const keypad = $('keypad');
+  for(let d=0; d<=9; d++){
+    const b = document.createElement('button');
+    b.textContent = d;
+    b.addEventListener('click', ()=>submitAnswer(d));
+    keypad.appendChild(b);
+  }
+  function setKeypadEnabled(en){
+    keypad.querySelectorAll('button').forEach(b=>b.disabled=!en);
+  }
+
+  document.addEventListener('keydown', (e)=>{
+    if($('testScreen').classList.contains('hidden')) return;
+    if(e.key >= '0' && e.key <= '9'){
+      submitAnswer(parseInt(e.key,10));
+    }
+  });
+
+  function submitAnswer(digit){
+    if(locked) return;
+    const q = questions[curIdx];
+    q.given = digit;
+    q.reactionMs = performance.now() - qStartTime;
+    locked = true;
+    setKeypadEnabled(false);
+    const slot = $('answerSlot');
+    slot.textContent = digit;
+    slot.classList.add('locked');
+  }
+
+  // ---------- timer / flow ----------
+  const timerNum = $('timerNum'), barFill = $('barFill'), qLabel = $('qLabel');
+
+  function showQuestion(){
+    const q = questions[curIdx];
+    qLabel.textContent = `QUESTION ${curIdx+1} / ${questions.length}`;
+    $('questionText').textContent = q.text;
+    const slot = $('answerSlot');
+    slot.textContent = '\u00A0';
+    slot.className = 'answer-slot';
+    locked = false;
+    setKeypadEnabled(true);
+    timerNum.textContent = secsPerQ.toFixed(1);
+    timerNum.classList.remove('low');
+    barFill.style.width='100%';
+    barFill.classList.remove('low');
+
+    const totalMs = secsPerQ*1000;
+    qStartTime = performance.now();
+    clearInterval(tickHandle);
+    tickHandle = setInterval(()=>{
+      const elapsed = performance.now() - qStartTime;
+      const remainMs = Math.max(0, totalMs - elapsed);
+      timerNum.textContent = (remainMs/1000).toFixed(1);
+      barFill.style.width = (remainMs/totalMs*100)+'%';
+      if(remainMs <= totalMs*0.25){
+        barFill.classList.add('low');
+        timerNum.classList.add('low');
+      }
+      if(remainMs <= 0){
+        clearInterval(tickHandle);
+        nextQuestion();
+      }
+    }, 50);
+  }
+
+  function flash(){
+    const f = $('flash');
+    f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+  }
+
+  function nextQuestion(){
+    flash();
+    curIdx++;
+    if(curIdx >= questions.length){
+      finishTest();
+    } else {
+      showQuestion();
+    }
+  }
+
+  // ---------- lifecycle ----------
+  startBtn.addEventListener('click', ()=>{
+    if(activeOps.size===0) return;
+    secsPerQ = parseFloat(secRange.value);
+    buildQuestions(parseInt(qRange.value,10));
+    curIdx = 0;
+    $('setupScreen').classList.add('hidden');
+    $('resultsScreen').classList.add('hidden');
+    $('testScreen').classList.remove('hidden');
+    $('headerRight').textContent = 'IN PROGRESS';
+    showQuestion();
+  });
+
+  function finishTest(){
+    $('testScreen').classList.add('hidden');
+    $('headerRight').textContent = 'RESULTS';
+    renderResults();
+    $('resultsScreen').classList.remove('hidden');
+  }
+
+  $('restartBtn').addEventListener('click', ()=>{
+    $('resultsScreen').classList.add('hidden');
+    $('setupScreen').classList.remove('hidden');
+    $('headerRight').textContent = 'SETUP';
+  });
+
+  // ---------- results ----------
+  const OP_LABEL = {'+':'+','−':'−','×':'×','÷':'÷'};
+
+  function renderResults(){
+    const answered = questions.filter(q=>q.given!==null);
+    const correct = answered.filter(q=>q.given===q.answer);
+    const skipped = questions.filter(q=>q.given===null);
+
+    const acc = answered.length>0 ? (correct.length/answered.length*100) : 0;
+    const avgReact = answered.length>0 ? (answered.reduce((s,q)=>s+q.reactionMs,0)/answered.length/1000) : 0;
+
+    $('mAcc').innerHTML = `${acc.toFixed(1)}<small>%</small>`;
+    $('mAns').innerHTML = `${answered.length}<small>/${questions.length}</small>`;
+    $('mReact').innerHTML = `${avgReact.toFixed(2)}<small>s</small>`;
+    $('mSkip').innerHTML = `${skipped.length}<small>questions</small>`;
+
+    // per-operator breakdown
+    const breakdown = $('opBreakdown');
+    breakdown.innerHTML = '';
+    [...activeOps].forEach(op=>{
+      const qs = questions.filter(q=>q.op===op);
+      const ans = qs.filter(q=>q.given!==null);
+      const cor = ans.filter(q=>q.given===q.answer);
+      const pct = ans.length>0 ? (cor.length/ans.length*100) : 0;
+      const row = document.createElement('div');
+      row.className='op-row';
+      row.innerHTML = `<div class="op-sym">${OP_LABEL[op]}</div>
+        <div class="bar-bg"><div class="bar-in" style="width:${pct}%"></div></div>
+        <div class="op-pct">${pct.toFixed(0)}% <span style="color:var(--muted)">(${cor.length}/${qs.length})</span></div>`;
+      breakdown.appendChild(row);
+    });
+
+    // table
+    const body = $('resultsBody');
+    body.innerHTML = '';
+    questions.forEach((q,i)=>{
+      const tr = document.createElement('tr');
+      const given = q.given===null ? '–' : q.given;
+      const status = q.given===null ? 'skip' : (q.given===q.answer ? 'correct' : 'wrong');
+      const color = status==='correct' ? 'var(--green)' : status==='wrong' ? 'var(--red)' : 'var(--muted)';
+      tr.innerHTML = `<td>${i+1}</td><td>${q.text}</td><td>${given}</td><td>${q.answer}</td><td style="color:${color}">${status}</td>`;
+      body.appendChild(tr);
+    });
+
+    window._drillSummary = {
+      total: questions.length, answered: answered.length, correct: correct.length,
+      skipped: skipped.length, acc, avgReact, ops:[...activeOps], secsPerQ,
+      byOp:[...activeOps].map(op=>{
+        const qs = questions.filter(q=>q.op===op);
+        const ans = qs.filter(q=>q.given!==null);
+        const cor = ans.filter(q=>q.given===q.answer);
+        return {op, total:qs.length, correct:cor.length};
+      })
+    };
+  }
+
+  $('exportBtn').addEventListener('click', ()=>{
+    const s = window._drillSummary;
+    if(!s) return;
+    const lines = [
+      `MATH DRILL SUMMARY`,
+      `Operators: ${s.ops.join(' ')} | Questions: ${s.total} | Sec/question: ${s.secsPerQ}`,
+      `Accuracy: ${s.acc.toFixed(1)}%`,
+      `Answered: ${s.answered}/${s.total}  Skipped: ${s.skipped}`,
+      `Avg reaction: ${s.avgReact.toFixed(2)}s`,
+      ``,
+      `By operator:`,
+      ...s.byOp.map(o=>`${o.op}  ${o.correct}/${o.total} correct`)
+    ];
+    const text = lines.join('\n');
+    navigator.clipboard?.writeText(text).then(()=>{
+      const btn = $('exportBtn');
+      const old = btn.textContent;
+      btn.textContent = 'Copied ✓';
+      setTimeout(()=>btn.textContent=old, 1500);
+    }).catch(()=>{ alert(text); });
+  });
+
+})();
+</script>
+</body>
+</html>

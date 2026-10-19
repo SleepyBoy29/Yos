@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guess the Color!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #FFF6E9;
+    --ink: #2B2640;
+    --card: #FFFFFF;
+    --line: #2B2640;
+    --accent: #FF6B6B;
+    --accent2: #3DDC97;
+    --accent3: #4D96FF;
+    --yellow: #FFD23F;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 12% 15%, #FFE1EC 0%, transparent 32%),
+      radial-gradient(circle at 88% 12%, #DFF6FF 0%, transparent 30%),
+      radial-gradient(circle at 85% 85%, #E9FBE9 0%, transparent 30%),
+      var(--bg);
+    font-family: 'Nunito', sans-serif;
+    color: var(--ink);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 28px 16px;
+  }
+  .stage{ width: 100%; max-width: 460px; }
+
+  .title-row{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:14px;
+  }
+  h1{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:800;
+    font-size: 27px;
+    margin:0;
+  }
+  h1 span{ color: var(--accent); }
+  .scorebug{
+    font-family:'Baloo 2', sans-serif;
+    font-weight:700;
+    font-size: 13px;
+    background: var(--yellow);
+    border: 3px solid var(--line);
+    border-radius: 999px;
+    padding: 6px 13px;
+    box-shadow: 3px 3px 0 var(--line);
+    white-space:nowrap;
+  }
+
+  .card{
+    background: var(--card);
+    border: 4px solid var(--line);
+    border-radius: 28px;
+    box-shadow: 6px 6px 0 var(--line);
+    padding: 20px 20px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .round-label{
+    font-weight: 800;
+    font-size: 13px;
+    color: #6b6380;
+    margin-bottom: 8px;
+  }
+
+  .blob-wrap{
+    display:flex;
+    justify-content:center;
+    margin: 4px 0 14px;
+  }
+  .blob{
+    width: 120px;
+    height: 120px;
+    border: 4px solid var(--line);
+    border-radius: 47% 53% 61% 39% / 45% 40% 60% 55%;
+    box-shadow: 5px 5px 0 var(--line);
+    transition: transform .25s ease;
+  }
+  .blob.pop{ animation: pop .4s ease; }
+  @keyframes pop{
+    0%{ transform: scale(1); }
+    45%{ transform: scale(1.08) rotate(-3deg); }
+    100%{ transform: scale(1) rotate(0deg); }
+  }
+
+  .prompt{
+    text-align:center;
+    font-weight: 700;
+    margin-bottom: 14px;
+    font-size: 14px;
+    color: #4a4560;
+  }
+
+  /* --- Big box picker --- */
+  .picker-wrap{ margin-bottom: 14px; }
+
+  .sv-box{
+    position: relative;
+    width: 100%;
+    height: 190px;
+    border: 4px solid var(--line);
+    border-radius: 18px;
+    box-shadow: 4px 4px 0 var(--line);
+    cursor: crosshair;
+    background-image:
+      linear-gradient(to top, #000, transparent),
+      linear-gradient(to right, #fff, transparent);
+    touch-action: none;
+  }
+  .sv-cursor{
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px var(--line);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    top: 0; left: 100%;
+  }
+
+  .hue-row{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .hue-bar{
+    position: relative;
+    flex: 1;
+    height: 26px;
+    border: 3px solid var(--line);
+    border-radius: 999px;
+    background: linear-gradient(to right,
+      #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+    cursor: pointer;
+    touch-action: none;
+  }
+  .hue-cursor{
+    position: absolute;
+    top: 50%;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px var(--line);
+    transform: translate(-50%, -50%);
+    background: #fff;
+    pointer-events: none;
+    left: 0%;
+  }
+  .preview-chip{
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: 3px solid var(--line);
+    flex-shrink: 0;
+  }
+
+  .hex-input{
+    display:block;
+    margin: 10px auto 0;
+    font-family:'Baloo 2', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    border: 3px solid var(--line);
+    border-radius: 14px;
+    padding: 9px 12px;
+    width: 140px;
+    text-align:center;
+    letter-spacing: 1px;
+    outline: none;
+    background: #FBFAFF;
+    color: var(--ink);
+  }
+  .hex-input:focus{ border-color: var(--accent3); }
+  .hex-input::placeholder{ color: #c3bdd6; }
+
+  .go-btn{
+    display:block;
+    width: 100%;
+    margin-top: 14px;
+    font-family:'Baloo 2', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    color: var(--ink);
+    background: var(--accent2);
+    border: 4px solid var(--line);
+    border-radius: 16px;
+    padding: 13px;
+    cursor: pointer;
+    box-shadow: 4px 4px 0 var(--line);
+    transition: transform .08s ease, box-shadow .08s ease;
+  }
+  .go-btn:active{ transform: translate(3px,3px); box-shadow: 1px 1px 0 var(--line); }
+
+  .result{ display:none; text-align:center; margin-top: 4px; }
+  .result.show{ display:block; }
+
+  .compare-row{
+    display:flex;
+    justify-content:center;
+    gap: 14px;
+    margin: 10px 0 14px;
+  }
+  .compare-item{ text-align:center; }
+  .compare-swatch{
+    width: 76px;
+    height: 76px;
+    border-radius: 18px;
+    border: 3px solid var(--line);
+    margin-bottom: 6px;
+  }
+  .compare-item small{
+    font-weight: 800;
+    font-family:'Baloo 2', sans-serif;
+    font-size: 12px;
+    color: #6b6380;
+  }
+
+  .accuracy-num{
+    font-family:'Baloo 2', sans-serif;
+    font-weight: 800;
+    font-size: 44px;
+    line-height: 1;
+    margin: 4px 0 2px;
+  }
+  .feedback-text{ font-weight: 800; font-size: 16px; margin-bottom: 14px; }
+  .stars{ font-size: 26px; letter-spacing: 4px; margin-bottom: 10px; }
+
+  .next-btn{
+    font-family:'Baloo 2', sans-serif;
+    font-weight: 800;
+    font-size: 17px;
+    color: #fff;
+    background: var(--accent3);
+    border: 4px solid var(--line);
+    border-radius: 16px;
+    padding: 12px 20px;
+    cursor: pointer;
+    box-shadow: 4px 4px 0 var(--line);
+  }
+  .next-btn:active{ transform: translate(3px,3px); box-shadow: 1px 1px 0 var(--line); }
+
+  .final{ display:none; text-align:center; }
+  .final.show{ display:block; }
+  .final .big{
+    font-family:'Baloo 2', sans-serif;
+    font-weight: 800;
+    font-size: 34px;
+    margin: 6px 0;
+  }
+  .hint{
+    text-align:center;
+    font-size: 12px;
+    color: #918aa8;
+    margin-top: 14px;
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="title-row">
+    <h1>Guess the <span>Color!</span></h1>
+    <div class="scorebug" id="scorebug">Round 1/5</div>
+  </div>
+
+  <div class="card">
+    <!-- GAME SCREEN -->
+    <div id="gameScreen">
+      <div class="round-label">Mystery color:</div>
+      <div class="blob-wrap"><div class="blob" id="targetBlob"></div></div>
+      <div class="prompt">Tap anywhere in the box to match the color!</div>
+
+      <div class="picker-wrap">
+        <div class="sv-box" id="svBox">
+          <div class="sv-cursor" id="svCursor"></div>
+        </div>
+        <div class="hue-row">
+          <div class="preview-chip" id="previewChip"></div>
+          <div class="hue-bar" id="hueBar">
+            <div class="hue-cursor" id="hueCursor"></div>
+          </div>
+        </div>
+        <input type="text" class="hex-input" id="hexInput" maxlength="7" placeholder="#RRGGBB" autocomplete="off" spellcheck="false">
+        <div class="prompt" style="margin:6px 0 0; font-size:12px; color:#c3bdd6;">or type a hex code</div>
+      </div>
+
+      <button class="go-btn" id="checkBtn">Check My Guess!</button>
+
+      <div class="result" id="resultBox">
+        <div class="compare-row">
+          <div class="compare-item">
+            <div class="compare-swatch" id="resultTarget"></div>
+            <small>ACTUAL COLOR</small>
+          </div>
+          <div class="compare-item">
+            <div class="compare-swatch" id="resultGuess"></div>
+            <small>YOUR GUESS</small>
+          </div>
+        </div>
+        <div class="accuracy-num" id="accuracyNum">0%</div>
+        <div class="stars" id="starsBox">☆☆☆☆☆</div>
+        <div class="feedback-text" id="feedbackText"></div>
+        <button class="next-btn" id="nextBtn">Next →</button>
+      </div>
+    </div>
+
+    <!-- FINAL SCREEN -->
+    <div class="final" id="finalScreen">
+      <div class="round-label">Game over!</div>
+      <div class="big" id="finalScoreText">0%</div>
+      <div class="feedback-text" id="finalFeedback"></div>
+      <div class="stars" id="finalStars">☆☆☆☆☆</div>
+      <button class="go-btn" id="restartBtn" style="margin-top:14px;">Play Again</button>
+    </div>
+  </div>
+
+  <div class="hint">The closer your color, the higher your score. Can you score 5 stars?</div>
+</div>
+
+<script>
+  const TOTAL_ROUNDS = 5;
+  let round = 0;
+  let totalAccuracy = 0;
+  let currentTarget = null;
+
+  // current picker state
+  let hue = 0;      // 0-360
+  let sat = 0;      // 0-100
+  let val = 100;    // 0-100
+
+  const targetBlob = document.getElementById('targetBlob');
+  const scorebug = document.getElementById('scorebug');
+  const svBox = document.getElementById('svBox');
+  const svCursor = document.getElementById('svCursor');
+  const hueBar = document.getElementById('hueBar');
+  const hueCursor = document.getElementById('hueCursor');
+  const previewChip = document.getElementById('previewChip');
+  const hexInput = document.getElementById('hexInput');
+  const checkBtn = document.getElementById('checkBtn');
+  const resultBox = document.getElementById('resultBox');
+  const gameScreen = document.getElementById('gameScreen');
+  const finalScreen = document.getElementById('finalScreen');
+  const resultTarget = document.getElementById('resultTarget');
+  const resultGuess = document.getElementById('resultGuess');
+  const accuracyNum = document.getElementById('accuracyNum');
+  const starsBox = document.getElementById('starsBox');
+  const feedbackText = document.getElementById('feedbackText');
+  const nextBtn = document.getElementById('nextBtn');
+  const restartBtn = document.getElementById('restartBtn');
+
+  function randomHex(){
+    const r = Math.floor(Math.random()*256);
+    const g = Math.floor(Math.random()*256);
+    const b = Math.floor(Math.random()*256);
+    return { r, g, b, hex: rgbToHex(r,g,b) };
+  }
+
+  function rgbToHex(r,g,b){
+    return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('').toUpperCase();
+  }
+
+  function hsvToRgb(h, s, v){
+    s /= 100; v /= 100;
+    const c = v * s;
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+    const m = v - c;
+    let r=0, g=0, b=0;
+    if (h < 60)      { r=c; g=x; b=0; }
+    else if (h < 120){ r=x; g=c; b=0; }
+    else if (h < 180){ r=0; g=c; b=x; }
+    else if (h < 240){ r=0; g=x; b=c; }
+    else if (h < 300){ r=x; g=0; b=c; }
+    else             { r=c; g=0; b=x; }
+    return {
+      r: Math.round((r+m)*255),
+      g: Math.round((g+m)*255),
+      b: Math.round((b+m)*255)
+    };
+  }
+
+  function isValidHex(hex){
+    return /^#?([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/.test(hex.trim());
+  }
+
+  function hexToRgb(hex){
+    hex = hex.replace('#','').trim();
+    if(hex.length === 3){
+      hex = hex.split('').map(c => c+c).join('');
+    }
+    const num = parseInt(hex, 16);
+    return { r: (num>>16)&255, g: (num>>8)&255, b: num&255 };
+  }
+
+  function rgbToHsv(r,g,b){
+    r/=255; g/=255; b/=255;
+    const max = Math.max(r,g,b), min = Math.min(r,g,b);
+    const d = max - min;
+    let h = 0;
+    if(d !== 0){
+      if(max === r) h = 60 * (((g-b)/d) % 6);
+      else if(max === g) h = 60 * ((b-r)/d + 2);
+      else h = 60 * ((r-g)/d + 4);
+    }
+    if(h < 0) h += 360;
+    const s = max === 0 ? 0 : (d/max) * 100;
+    const v = max * 100;
+    return { h, s, v };
+  }
+
+  function calcAccuracy(target, guess){
+    const dr = target.r - guess.r;
+    const dg = target.g - guess.g;
+    const db = target.b - guess.b;
+    const dist = Math.sqrt(dr*dr + dg*dg + db*db);
+    const maxDist = Math.sqrt(3 * 255*255);
+    const acc = Math.max(0, 100 - (dist / maxDist) * 100);
+    return Math.round(acc);
+  }
+
+  function starsForAccuracy(acc){
+    let n;
+    if(acc >= 95) n = 5;
+    else if(acc >= 85) n = 4;
+    else if(acc >= 70) n = 3;
+    else if(acc >= 50) n = 2;
+    else if(acc >= 25) n = 1;
+    else n = 0;
+    return '★'.repeat(n) + '☆'.repeat(5-n);
+  }
+
+  function feedbackForAccuracy(acc){
+    if(acc >= 95) return 'Amazing! Eagle eyes! 🦅';
+    if(acc >= 85) return 'Great job, so close to perfect! ✨';
+    if(acc >= 70) return 'Nice! You were really close! 🎯';
+    if(acc >= 50) return 'Not bad! Keep practicing! 💪';
+    if(acc >= 25) return 'Almost there, look closer! 🔍';
+    return 'Try again, you can do it! 🌟';
+  }
+
+  function updatePickerVisuals(syncHexField = true){
+    hueBar.style.setProperty('--h', hue);
+    hueCursor.style.left = (hue / 360 * 100) + '%';
+    hueCursor.style.background = `hsl(${hue}, 100%, 50%)`;
+
+    svBox.style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
+    svCursor.style.left = sat + '%';
+    svCursor.style.top = (100 - val) + '%';
+
+    const rgb = hsvToRgb(hue, sat, val);
+    const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
+    previewChip.style.background = hex;
+    if(syncHexField) hexInput.value = hex;
+  }
+
+  function setSVFromEvent(clientX, clientY){
+    const rect = svBox.getBoundingClientRect();
+    let x = (clientX - rect.left) / rect.width;
+    let y = (clientY - rect.top) / rect.height;
+    x = Math.min(1, Math.max(0, x));
+    y = Math.min(1, Math.max(0, y));
+    sat = Math.round(x * 100);
+    val = Math.round((1 - y) * 100);
+    updatePickerVisuals();
+  }
+
+  function setHueFromEvent(clientX){
+    const rect = hueBar.getBoundingClientRect();
+    let x = (clientX - rect.left) / rect.width;
+    x = Math.min(1, Math.max(0, x));
+    hue = Math.round(x * 360);
+    updatePickerVisuals();
+  }
+
+  function addDragHandlers(el, onMove){
+    let dragging = false;
+    const start = (e) => { dragging = true; onMove(e); e.preventDefault(); };
+    const move = (e) => { if(dragging) onMove(e); };
+    const end = () => { dragging = false; };
+
+    el.addEventListener('mousedown', start);
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', end);
+
+    el.addEventListener('touchstart', start, { passive:false });
+    window.addEventListener('touchmove', (e) => {
+      if(dragging){ move(e); e.preventDefault(); }
+    }, { passive:false });
+    window.addEventListener('touchend', end);
+  }
+
+  function pointFromEvent(e){
+    if(e.touches && e.touches.length) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    return { x: e.clientX, y: e.clientY };
+  }
+
+  addDragHandlers(svBox, (e) => {
+    const p = pointFromEvent(e);
+    setSVFromEvent(p.x, p.y);
+  });
+  addDragHandlers(hueBar, (e) => {
+    const p = pointFromEvent(e);
+    setHueFromEvent(p.x);
+  });
+
+  hexInput.addEventListener('input', () => {
+    let v = hexInput.value.trim();
+    if(v && !v.startsWith('#')) v = '#' + v;
+    const cursorPos = hexInput.selectionStart;
+    hexInput.value = v.toUpperCase();
+    hexInput.setSelectionRange(cursorPos, cursorPos);
+
+    if(isValidHex(v)){
+      const rgb = hexToRgb(v);
+      const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
+      hue = hsv.h; sat = hsv.s; val = hsv.v;
+      updatePickerVisuals(false);
+    }
+  });
+
+  hexInput.addEventListener('blur', () => {
+    // snap back to the valid current color if the field was left invalid/empty
+    updatePickerVisuals(true);
+  });
+
+  function newRound(){
+    round++;
+    currentTarget = randomHex();
+    targetBlob.style.background = currentTarget.hex;
+    targetBlob.classList.remove('pop');
+    void targetBlob.offsetWidth;
+    targetBlob.classList.add('pop');
+
+    hue = 0; sat = 0; val = 100;
+    updatePickerVisuals();
+
+    scorebug.textContent = 'Round ' + round + '/' + TOTAL_ROUNDS;
+    resultBox.classList.remove('show');
+    checkBtn.style.display = 'block';
+  }
+
+  checkBtn.addEventListener('click', () => {
+    const guessRgb = hsvToRgb(hue, sat, val);
+    const acc = calcAccuracy(currentTarget, guessRgb);
+    totalAccuracy += acc;
+
+    resultTarget.style.background = currentTarget.hex;
+    resultGuess.style.background = rgbToHex(guessRgb.r, guessRgb.g, guessRgb.b);
+    accuracyNum.textContent = acc + '%';
+    starsBox.textContent = starsForAccuracy(acc);
+    feedbackText.textContent = feedbackForAccuracy(acc);
+
+    resultBox.classList.add('show');
+    checkBtn.style.display = 'none';
+  });
+
+  nextBtn.addEventListener('click', () => {
+    if(round >= TOTAL_ROUNDS){
+      showFinal();
+    } else {
+      newRound();
+    }
+  });
+
+  function showFinal(){
+    gameScreen.style.display = 'none';
+    finalScreen.classList.add('show');
+    const avg = Math.round(totalAccuracy / TOTAL_ROUNDS);
+    document.getElementById('finalScoreText').textContent = 'Average: ' + avg + '%';
+    document.getElementById('finalFeedback').textContent = feedbackForAccuracy(avg);
+    document.getElementById('finalStars').textContent = starsForAccuracy(avg);
+    scorebug.textContent = 'Done!';
+  }
+
+  restartBtn.addEventListener('click', () => {
+    round = 0;
+    totalAccuracy = 0;
+    gameScreen.style.display = 'block';
+    finalScreen.classList.remove('show');
+    newRound();
+  });
+
+  newRound();
+</script>
+</body>
+</html>

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pixel Art → CSS Generator</title>
+<style>
+  :root{
+    --paper:#f6f3ec;
+    --panel:#fffdf9;
+    --ink:#23262b;
+    --muted:#767a85;
+    --line:#e4e0d6;
+    --accent:#3552c1;
+    --accent-ink:#ffffff;
+    --accent-soft:#e8ecfb;
+    --check-a:#eceef3;
+    --check-b:#dcdfe8;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0);
+    min-height:100vh;
+  }
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+  .app{max-width:1040px;margin:0 auto;padding:28px 20px 60px;}
+  .app-header{margin-bottom:22px;}
+  .app-header h1{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:1.6rem;
+    letter-spacing:-0.02em;
+    margin:0 0 6px;
+  }
+  .app-header p{color:var(--muted);margin:0;font-size:0.95rem;}
+
+  .workspace{display:grid;grid-template-columns:240px 1fr;gap:20px;align-items:start;}
+  @media (max-width:720px){
+    .workspace{grid-template-columns:1fr;}
+  }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px;
+  }
+  .panel-group{margin-bottom:20px;}
+  .panel-group:last-child{margin-bottom:0;}
+  .panel-group h2{
+    font-size:0.78rem;
+    font-weight:600;
+    color:var(--muted);
+    margin:0 0 10px;
+  }
+
+  .swatches{display:flex;flex-wrap:wrap;gap:8px;}
+  .swatch{
+    width:34px;height:34px;
+    border-radius:8px;
+    border:2px solid var(--line);
+    cursor:pointer;
+    padding:0;
+    position:relative;
+    background:#fff;
+  }
+  .swatch.active{border-color:var(--ink);box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--ink);}
+  .swatch.eraser{
+    background:
+      linear-gradient(45deg, transparent 46%, #d33 48%, #d33 52%, transparent 54%),
+      repeating-conic-gradient(var(--check-a) 0% 25%, var(--check-b) 0% 50%) 0 0/10px 10px;
+  }
+  .custom-color-row{
+    display:flex;align-items:center;gap:10px;
+    margin-top:10px;
+    padding-top:12px;
+    border-top:1px dashed var(--line);
+  }
+  .custom-color-row label{font-size:0.82rem;color:var(--muted);flex:1;}
+  .custom-color-row input[type="color"]{
+    width:52px;height:38px;border:2px solid var(--line);border-radius:8px;
+    padding:0;cursor:pointer;background:none;
+  }
+  .custom-color-row input[type="color"].active{border-color:var(--ink);}
+  #customHex{
+    width:84px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:8px 9px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:0.82rem;
+    text-transform:uppercase;
+  }
+
+  select, .btn{
+    width:100%;
+    font-size:0.9rem;
+    font-family:inherit;
+    border-radius:9px;
+    padding:9px 10px;
+  }
+  select{
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--ink);
+  }
+  .actions{display:flex;flex-direction:column;gap:10px;}
+  .btn{border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;font-weight:600;}
+  .btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
+  .btn-ghost{background:#fff;}
+  .btn:hover{filter:brightness(0.97);}
+  .btn:focus-visible, .swatch:focus-visible, select:focus-visible, .icon-btn:focus-visible{
+    outline:2px solid var(--accent);outline-offset:2px;
+  }
+
+  .canvas-wrap{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .pixel-grid{
+    --cols:16;
+    display:grid;
+    grid-template-columns:repeat(var(--cols), 1fr);
+    width:min(78vw, 460px);
+    aspect-ratio:1/1;
+    border-radius:4px;
+    overflow:hidden;
+    touch-action:none;
+    background:
+      repeating-conic-gradient(var(--check-a) 0% 25%, var(--check-b) 0% 50%) 0 0/20px 20px;
+    border:1px solid var(--line);
+  }
+  .pixel{
+    outline:1px solid rgba(0,0,0,0.04);
+  }
+
+  .overlay{
+    position:fixed;inset:0;background:rgba(20,18,14,0.45);
+    display:none;
+  }
+  .overlay.show{display:block;}
+  .modal{
+    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:min(92vw, 540px);
+    background:var(--panel);
+    border-radius:var(--radius);
+    border:1px solid var(--line);
+    padding:20px;
+    display:none;
+    max-height:85vh;
+    overflow:auto;
+  }
+  .modal.show{display:block;}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;}
+  .modal-head h2{font-size:1.05rem;margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+  .icon-btn{
+    background:none;border:none;font-size:1.3rem;line-height:1;cursor:pointer;color:var(--muted);
+    padding:4px 8px;border-radius:6px;
+  }
+  .icon-btn:hover{background:var(--accent-soft);color:var(--accent);}
+  .modal-sub{color:var(--muted);font-size:0.88rem;margin:6px 0 14px;}
+  .code-block{
+    background:#1e2128;color:#e6e6e6;
+    border-radius:10px;
+    padding:14px;
+    font-size:0.78rem;
+    line-height:1.5;
+    overflow-x:auto;
+    white-space:pre;
+    margin:0 0 14px;
+  }
+  .modal .btn-primary{width:auto;padding:9px 18px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <h1>Pixel Art → CSS</h1>
+    <p>Paint a grid, then export it as a single pure-CSS box-shadow block.</p>
+  </header>
+
+  <div class="workspace">
+    <aside class="panel">
+      <div class="panel-group">
+        <h2>Tool</h2>
+        <div class="swatches" id="swatches">
+          <button class="swatch eraser active" data-color="" title="Eraser" aria-label="Eraser"></button>
+        </div>
+        <div class="custom-color-row">
+          <input type="color" id="customColor" value="#111111">
+          <input type="text" id="customHex" maxlength="7" value="#111111">
+          <label for="customColor">Any color</label>
+        </div>
+      </div>
+
+      <div class="panel-group">
+        <h2>Canvas size</h2>
+        <select id="gridSize">
+          <option value="8">8 × 8</option>
+          <option value="16" selected>16 × 16</option>
+          <option value="24">24 × 24</option>
+          <option value="32">32 × 32</option>
+          <option value="64">64 × 64</option>
+        </select>
+      </div>
+
+      <div class="panel-group">
+        <h2>Template</h2>
+        <select id="templateSelect">
+          <option value="blank">Blank</option>
+          <option value="heart">Heart</option>
+          <option value="smiley">Smiley</option>
+          <option value="tree">Tree</option>
+        </select>
+        <p style="font-size:0.78rem;color:var(--muted);margin:8px 0 0;">Templates are fixed at 16 × 16 — picking one resizes the canvas and resets the "Canvas size" field below.</p>
+      </div>
+
+      <div class="panel-group actions">
+        <button class="btn btn-ghost" id="resetBtn">Reset canvas</button>
+        <button class="btn btn-primary" id="generateBtn">Generate CSS</button>
+      </div>
+    </aside>
+
+    <main class="canvas-wrap">
+      <div class="pixel-grid" id="pixelGrid"></div>
+    </main>
+  </div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="Generated CSS">
+  <div class="modal-head">
+    <h2>Your CSS</h2>
+    <button class="icon-btn" id="closeModal" aria-label="Close">&times;</button>
+  </div>
+  <p class="modal-sub">Paste this into your stylesheet, then add <code class="mono">&lt;div class="pixel-art"&gt;&lt;/div&gt;</code> to your HTML.</p>
+  <pre class="code-block mono" id="cssOutput"></pre>
+  <button class="btn btn-primary" id="copyBtn">Copy code</button>
+</div>
+
+<script>
+(function(){
+  var grid = document.getElementById('pixelGrid');
+  var swatchesEl = document.getElementById('swatches');
+  var customColor = document.getElementById('customColor');
+  var customHex = document.getElementById('customHex');
+  var gridSizeSel = document.getElementById('gridSize');
+  var templateSel = document.getElementById('templateSelect');
+  var resetBtn = document.getElementById('resetBtn');
+  var generateBtn = document.getElementById('generateBtn');
+  var overlay = document.getElementById('overlay');
+  var modal = document.getElementById('modal');
+  var closeModal = document.getElementById('closeModal');
+  var cssOutput = document.getElementById('cssOutput');
+  var copyBtn = document.getElementById('copyBtn');
+
+  var cols = 16;
+  var cells = [];      // DOM refs
+  var state = [];       // colors, '' = empty
+  var currentColor = '';
+  var painting = false;
+  var paintValue = '';
+
+  function buildGrid(n){
+    cols = n;
+    grid.style.setProperty('--cols', n);
+    grid.innerHTML = '';
+    cells = [];
+    state = new Array(n * n).fill('');
+    for (var i = 0; i < n * n; i++){
+      var c = document.createElement('div');
+      c.className = 'pixel';
+      c.dataset.index = i;
+      grid.appendChild(c);
+      cells.push(c);
+    }
+  }
+
+  function paintCell(i, color){
+    if (i < 0 || i >= state.length) return;
+    state[i] = color;
+    cells[i].style.background = color || 'transparent';
+  }
+
+  function cellFromPoint(x, y){
+    var el = document.elementFromPoint(x, y);
+    if (el && el.classList.contains('pixel')) return parseInt(el.dataset.index, 10);
+    return -1;
+  }
+
+  grid.addEventListener('pointerdown', function(e){
+    painting = true;
+    paintValue = currentColor;
+    var i = cellFromPoint(e.clientX, e.clientY);
+    if (i > -1) paintCell(i, paintValue);
+    e.preventDefault();
+  });
+  document.addEventListener('pointermove', function(e){
+    if (!painting) return;
+    var i = cellFromPoint(e.clientX, e.clientY);
+    if (i > -1) paintCell(i, paintValue);
+  });
+  document.addEventListener('pointerup', function(){ painting = false; });
+  document.addEventListener('pointercancel', function(){ painting = false; });
+
+  function clearActiveSwatches(){
+    var all = swatchesEl.querySelectorAll('.swatch');
+    for (var j = 0; j < all.length; j++) all[j].classList.remove('active');
+    customColor.classList.remove('active');
+  }
+
+  swatchesEl.addEventListener('click', function(e){
+    var btn = e.target.closest('.swatch');
+    if (!btn) return;
+    currentColor = btn.dataset.color || '';
+    clearActiveSwatches();
+    btn.classList.add('active');
+  });
+
+  function useCustomColor(val){
+    currentColor = val;
+    customColor.value = val;
+    customHex.value = val;
+    clearActiveSwatches();
+    customColor.classList.add('active');
+  }
+  customColor.addEventListener('input', function(){
+    useCustomColor(customColor.value);
+  });
+  customHex.addEventListener('change', function(){
+    var v = customHex.value.trim();
+    if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(v)){
+      customHex.value = customColor.value;
+      return;
+    }
+    useCustomColor(v);
+  });
+
+  gridSizeSel.addEventListener('change', function(){
+    buildGrid(parseInt(gridSizeSel.value, 10));
+  });
+
+  resetBtn.addEventListener('click', function(){
+    buildGrid(cols);
+  });
+
+  // --- Templates: simple, original, geometric shapes (not copyrighted characters) ---
+  function heartPolygon(){
+    var pts = [];
+    var n = 200;
+    for (var i = 0; i < n; i++){
+      var t = 2 * Math.PI * i / n;
+      var x = 16 * Math.pow(Math.sin(t), 3);
+      var y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
+      pts.push([x, y]);
+    }
+    return pts;
+  }
+  function pointInPolygon(px, py, poly){
+    var inside = false;
+    for (var i = 0, j = poly.length - 1; i < poly.length; j = i++){
+      var xi = poly[i][0], yi = poly[i][1];
+      var xj = poly[j][0], yj = poly[j][1];
+      if (((yi > py) !== (yj > py)) && (px < (xj - xi) * (py - yi) / (yj - yi) + xi)){
+        inside = !inside;
+      }
+    }
+    return inside;
+  }
+
+  function applyTemplate(name){
+    buildGrid(16);
+    gridSizeSel.value = '16';
+    if (name === 'blank') return;
+
+    var heartPts, heartBounds;
+    if (name === 'heart'){
+      heartPts = heartPolygon();
+      var xs = heartPts.map(function(p){ return p[0]; });
+      var ys = heartPts.map(function(p){ return p[1]; });
+      heartBounds = { minX: Math.min.apply(null, xs), maxX: Math.max.apply(null, xs),
+                       minY: Math.min.apply(null, ys), maxY: Math.max.apply(null, ys) };
+    }
+
+    for (var y = 0; y < 16; y++){
+      for (var x = 0; x < 16; x++){
+        var u = (x - 7.5) / 8, v = (7.5 - y) / 8;
+        var idx = y * 16 + x;
+        var color = null;
+
+        if (name === 'heart'){
+          var margin = 0.08;
+          var fu = (x + 0.5) / 16, fv = 1 - (y + 0.5) / 16;
+          var px = heartBounds.minX + (heartBounds.maxX - heartBounds.minX) * (fu * (1 + 2*margin) - margin);
+          var py = heartBounds.minY + (heartBounds.maxY - heartBounds.minY) * (fv * (1 + 2*margin) - margin);
+          if (pointInPolygon(px, py, heartPts)) color = '#ff1c1c';
+        }
+        else if (name === 'smiley'){
+          var r = Math.sqrt(u*u + v*v);
+          if (r <= 0.95) color = '#ffc231';
+          if ((x === 5 || x === 6) && (y === 6 || y === 7)) color = '#23262b';
+          if ((x === 9 || x === 10) && (y === 6 || y === 7)) color = '#23262b';
+          var mouthR = Math.sqrt(u*u + Math.pow(v + 0.25, 2));
+          if (mouthR > 0.45 && mouthR < 0.6 && v < -0.05) color = '#23262b';
+        }
+        else if (name === 'tree'){
+          if (x >= 7 && x <= 8 && y >= 11 && y <= 14) color = '#7a4a2b';
+          var rowWidth = Math.floor((y) / 2);
+          if (y >= 1 && y <= 10 && Math.abs(x - 7.5) <= rowWidth * 0.75) color = '#35c161';
+        }
+        if (color) paintCell(idx, color);
+      }
+    }
+  }
+  templateSel.addEventListener('change', function(){
+    applyTemplate(templateSel.value);
+  });
+
+  // --- Generate CSS (box-shadow pixel art technique) ---
+  generateBtn.addEventListener('click', function(){
+    var unit = 10;
+    var painted = [];
+    for (var i = 0; i < state.length; i++){
+      if (state[i]) painted.push({ x: i % cols, y: Math.floor(i / cols), color: state[i] });
+    }
+    if (!painted.length){
+      cssOutput.textContent = 'Your canvas is empty — paint a few pixels first.';
+    } else {
+      var first = painted[0];
+      var lines = [
+        '.pixel-art {',
+        '  position: relative;',
+        '  width: ' + unit + 'px;',
+        '  height: ' + unit + 'px;',
+        '  background: ' + first.color + ';',
+        '  box-shadow:'
+      ];
+      var shadowParts = [];
+      for (var k = 1; k < painted.length; k++){
+        var p = painted[k];
+        shadowParts.push('    ' + ((p.x - first.x) * unit) + 'px ' + ((p.y - first.y) * unit) + 'px 0 ' + p.color);
+      }
+      lines.push(shadowParts.join(',\n') + ';');
+      lines.push('}');
+      cssOutput.textContent = lines.join('\n');
+    }
+    overlay.classList.add('show');
+    modal.classList.add('show');
+  });
+
+  function hideModal(){
+    overlay.classList.remove('show');
+    modal.classList.remove('show');
+  }
+  closeModal.addEventListener('click', hideModal);
+  overlay.addEventListener('click', hideModal);
+
+  copyBtn.addEventListener('click', function(){
+    navigator.clipboard.writeText(cssOutput.textContent).then(function(){
+      var old = copyBtn.textContent;
+      copyBtn.textContent = 'Copied!';
+      setTimeout(function(){ copyBtn.textContent = old; }, 1400);
+    });
+  });
+
+  buildGrid(16);
+})();
+</script>
+</body>
+</html>

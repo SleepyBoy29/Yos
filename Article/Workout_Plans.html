@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Workout Plans: No Equipment to Full Gym</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EAF0EE;--ink:#172A3A;--mut:#4B6074;--line:#B3C4BF;--acc:#1F4BFF;--lime:#CDEB5B;--panel:#F6FAF8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12202B;--ink:#E6EEEA;--mut:#9FB2BF;--line:#2E4352;--acc:#8FA9FF;--panel:#182B38}}
+:root[data-theme="dark"]{--bg:#12202B;--ink:#E6EEEA;--mut:#9FB2BF;--line:#2E4352;--acc:#8FA9FF;--panel:#182B38}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.55 Barlow,system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:40px 20px 56px}
+h1{font:800 clamp(2.6rem,8vw,5rem)/.95 "Barlow Condensed","Arial Narrow",Impact,sans-serif;margin:0 0 14px;letter-spacing:-.01em;max-width:11em}
+.lead{color:var(--mut);max-width:34em;margin:0 0 32px}
+.ctl{display:flex;flex-wrap:wrap;gap:20px 36px;margin-bottom:28px}
+.grp b{display:block;font-weight:600;margin-bottom:8px;font-size:.95rem}
+.seg{display:inline-flex;border:2px solid var(--ink);border-radius:999px;overflow:hidden;flex-wrap:wrap}
+.seg button{font:600 1rem Barlow,system-ui,sans-serif;padding:9px 18px;border:0;background:transparent;color:var(--ink);cursor:pointer}
+.seg button+button{border-left:2px solid var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--lime);color:#172A3A}
+button:focus-visible,input:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.info{background:var(--panel);border-left:6px solid var(--acc);padding:16px 20px;margin-bottom:36px;display:grid;gap:6px 32px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.info p{margin:0}.info span{font-weight:600}
+.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:36px 28px}
+.day{border-top:8px solid var(--ink);padding-top:12px}
+.day:nth-child(2){border-color:var(--acc)}.day:nth-child(3){border-color:var(--lime)}
+.day h2{font:800 2rem/1 "Barlow Condensed","Arial Narrow",Impact,sans-serif;margin:0 0 4px}
+.day .f{color:var(--mut);margin:0 0 12px;font-size:.95rem}
+.day ul{list-style:none;margin:0;padding:0}
+.day li{border-top:1px solid var(--line)}
+.day label{display:flex;gap:12px;align-items:baseline;padding:10px 0;cursor:pointer}
+.day input{accent-color:var(--acc);width:18px;height:18px;flex:none;align-self:center}
+.day .n{flex:1}.day .r{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.day input:checked~.n{text-decoration:line-through;color:var(--mut)}
+.more{margin-top:44px;display:grid;gap:24px 36px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.more h3{font:800 1.4rem "Barlow Condensed","Arial Narrow",Impact,sans-serif;margin:0 0 6px}
+.more p{margin:0;color:var(--mut);font-size:.95rem}
+.fine{margin-top:40px;color:var(--mut);font-size:.85rem;max-width:44em}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Train anywhere. Add weight when you're ready.</h1>
+<p class="lead">Pick your equipment level and the emphasis you want. Each plan is three sessions a week, with a rest day between.</p>
+
+<div class="ctl">
+<div class="grp"><b>Equipment</b><div class="seg" id="lv"></div></div>
+<div class="grp"><b>Plan emphasis</b><div class="seg" id="sx"></div></div>
+</div>
+
+<div class="info" id="info"></div>
+<div class="days" id="days"></div>
+
+<div class="more">
+<div><h3>Warm-up (5–8 min)</h3><p>Easy marching or jumping jacks, arm and hip circles, 10 bodyweight squats, 10 cat-cows. Then do one light set of your first exercise.</p></div>
+<div><h3>Rest between sets</h3><p>60–90 seconds for most exercises. Take 2–3 minutes after heavy barbell lifts.</p></div>
+<div><h3>Cool-down (5 min)</h3><p>Stretch quads, hamstrings, chest and hip flexors for 30 seconds each side. Breathe slowly.</p></div>
+<div><h3>Weekly rhythm</h3><p>Mon / Wed / Fri, or any three days with a rest day between. Walk 20–30 minutes on the other days.</p></div>
+</div>
+<p class="fine">General fitness guidance, not medical advice. If you have an injury, a health condition, or are pregnant, check with a doctor before starting. Stop any exercise that causes sharp pain. Both emphasis options work for anyone: choose the one that matches your goal.</p>
+</div>
+
+<script>
+var L={
+bw:{name:"No equipment",need:"A floor, a sturdy chair or table, and a towel.",prog:"Add 1–2 reps per set each week. At the top of the range, lower for 3 seconds or move to a harder variation."},
+home:{name:"Home equipment",need:"Dumbbells, a resistance band, and optionally a pull-up bar.",prog:"When you hit the top reps on every set, move up to the next dumbbell weight or a stronger band."},
+gym:{name:"Full gym",need:"Barbell and rack, bench, cable station, and machines.",prog:"When you hit the top of the rep range on every set, add 2.5 kg (5 lb) next session."}
+};
+var S={m:{name:"Men's emphasis",note:"Balanced strength with extra upper-body pressing and pulling volume."},
+w:{name:"Women's emphasis",note:"Glutes, legs and core, with steady upper-body work."}};
+var D={
+bw:{m:[
+{t:"Push + Core",f:"Chest, shoulders, triceps, abs",e:[["Push-ups","4 × 10–15"],["Pike push-ups","3 × 8–12"],["Chair dips","3 × 12"],["Plank","3 × 40 sec"],["Mountain climbers","3 × 30 sec"]]},
+{t:"Legs",f:"Quads, hamstrings, calves",e:[["Bodyweight squats","4 × 20"],["Reverse lunges","3 × 12 / leg"],["Split squat, rear foot on chair","3 × 10 / leg"],["Single-leg calf raises","3 × 15 / leg"],["Wall sit","3 × 45 sec"]]},
+{t:"Pull + Conditioning",f:"Back, arms, heart rate",e:[["Table rows (sturdy table)","4 × 8–12"],["Superman holds","3 × 15"],["Burpees","4 × 10"],["High knees","3 × 40 sec"],["Hollow hold","3 × 30 sec"]]}],
+w:[
+{t:"Lower + Glutes",f:"Glutes, quads, hamstrings",e:[["Glute bridges","4 × 20"],["Bodyweight squats","4 × 15"],["Reverse lunges","3 × 12 / leg"],["Donkey kicks","3 × 15 / side"],["Side-lying leg raises","3 × 15 / side"]]},
+{t:"Upper + Core",f:"Chest, shoulders, arms, abs",e:[["Incline push-ups (hands on counter)","4 × 8–12"],["Pike push-ups","3 × 8"],["Chair dips","3 × 12"],["Plank shoulder taps","3 × 20"],["Dead bugs","3 × 12 / side"]]},
+{t:"Full Body + Cardio",f:"Legs, core, endurance",e:[["Step-ups on a sturdy chair","3 × 12 / leg"],["Single-leg glute bridges","3 × 12 / leg"],["Burpees (no jump)","3 × 10"],["Bird dogs","3 × 12 / side"],["Jumping jacks","3 × 45 sec"]]}]},
+home:{m:[
+{t:"Push",f:"Chest, shoulders, triceps",e:[["Dumbbell floor press","4 × 8–10"],["Dumbbell shoulder press","3 × 10"],["Push-ups","3 × to near failure"],["Overhead triceps extension","3 × 12"],["Lateral raises","3 × 15"]]},
+{t:"Pull",f:"Back, rear delts, biceps",e:[["One-arm dumbbell row","4 × 10 / arm"],["Pull-ups or band-assisted","4 × max reps"],["Dumbbell reverse fly","3 × 15"],["Dumbbell curls","3 × 12"],["Hammer curls","2 × 12"]]},
+{t:"Legs",f:"Quads, hamstrings, calves",e:[["Goblet squat","4 × 10–12"],["Dumbbell Romanian deadlift","4 × 10"],["Walking lunges","3 × 12 / leg"],["Calf raises","4 × 15"],["Plank","3 × 45 sec"]]}],
+w:[
+{t:"Lower A",f:"Glutes, quads, hamstrings",e:[["Goblet squat","4 × 12"],["Dumbbell Romanian deadlift","4 × 10"],["Dumbbell hip thrust (back on couch)","4 × 12"],["Banded lateral walks","3 × 15 / side"],["Calf raises","3 × 15"]]},
+{t:"Upper",f:"Back, shoulders, arms",e:[["Dumbbell shoulder press","3 × 10"],["One-arm dumbbell row","4 × 10 / arm"],["Dumbbell floor press","3 × 10"],["Band pull-aparts","3 × 15"],["Curl + triceps extension superset","2 × 12"]]},
+{t:"Lower B + Core",f:"Single-leg strength, abs",e:[["Bulgarian split squat","3 × 10 / leg"],["Single-leg Romanian deadlift","3 × 10 / leg"],["Banded glute bridge march","3 × 12"],["Band Pallof press","3 × 12 / side"],["Dead bugs","3 × 12 / side"]]}]},
+gym:{m:[
+{t:"Push",f:"Chest, shoulders, triceps",e:[["Barbell bench press","4 × 6–8"],["Incline dumbbell press","3 × 8–10"],["Overhead press","3 × 8"],["Cable lateral raise","3 × 12–15"],["Rope triceps pushdown","3 × 12"]]},
+{t:"Pull",f:"Back, rear delts, biceps",e:[["Deadlift","3 × 5"],["Lat pulldown or pull-ups","4 × 8–10"],["Seated cable row","3 × 10"],["Face pulls","3 × 15"],["EZ-bar curl","3 × 10"]]},
+{t:"Legs",f:"Quads, hamstrings, calves",e:[["Back squat","4 × 6–8"],["Leg press","3 × 10–12"],["Romanian deadlift","3 × 8–10"],["Leg curl","3 × 12"],["Standing calf raise","4 × 12"]]}],
+w:[
+{t:"Lower (Glute focus)",f:"Glutes, hamstrings, quads",e:[["Barbell hip thrust","4 × 8–10"],["Back squat or Smith squat","4 × 8"],["Romanian deadlift","3 × 10"],["Walking lunges","3 × 12 / leg"],["Cable kickbacks","3 × 12 / leg"]]},
+{t:"Upper",f:"Back, chest, shoulders, arms",e:[["Lat pulldown","4 × 10"],["Dumbbell incline press","3 × 10"],["Seated cable row","3 × 12"],["Lateral raises","3 × 15"],["Pushdown + curl superset","2 × 12"]]},
+{t:"Lower + Core",f:"Quads, hip abductors, abs",e:[["Leg press","4 × 12"],["Bulgarian split squat","3 × 10 / leg"],["Leg curl","3 × 12"],["Hip abduction machine","3 × 15"],["Hanging knee raise or cable crunch","3 × 12"]]}]}
+};
+var lv="bw",sx="m";
+function seg(id,obj,get,set){
+ var el=document.getElementById(id);el.innerHTML="";
+ Object.keys(obj).forEach(function(k){
+  var b=document.createElement("button");b.type="button";b.textContent=obj[k].name;
+  b.setAttribute("aria-pressed",get()===k);
+  b.onclick=function(){set(k);render()};el.appendChild(b);
+ });
+}
+function render(){
+ seg("lv",L,function(){return lv},function(k){lv=k});
+ seg("sx",S,function(){return sx},function(k){sx=k});
+ document.getElementById("info").innerHTML=
+  "<p><span>You need:</span> "+L[lv].need+"</p><p><span>Emphasis:</span> "+S[sx].note+"</p><p><span>How to progress:</span> "+L[lv].prog+"</p>";
+ var h="";
+ D[lv][sx].forEach(function(d,i){
+  h+='<section class="day"><h2>Day '+(i+1)+': '+d.t+'</h2><p class="f">'+d.f+'</p><ul>';
+  d.e.forEach(function(x){h+='<li><label><input type="checkbox"><span class="n">'+x[0]+'</span><span class="r">'+x[1]+'</span></label></li>'});
+  h+='</ul></section>';
+ });
+ document.getElementById("days").innerHTML=h;
+}
+render();
+</script>
+</body>
+</html>

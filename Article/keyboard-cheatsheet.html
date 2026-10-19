@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Command Deck — Keyboard Shortcut Cheat Sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg: #0a0c10;
+    --panel: #12151b;
+    --panel-2: #171b22;
+    --border: #262b35;
+    --text: #e9ebf0;
+    --muted: #8b93a3;
+    --accent: #12e0b3;
+    --accent-dim: rgba(18,224,179,0.12);
+    --h5: #ff5d5d;
+    --h4: #ff9f4d;
+    --h3: #ffd65d;
+    --h2: #5fc6ff;
+    --h1: #6e82ff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height:100vh;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:40px 24px 80px;}
+
+  /* header */
+  header{margin-bottom:32px;}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--accent); margin-bottom:10px; display:flex; align-items:center; gap:8px;
+  }
+  .eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);}
+  h1{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:800; font-size:clamp(28px,4vw,44px);
+    margin:0 0 10px; letter-spacing:-0.01em; line-height:1.05;
+  }
+  .sub{color:var(--muted); font-size:15px; max-width:640px; line-height:1.6;}
+
+  /* legend */
+  .legend{display:flex; flex-wrap:wrap; gap:10px; margin-top:22px;}
+  .legend-item{
+    display:flex; align-items:center; gap:7px;
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted);
+    background:var(--panel); border:1px solid var(--border); padding:6px 10px; border-radius:20px;
+  }
+  .dot{width:9px;height:9px;border-radius:50%;}
+
+  /* controls */
+  .controls{
+    display:flex; flex-wrap:wrap; gap:12px; align-items:center;
+    margin:28px 0 18px; padding:16px; background:var(--panel);
+    border:1px solid var(--border); border-radius:12px;
+  }
+  .tabs{display:flex; gap:6px; flex-wrap:wrap;}
+  .tab{
+    font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:600;
+    padding:8px 14px; border-radius:8px; border:1px solid var(--border);
+    background:var(--panel-2); color:var(--muted); cursor:pointer; transition:.15s;
+  }
+  .tab:hover{color:var(--text); border-color:#3a4150;}
+  .tab.active{background:var(--accent); color:#04140f; border-color:var(--accent);}
+
+  .search{
+    flex:1; min-width:180px; position:relative;
+  }
+  .search input{
+    width:100%; background:var(--panel-2); border:1px solid var(--border);
+    border-radius:8px; padding:9px 12px 9px 32px; color:var(--text);
+    font-family:'Inter',sans-serif; font-size:13.5px; outline:none;
+  }
+  .search input:focus{border-color:var(--accent);}
+  .search::before{
+    content:"⌕"; position:absolute; left:11px; top:50%; transform:translateY(-50%);
+    color:var(--muted); font-size:15px;
+  }
+
+  select#sortSel{
+    background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+    font-family:'JetBrains Mono',monospace; font-size:12px; padding:8px 10px; border-radius:8px;
+    cursor:pointer;
+  }
+
+  /* export buttons */
+  .exports{display:flex; gap:10px; margin-bottom:22px; flex-wrap:wrap;}
+  .xbtn{
+    font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:600;
+    display:flex; align-items:center; gap:8px;
+    padding:10px 16px; border-radius:8px; cursor:pointer; border:1px solid var(--border);
+    background:var(--panel); color:var(--text); transition:.15s;
+  }
+  .xbtn:hover{border-color:var(--accent); color:var(--accent); transform:translateY(-1px);}
+  .xbtn .ic{font-size:14px;}
+
+  .count{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted); margin-bottom:14px;}
+
+  /* table */
+  .table-wrap{border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--panel);}
+  table{width:100%; border-collapse:collapse;}
+  thead th{
+    text-align:left; font-family:'JetBrains Mono',monospace; font-size:11px;
+    text-transform:uppercase; letter-spacing:.08em; color:var(--muted);
+    padding:12px 16px; background:var(--panel-2); border-bottom:1px solid var(--border);
+  }
+  tbody tr{border-bottom:1px solid var(--border);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:rgba(255,255,255,0.02);}
+  td{padding:13px 16px; font-size:13.5px; vertical-align:middle;}
+  .os-badge{
+    font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:700;
+    padding:3px 8px; border-radius:5px; display:inline-block;
+  }
+  .os-Windows{background:rgba(95,198,255,0.14); color:#5fc6ff;}
+  .os-Linux{background:rgba(255,159,77,0.14); color:#ff9f4d;}
+  .os-macOS{background:rgba(200,200,210,0.14); color:#d6d9e0;}
+  .os-Photoshop{background:rgba(49,168,255,0.14); color:#31a8ff;}
+  .os-Excel{background:rgba(33,115,70,0.18); color:#3dba7a;}
+  .os-Word{background:rgba(43,87,154,0.18); color:#5a8fd6;}
+  .os-GoogleSheets{background:rgba(15,157,88,0.16); color:#2fbf71;}
+  .os-GoogleDocs{background:rgba(66,133,244,0.16); color:#6ea1f7;}
+  .os-Oracle{background:rgba(248,0,0,0.14); color:#ff5c5c;}
+  .os-PostgreSQL{background:rgba(51,103,145,0.20); color:#6fa8d1;}
+  .os-SQLServer{background:rgba(169,30,34,0.18); color:#e2585c;}
+  .os-MySQL{background:rgba(228,142,0,0.16); color:#f2a93c;}
+  .os-Redis{background:rgba(216,44,32,0.16); color:#ff6a54;}
+  .os-MongoDB{background:rgba(77,179,61,0.16); color:#6fd45c;}
+
+  .cmdline{
+    font-family:'JetBrains Mono',monospace; font-size:12px;
+    background:#171b22; border:1px solid #262b35; border-radius:6px;
+    padding:5px 10px; color:#8ee6c4; display:inline-block;
+    white-space:normal; word-break:break-word; max-width:100%;
+  }
+
+  .keys{display:flex; align-items:center; gap:5px; flex-wrap:wrap;}
+  kbd{
+    font-family:'JetBrains Mono',monospace; font-weight:600; font-size:12px;
+    background:linear-gradient(180deg,#232833,#1a1e26);
+    color:var(--text); padding:5px 9px; border-radius:6px;
+    border:1px solid #363c48; border-bottom:3px solid #0c0e12;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset;
+  }
+  .plus{color:var(--muted); font-size:11px; font-family:'JetBrains Mono',monospace;}
+
+  .action{color:var(--text);}
+  .category{color:var(--muted); font-size:12px;}
+
+  .heat{display:flex; align-items:center; gap:8px;}
+  .heat-bar{width:44px; height:6px; border-radius:4px; background:var(--panel-2); overflow:hidden;}
+  .heat-fill{height:100%; border-radius:4px;}
+  .heat-label{font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--muted); white-space:nowrap;}
+
+  footer{margin-top:36px; color:var(--muted); font-size:12px; font-family:'JetBrains Mono',monospace; text-align:center;}
+
+  @media (max-width:640px){
+    thead th:nth-child(4), td:nth-child(4){display:none;}
+    .table-wrap{overflow-x:auto;}
+    table{min-width:560px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Local dataset · sorted by usage frequency</div>
+    <h1>Command Deck</h1>
+    <p class="sub">A shortcut and command cheat sheet for Windows, Linux, macOS, Photoshop, Excel, Word, Google Sheets, Google Docs, Oracle, PostgreSQL, SQL Server, MySQL, Redis, and MongoDB — ranked from the most-used (hot/red) down to the rarest (cool/blue). Search, filter by tool, then export to Excel, Word, or a static HTML file.</p>
+
+    <div class="legend">
+      <div class="legend-item"><span class="dot" style="background:var(--h5)"></span> Very frequent (daily)</div>
+      <div class="legend-item"><span class="dot" style="background:var(--h4)"></span> Frequent</div>
+      <div class="legend-item"><span class="dot" style="background:var(--h3)"></span> Occasional</div>
+      <div class="legend-item"><span class="dot" style="background:var(--h2)"></span> Rare</div>
+      <div class="legend-item"><span class="dot" style="background:var(--h1)"></span> Very rare</div>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="tabs" id="osTabs">
+      <button class="tab active" data-os="All">All</button>
+      <button class="tab" data-os="Windows">Windows</button>
+      <button class="tab" data-os="Linux">Linux</button>
+      <button class="tab" data-os="macOS">macOS</button>
+      <button class="tab" data-os="Photoshop">Photoshop</button>
+      <button class="tab" data-os="Excel">Excel</button>
+      <button class="tab" data-os="Word">Word</button>
+      <button class="tab" data-os="GoogleSheets">Google Sheets</button>
+      <button class="tab" data-os="GoogleDocs">Google Docs</button>
+      <button class="tab" data-os="Oracle">Oracle</button>
+      <button class="tab" data-os="PostgreSQL">PostgreSQL</button>
+      <button class="tab" data-os="SQLServer">SQL Server</button>
+      <button class="tab" data-os="MySQL">MySQL</button>
+      <button class="tab" data-os="Redis">Redis</button>
+      <button class="tab" data-os="MongoDB">MongoDB</button>
+    </div>
+    <div class="search">
+      <input type="text" id="searchInput" placeholder="Search shortcut, command, key, or action...">
+    </div>
+    <select id="sortSel">
+      <option value="freqDesc">Frequency: Most → Least used</option>
+      <option value="freqAsc">Frequency: Least → Most used</option>
+      <option value="az">Name A → Z</option>
+    </select>
+  </div>
+
+  <div class="exports">
+    <button class="xbtn" id="btnExcel"><span class="ic">▤</span> Export to Excel (.xlsx)</button>
+    <button class="xbtn" id="btnWord"><span class="ic">▥</span> Export to Word (.doc)</button>
+    <button class="xbtn" id="btnHtml"><span class="ic">◫</span> Export to static HTML</button>
+  </div>
+
+  <div class="count" id="countLabel"></div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:90px;">Tool</th>
+          <th style="width:240px;">Shortcut / Command</th>
+          <th>Action</th>
+          <th style="width:150px;">Category</th>
+          <th style="width:150px;">Frequency</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <footer>Command Deck · local dataset, no server connection required</footer>
+</div>
+
+<script>
+// ---------- DATA ----------
+// freq: 5 = very frequent ... 1 = very rare
+const DATA = [
+  // WINDOWS
+  {os:"Windows",keys:["Ctrl","C"],action:"Copy",cat:"Editing",freq:5},
+  {os:"Windows",keys:["Ctrl","V"],action:"Paste",cat:"Editing",freq:5},
+  {os:"Windows",keys:["Ctrl","Z"],action:"Undo",cat:"Editing",freq:5},
+  {os:"Windows",keys:["Ctrl","S"],action:"Save file",cat:"File",freq:5},
+  {os:"Windows",keys:["Alt","Tab"],action:"Switch between apps",cat:"Navigation",freq:5},
+  {os:"Windows",keys:["Ctrl","X"],action:"Cut",cat:"Editing",freq:5},
+  {os:"Windows",keys:["Ctrl","A"],action:"Select all",cat:"Editing",freq:5},
+  {os:"Windows",keys:["Win"],action:"Open Start Menu",cat:"System",freq:5},
+  {os:"Windows",keys:["Ctrl","F"],action:"Find",cat:"Navigation",freq:5},
+  {os:"Windows",keys:["Alt","F4"],action:"Close active window",cat:"Window",freq:5},
+  {os:"Windows",keys:["Ctrl","Shift","Esc"],action:"Open Task Manager",cat:"System",freq:4},
+  {os:"Windows",keys:["Win","D"],action:"Show desktop",cat:"Window",freq:4},
+  {os:"Windows",keys:["Ctrl","Y"],action:"Redo",cat:"Editing",freq:4},
+  {os:"Windows",keys:["Win","E"],action:"Open File Explorer",cat:"File",freq:4},
+  {os:"Windows",keys:["Ctrl","P"],action:"Print",cat:"File",freq:4},
+  {os:"Windows",keys:["Win","L"],action:"Lock the screen",cat:"System",freq:4},
+  {os:"Windows",keys:["Ctrl","Tab"],action:"Switch between tabs",cat:"Navigation",freq:4},
+  {os:"Windows",keys:["Ctrl","N"],action:"Open a new window/document",cat:"File",freq:4},
+  {os:"Windows",keys:["Ctrl","Shift","T"],action:"Reopen closed tab",cat:"Browser",freq:4},
+  {os:"Windows",keys:["Win","Tab"],action:"Open Task View",cat:"Navigation",freq:4},
+  {os:"Windows",keys:["Win","Shift","S"],action:"Take an area screenshot (Snip)",cat:"Utility",freq:3},
+  {os:"Windows",keys:["Win","→"],action:"Snap window to the right",cat:"Window",freq:3},
+  {os:"Windows",keys:["Win","R"],action:"Open the Run dialog",cat:"System",freq:3},
+  {os:"Windows",keys:["Alt","Enter"],action:"Open properties of selected item",cat:"File",freq:3},
+  {os:"Windows",keys:["Win","."],action:"Open emoji panel",cat:"Utility",freq:3},
+  {os:"Windows",keys:["Ctrl","Shift","V"],action:"Paste without formatting",cat:"Editing",freq:3},
+  {os:"Windows",keys:["Ctrl","Backspace"],action:"Delete one word backward",cat:"Editing",freq:3},
+  {os:"Windows",keys:["Win","Shift","N"],action:"Create new folder",cat:"File",freq:3},
+  {os:"Windows",keys:["Win",","],action:"Peek at the desktop",cat:"Window",freq:2},
+  {os:"Windows",keys:["Win","Ctrl","D"],action:"Create new virtual desktop",cat:"System",freq:2},
+  {os:"Windows",keys:["Win","Ctrl","→"],action:"Switch virtual desktops",cat:"System",freq:2},
+  {os:"Windows",keys:["Win","X"],action:"Open Quick Link menu",cat:"System",freq:2},
+  {os:"Windows",keys:["Win","P"],action:"Choose display projection mode",cat:"Display",freq:2},
+  {os:"Windows",keys:["Win","G"],action:"Open Xbox Game Bar",cat:"Utility",freq:2},
+  {os:"Windows",keys:["Win","Ctrl","F4"],action:"Close active virtual desktop",cat:"System",freq:1},
+  {os:"Windows",keys:["Win","Ctrl","Shift","B"],action:"Restart the graphics driver",cat:"System",freq:1},
+  {os:"Windows",keys:["Win","Pause"],action:"Open System Properties",cat:"System",freq:1},
+
+  // LINUX
+  {os:"Linux",keys:["Ctrl","C"],action:"Copy / interrupt process in terminal",cat:"Editing",freq:5},
+  {os:"Linux",keys:["Ctrl","V"],action:"Paste",cat:"Editing",freq:5},
+  {os:"Linux",keys:["Ctrl","Alt","T"],action:"Open terminal",cat:"System",freq:5},
+  {os:"Linux",keys:["Ctrl","Z"],action:"Undo / suspend process",cat:"Editing",freq:5},
+  {os:"Linux",keys:["Ctrl","S"],action:"Save file",cat:"File",freq:5},
+  {os:"Linux",keys:["Alt","Tab"],action:"Switch between windows",cat:"Navigation",freq:5},
+  {os:"Linux",keys:["Ctrl","A"],action:"Select all / move to start of line (terminal)",cat:"Editing",freq:5},
+  {os:"Linux",keys:["Ctrl","X"],action:"Cut",cat:"Editing",freq:5},
+  {os:"Linux",keys:["Ctrl","F"],action:"Find",cat:"Navigation",freq:5},
+  {os:"Linux",keys:["Super"],action:"Open Activities / app launcher",cat:"System",freq:5},
+  {os:"Linux",keys:["Ctrl","Shift","C"],action:"Copy inside the terminal",cat:"Terminal",freq:4},
+  {os:"Linux",keys:["Ctrl","Shift","V"],action:"Paste inside the terminal",cat:"Terminal",freq:4},
+  {os:"Linux",keys:["Ctrl","L"],action:"Clear the terminal screen",cat:"Terminal",freq:4},
+  {os:"Linux",keys:["Ctrl","R"],action:"Search command history",cat:"Terminal",freq:4},
+  {os:"Linux",keys:["Ctrl","D"],action:"Exit the shell",cat:"Terminal",freq:4},
+  {os:"Linux",keys:["Alt","F2"],action:"Run a quick command",cat:"System",freq:4},
+  {os:"Linux",keys:["Ctrl","Alt","→"],action:"Switch workspace",cat:"Navigation",freq:4},
+  {os:"Linux",keys:["PrtScn"],action:"Take a screenshot",cat:"Utility",freq:4},
+  {os:"Linux",keys:["Ctrl","Shift","T"],action:"Reopen closed tab",cat:"Browser",freq:4},
+  {os:"Linux",keys:["Super","D"],action:"Show desktop",cat:"Window",freq:4},
+  {os:"Linux",keys:["Super","L"],action:"Lock the screen",cat:"System",freq:3},
+  {os:"Linux",keys:["Ctrl","U"],action:"Delete line before cursor (terminal)",cat:"Terminal",freq:3},
+  {os:"Linux",keys:["Ctrl","K"],action:"Delete line after cursor (terminal)",cat:"Terminal",freq:3},
+  {os:"Linux",keys:["Alt","F7"],action:"Move window with arrow keys",cat:"Window",freq:3},
+  {os:"Linux",keys:["Ctrl","Insert"],action:"Copy (alternative)",cat:"Editing",freq:3},
+  {os:"Linux",keys:["Shift","Insert"],action:"Paste (alternative)",cat:"Editing",freq:3},
+  {os:"Linux",keys:["Ctrl","Alt","Delete"],action:"Log out / restart session",cat:"System",freq:3},
+  {os:"Linux",keys:["Ctrl","Shift","N"],action:"Create new folder",cat:"File",freq:3},
+  {os:"Linux",keys:["Ctrl","Alt","Esc"],action:"Force quit (xkill)",cat:"System",freq:2},
+  {os:"Linux",keys:["Super","Number"],action:"Open app in dock by position",cat:"Navigation",freq:2},
+  {os:"Linux",keys:["Alt","Space"],action:"Open window menu",cat:"Window",freq:2},
+  {os:"Linux",keys:["Ctrl","Alt","F1"],action:"Switch to TTY1",cat:"System",freq:2},
+  {os:"Linux",keys:["Ctrl","Alt","L"],action:"Lock screen (some desktop environments)",cat:"System",freq:2},
+  {os:"Linux",keys:["Ctrl","Alt","F7"],action:"Return to the X / GUI session",cat:"System",freq:1},
+  {os:"Linux",keys:["Ctrl","Alt","Backspace"],action:"Restart the X server (deprecated)",cat:"System",freq:1},
+  {os:"Linux",keys:["Super","PrtScn"],action:"Screenshot the active window",cat:"Utility",freq:1},
+
+  // macOS
+  {os:"macOS",keys:["Cmd","C"],action:"Copy",cat:"Editing",freq:5},
+  {os:"macOS",keys:["Cmd","V"],action:"Paste",cat:"Editing",freq:5},
+  {os:"macOS",keys:["Cmd","Z"],action:"Undo",cat:"Editing",freq:5},
+  {os:"macOS",keys:["Cmd","S"],action:"Save file",cat:"File",freq:5},
+  {os:"macOS",keys:["Cmd","Tab"],action:"Switch between apps",cat:"Navigation",freq:5},
+  {os:"macOS",keys:["Cmd","X"],action:"Cut",cat:"Editing",freq:5},
+  {os:"macOS",keys:["Cmd","A"],action:"Select all",cat:"Editing",freq:5},
+  {os:"macOS",keys:["Cmd","F"],action:"Find",cat:"Navigation",freq:5},
+  {os:"macOS",keys:["Cmd","W"],action:"Close active window/tab",cat:"Window",freq:5},
+  {os:"macOS",keys:["Cmd","Space"],action:"Open Spotlight Search",cat:"System",freq:5},
+  {os:"macOS",keys:["Cmd","Shift","Z"],action:"Redo",cat:"Editing",freq:4},
+  {os:"macOS",keys:["Cmd","Q"],action:"Quit the app",cat:"Window",freq:4},
+  {os:"macOS",keys:["Cmd","N"],action:"Open a new window",cat:"File",freq:4},
+  {os:"macOS",keys:["Cmd","T"],action:"Open a new tab",cat:"Browser",freq:4},
+  {os:"macOS",keys:["Cmd","Shift","4"],action:"Screenshot a selected area",cat:"Utility",freq:4},
+  {os:"macOS",keys:["Cmd","Shift","3"],action:"Screenshot the entire screen",cat:"Utility",freq:4},
+  {os:"macOS",keys:["Cmd",","],action:"Open app Preferences",cat:"System",freq:4},
+  {os:"macOS",keys:["Cmd","Shift","T"],action:"Reopen closed tab",cat:"Browser",freq:4},
+  {os:"macOS",keys:["Cmd","H"],action:"Hide the active app",cat:"Window",freq:4},
+  {os:"macOS",keys:["Cmd","M"],action:"Minimize window",cat:"Window",freq:4},
+  {os:"macOS",keys:["Cmd","Option","Esc"],action:"Force Quit an app",cat:"System",freq:3},
+  {os:"macOS",keys:["Cmd","Shift","N"],action:"Create new folder",cat:"File",freq:3},
+  {os:"macOS",keys:["Cmd","Delete"],action:"Move item to Trash",cat:"File",freq:3},
+  {os:"macOS",keys:["Cmd","Shift","."],action:"Show hidden files",cat:"File",freq:3},
+  {os:"macOS",keys:["Ctrl","↑"],action:"Open Mission Control",cat:"Navigation",freq:3},
+  {os:"macOS",keys:["Cmd","Shift","5"],action:"Open screenshot/recording toolbar",cat:"Utility",freq:3},
+  {os:"macOS",keys:["Cmd","L"],action:"Select the browser address bar",cat:"Browser",freq:3},
+  {os:"macOS",keys:["Cmd","Shift","V"],action:"Paste and match style",cat:"Editing",freq:3},
+  {os:"macOS",keys:["Cmd","Ctrl","Space"],action:"Open the emoji picker",cat:"Utility",freq:3},
+  {os:"macOS",keys:["Cmd","Shift","A"],action:"Open the Applications folder",cat:"Navigation",freq:2},
+  {os:"macOS",keys:["Cmd","Shift","Q"],action:"Log out of the account",cat:"System",freq:2},
+  {os:"macOS",keys:["Cmd","Shift","U"],action:"Open the Utilities folder",cat:"Navigation",freq:2},
+  {os:"macOS",keys:["Cmd","Ctrl","F"],action:"Toggle full-screen mode",cat:"Window",freq:2},
+  {os:"macOS",keys:["Cmd","Option","D"],action:"Show/hide the Dock",cat:"Display",freq:2},
+  {os:"macOS",keys:["Cmd","Shift","Option","Esc"],action:"Force quit the frontmost app immediately",cat:"System",freq:1},
+  {os:"macOS",keys:["Cmd","Option","Shift","K"],action:"Show the Keyboard Viewer",cat:"Utility",freq:1},
+
+  // PHOTOSHOP
+  {os:"Photoshop",keys:["Ctrl","Z"],action:"Undo",cat:"Editing",freq:5},
+  {os:"Photoshop",keys:["Ctrl","S"],action:"Save file",cat:"File",freq:5},
+  {os:"Photoshop",keys:["Ctrl","C"],action:"Copy",cat:"Editing",freq:5},
+  {os:"Photoshop",keys:["Ctrl","V"],action:"Paste",cat:"Editing",freq:5},
+  {os:"Photoshop",keys:["Ctrl","T"],action:"Free Transform",cat:"Transform",freq:5},
+  {os:"Photoshop",keys:["B"],action:"Brush tool",cat:"Tools",freq:5},
+  {os:"Photoshop",keys:["V"],action:"Move tool",cat:"Tools",freq:5},
+  {os:"Photoshop",keys:["Ctrl","D"],action:"Deselect",cat:"Selection",freq:5},
+  {os:"Photoshop",keys:["Ctrl","J"],action:"Duplicate layer",cat:"Layer",freq:5},
+  {os:"Photoshop",keys:["Space"],action:"Hold for Pan tool (drag canvas)",cat:"Navigation",freq:5},
+  {os:"Photoshop",keys:["Ctrl","Shift","S"],action:"Save As",cat:"File",freq:4},
+  {os:"Photoshop",keys:["E"],action:"Eraser tool",cat:"Tools",freq:4},
+  {os:"Photoshop",keys:["M"],action:"Marquee (rectangular selection) tool",cat:"Selection",freq:4},
+  {os:"Photoshop",keys:["L"],action:"Lasso tool",cat:"Selection",freq:4},
+  {os:"Photoshop",keys:["Ctrl","+"],action:"Zoom in",cat:"Navigation",freq:4},
+  {os:"Photoshop",keys:["Ctrl","-"],action:"Zoom out",cat:"Navigation",freq:4},
+  {os:"Photoshop",keys:["Ctrl","0"],action:"Fit image to screen",cat:"Navigation",freq:4},
+  {os:"Photoshop",keys:["X"],action:"Swap foreground/background color",cat:"Color",freq:4},
+  {os:"Photoshop",keys:["["],action:"Decrease brush size",cat:"Tools",freq:4},
+  {os:"Photoshop",keys:["]"],action:"Increase brush size",cat:"Tools",freq:4},
+  {os:"Photoshop",keys:["Ctrl","Shift","I"],action:"Invert selection",cat:"Selection",freq:3},
+  {os:"Photoshop",keys:["Ctrl","I"],action:"Invert colors",cat:"Color",freq:3},
+  {os:"Photoshop",keys:["Ctrl","G"],action:"Group layers",cat:"Layer",freq:3},
+  {os:"Photoshop",keys:["Ctrl","E"],action:"Merge layer down",cat:"Layer",freq:3},
+  {os:"Photoshop",keys:["Ctrl","U"],action:"Hue/Saturation",cat:"Color",freq:3},
+  {os:"Photoshop",keys:["Ctrl","L"],action:"Levels",cat:"Color",freq:3},
+  {os:"Photoshop",keys:["W"],action:"Magic Wand tool",cat:"Selection",freq:3},
+  {os:"Photoshop",keys:["G"],action:"Gradient tool",cat:"Tools",freq:3},
+  {os:"Photoshop",keys:["Q"],action:"Quick Mask mode",cat:"Selection",freq:2},
+  {os:"Photoshop",keys:["Ctrl","Alt","I"],action:"Image Size",cat:"File",freq:2},
+  {os:"Photoshop",keys:["Ctrl","Alt","C"],action:"Canvas Size",cat:"File",freq:2},
+  {os:"Photoshop",keys:["Ctrl","Shift","Alt","E"],action:"Stamp visible (merge all layers into a new layer)",cat:"Layer",freq:2},
+  {os:"Photoshop",keys:["F5"],action:"Open the Brush Settings panel",cat:"Tools",freq:1},
+  {os:"Photoshop",keys:["Ctrl","K"],action:"Open Preferences",cat:"System",freq:1},
+
+  // EXCEL
+  {os:"Excel",keys:["Ctrl","C"],action:"Copy cell",cat:"Editing",freq:5},
+  {os:"Excel",keys:["Ctrl","V"],action:"Paste cell",cat:"Editing",freq:5},
+  {os:"Excel",keys:["Ctrl","Z"],action:"Undo",cat:"Editing",freq:5},
+  {os:"Excel",keys:["Ctrl","S"],action:"Save file",cat:"File",freq:5},
+  {os:"Excel",keys:["Ctrl","X"],action:"Cut cell",cat:"Editing",freq:5},
+  {os:"Excel",keys:["Ctrl","A"],action:"Select all",cat:"Editing",freq:5},
+  {os:"Excel",keys:["Ctrl","F"],action:"Find",cat:"Navigation",freq:5},
+  {os:"Excel",keys:["Enter"],action:"Confirm cell entry & move down",cat:"Navigation",freq:5},
+  {os:"Excel",keys:["Tab"],action:"Move to the cell on the right",cat:"Navigation",freq:5},
+  {os:"Excel",keys:["Ctrl","Home"],action:"Go to cell A1",cat:"Navigation",freq:4},
+  {os:"Excel",keys:["Ctrl","End"],action:"Go to the last cell with data",cat:"Navigation",freq:4},
+  {os:"Excel",keys:["Ctrl","1"],action:"Open Format Cells",cat:"Format",freq:4},
+  {os:"Excel",keys:["Ctrl","B"],action:"Bold",cat:"Format",freq:4},
+  {os:"Excel",keys:["F2"],action:"Edit the active cell",cat:"Editing",freq:4},
+  {os:"Excel",keys:["Ctrl","Arrow"],action:"Jump to the edge of a data block",cat:"Navigation",freq:4},
+  {os:"Excel",keys:["Alt","="],action:"AutoSum",cat:"Formula",freq:4},
+  {os:"Excel",keys:["Ctrl","P"],action:"Print",cat:"File",freq:4},
+  {os:"Excel",keys:["Ctrl","Shift","L"],action:"Toggle filter",cat:"Data",freq:3},
+  {os:"Excel",keys:["Ctrl","T"],action:"Create table",cat:"Data",freq:3},
+  {os:"Excel",keys:["F4"],action:"Repeat last action / lock cell reference ($)",cat:"Formula",freq:3},
+  {os:"Excel",keys:["Ctrl",";"],action:"Insert today's date",cat:"Data",freq:3},
+  {os:"Excel",keys:["Ctrl","Shift",";"],action:"Insert current time",cat:"Data",freq:3},
+  {os:"Excel",keys:["Alt","Enter"],action:"New line inside a cell",cat:"Editing",freq:3},
+  {os:"Excel",keys:["Ctrl","9"],action:"Hide row",cat:"Format",freq:2},
+  {os:"Excel",keys:["Ctrl","0"],action:"Hide column",cat:"Format",freq:2},
+  {os:"Excel",keys:["Ctrl","Shift","&"],action:"Add a border",cat:"Format",freq:2},
+  {os:"Excel",keys:["F9"],action:"Recalculate the workbook",cat:"Formula",freq:2},
+  {os:"Excel",keys:["Ctrl","K"],action:"Insert hyperlink",cat:"Editing",freq:2},
+  {os:"Excel",keys:["Ctrl","F3"],action:"Open Name Manager",cat:"Formula",freq:1},
+
+  // WORD
+  {os:"Word",keys:["Ctrl","C"],action:"Copy",cat:"Editing",freq:5},
+  {os:"Word",keys:["Ctrl","V"],action:"Paste",cat:"Editing",freq:5},
+  {os:"Word",keys:["Ctrl","Z"],action:"Undo",cat:"Editing",freq:5},
+  {os:"Word",keys:["Ctrl","S"],action:"Save file",cat:"File",freq:5},
+  {os:"Word",keys:["Ctrl","B"],action:"Bold",cat:"Format",freq:5},
+  {os:"Word",keys:["Ctrl","I"],action:"Italic",cat:"Format",freq:5},
+  {os:"Word",keys:["Ctrl","U"],action:"Underline",cat:"Format",freq:5},
+  {os:"Word",keys:["Ctrl","A"],action:"Select all",cat:"Editing",freq:5},
+  {os:"Word",keys:["Ctrl","F"],action:"Find",cat:"Navigation",freq:5},
+  {os:"Word",keys:["Ctrl","P"],action:"Print",cat:"File",freq:5},
+  {os:"Word",keys:["Ctrl","X"],action:"Cut",cat:"Editing",freq:4},
+  {os:"Word",keys:["Ctrl","Y"],action:"Redo",cat:"Editing",freq:4},
+  {os:"Word",keys:["Ctrl","N"],action:"New document",cat:"File",freq:4},
+  {os:"Word",keys:["Ctrl","Home"],action:"Go to the start of the document",cat:"Navigation",freq:4},
+  {os:"Word",keys:["Ctrl","End"],action:"Go to the end of the document",cat:"Navigation",freq:4},
+  {os:"Word",keys:["Ctrl","Enter"],action:"Insert a page break",cat:"Format",freq:4},
+  {os:"Word",keys:["Ctrl","K"],action:"Insert hyperlink",cat:"Editing",freq:4},
+  {os:"Word",keys:["Ctrl","E"],action:"Center align",cat:"Format",freq:4},
+  {os:"Word",keys:["Ctrl","L"],action:"Left align",cat:"Format",freq:4},
+  {os:"Word",keys:["Ctrl","R"],action:"Right align",cat:"Format",freq:4},
+  {os:"Word",keys:["Ctrl","J"],action:"Justify text",cat:"Format",freq:3},
+  {os:"Word",keys:["Ctrl","Shift","C"],action:"Copy formatting (format painter)",cat:"Format",freq:3},
+  {os:"Word",keys:["Ctrl","Shift","V"],action:"Paste formatting",cat:"Format",freq:3},
+  {os:"Word",keys:["Ctrl","Shift",">"],action:"Increase font size",cat:"Format",freq:3},
+  {os:"Word",keys:["Ctrl","Shift","<"],action:"Decrease font size",cat:"Format",freq:3},
+  {os:"Word",keys:["Ctrl","Alt","M"],action:"Insert a comment",cat:"Collaboration",freq:3},
+  {os:"Word",keys:["Ctrl","Shift","8"],action:"Show formatting marks (paragraph marks)",cat:"View",freq:2},
+  {os:"Word",keys:["Alt","Shift","D"],action:"Insert a date field",cat:"Editing",freq:2},
+  {os:"Word",keys:["Ctrl","Alt","1"],action:"Apply Heading 1 style",cat:"Format",freq:2},
+  {os:"Word",keys:["Ctrl","Shift","F5"],action:"Open the Bookmark dialog",cat:"Editing",freq:1},
+
+  // GOOGLE SHEETS
+  {os:"GoogleSheets",keys:["Ctrl","C"],action:"Copy cell",cat:"Editing",freq:5},
+  {os:"GoogleSheets",keys:["Ctrl","V"],action:"Paste cell",cat:"Editing",freq:5},
+  {os:"GoogleSheets",keys:["Ctrl","Z"],action:"Undo",cat:"Editing",freq:5},
+  {os:"GoogleSheets",keys:["Ctrl","X"],action:"Cut cell",cat:"Editing",freq:5},
+  {os:"GoogleSheets",keys:["Ctrl","A"],action:"Select all",cat:"Editing",freq:5},
+  {os:"GoogleSheets",keys:["Ctrl","F"],action:"Find",cat:"Navigation",freq:5},
+  {os:"GoogleSheets",keys:["Ctrl","B"],action:"Bold",cat:"Format",freq:5},
+  {os:"GoogleSheets",keys:["Enter"],action:"Confirm cell entry & move down",cat:"Navigation",freq:5},
+  {os:"GoogleSheets",keys:["Tab"],action:"Move to the cell on the right",cat:"Navigation",freq:5},
+  {os:"GoogleSheets",keys:["Ctrl","Y"],action:"Redo",cat:"Editing",freq:4},
+  {os:"GoogleSheets",keys:["Ctrl","H"],action:"Find and replace",cat:"Navigation",freq:4},
+  {os:"GoogleSheets",keys:["Ctrl","Home"],action:"Go to cell A1",cat:"Navigation",freq:4},
+  {os:"GoogleSheets",keys:["Ctrl","End"],action:"Go to the last cell with data",cat:"Navigation",freq:4},
+  {os:"GoogleSheets",keys:["Ctrl","Shift","V"],action:"Paste values only",cat:"Editing",freq:4},
+  {os:"GoogleSheets",keys:["Ctrl",";"],action:"Insert today's date",cat:"Data",freq:3},
+  {os:"GoogleSheets",keys:["Ctrl","Shift",";"],action:"Insert current time",cat:"Data",freq:3},
+  {os:"GoogleSheets",keys:["Alt","Enter"],action:"New line inside a cell",cat:"Editing",freq:3},
+  {os:"GoogleSheets",keys:["F2"],action:"Edit the active cell",cat:"Editing",freq:3},
+  {os:"GoogleSheets",keys:["Ctrl","\\"],action:"Clear formatting",cat:"Format",freq:3},
+  {os:"GoogleSheets",keys:["Ctrl","Alt","M"],action:"Insert a comment",cat:"Collaboration",freq:3},
+  {os:"GoogleSheets",keys:["Ctrl","K"],action:"Insert link",cat:"Editing",freq:2},
+  {os:"GoogleSheets",keys:["Ctrl","Space"],action:"Select the entire column",cat:"Navigation",freq:2},
+  {os:"GoogleSheets",keys:["Shift","Space"],action:"Select the entire row",cat:"Navigation",freq:2},
+  {os:"GoogleSheets",keys:["Ctrl","`"],action:"Toggle show formulas",cat:"Formula",freq:1},
+
+  // GOOGLE DOCS
+  {os:"GoogleDocs",keys:["Ctrl","C"],action:"Copy",cat:"Editing",freq:5},
+  {os:"GoogleDocs",keys:["Ctrl","V"],action:"Paste",cat:"Editing",freq:5},
+  {os:"GoogleDocs",keys:["Ctrl","Z"],action:"Undo",cat:"Editing",freq:5},
+  {os:"GoogleDocs",keys:["Ctrl","X"],action:"Cut",cat:"Editing",freq:5},
+  {os:"GoogleDocs",keys:["Ctrl","A"],action:"Select all",cat:"Editing",freq:5},
+  {os:"GoogleDocs",keys:["Ctrl","F"],action:"Find",cat:"Navigation",freq:5},
+  {os:"GoogleDocs",keys:["Ctrl","B"],action:"Bold",cat:"Format",freq:5},
+  {os:"GoogleDocs",keys:["Ctrl","I"],action:"Italic",cat:"Format",freq:5},
+  {os:"GoogleDocs",keys:["Ctrl","U"],action:"Underline",cat:"Format",freq:5},
+  {os:"GoogleDocs",keys:["Ctrl","Y"],action:"Redo",cat:"Editing",freq:4},
+  {os:"GoogleDocs",keys:["Ctrl","H"],action:"Find and replace",cat:"Navigation",freq:4},
+  {os:"GoogleDocs",keys:["Ctrl","K"],action:"Insert link",cat:"Editing",freq:4},
+  {os:"GoogleDocs",keys:["Ctrl","Alt","M"],action:"Insert a comment",cat:"Collaboration",freq:4},
+  {os:"GoogleDocs",keys:["Ctrl","Enter"],action:"Insert a page break",cat:"Format",freq:4},
+  {os:"GoogleDocs",keys:["Ctrl","Home"],action:"Go to the start of the document",cat:"Navigation",freq:3},
+  {os:"GoogleDocs",keys:["Ctrl","End"],action:"Go to the end of the document",cat:"Navigation",freq:3},
+  {os:"GoogleDocs",keys:["Ctrl","Shift","V"],action:"Paste without formatting",cat:"Format",freq:3},
+  {os:"GoogleDocs",keys:["Ctrl","Shift","7"],action:"Create numbered list",cat:"Format",freq:3},
+  {os:"GoogleDocs",keys:["Ctrl","Shift","8"],action:"Create bulleted list",cat:"Format",freq:3},
+  {os:"GoogleDocs",keys:["Ctrl","]"],action:"Increase indent",cat:"Format",freq:2},
+  {os:"GoogleDocs",keys:["Ctrl","["],action:"Decrease indent",cat:"Format",freq:2},
+  {os:"GoogleDocs",keys:["Ctrl","Shift","C"],action:"View word count",cat:"Utility",freq:2},
+  {os:"GoogleDocs",keys:["Ctrl","Alt","1"],action:"Apply Heading 1 style",cat:"Format",freq:1},
+
+  // ORACLE (SQL*Plus)
+  {os:"Oracle",cmd:true,keys:["SELECT * FROM table;"],action:"Retrieve all rows from a table",cat:"Query",freq:5},
+  {os:"Oracle",cmd:true,keys:["INSERT INTO table (col1, col2) VALUES (v1, v2);"],action:"Insert a new row",cat:"Query",freq:5},
+  {os:"Oracle",cmd:true,keys:["UPDATE table SET col = value WHERE condition;"],action:"Update existing rows",cat:"Query",freq:5},
+  {os:"Oracle",cmd:true,keys:["DELETE FROM table WHERE condition;"],action:"Delete rows",cat:"Query",freq:5},
+  {os:"Oracle",cmd:true,keys:["COMMIT;"],action:"Commit the current transaction",cat:"Transaction",freq:5},
+  {os:"Oracle",cmd:true,keys:["ROLLBACK;"],action:"Roll back the current transaction",cat:"Transaction",freq:5},
+  {os:"Oracle",cmd:true,keys:["DESC table;"],action:"Describe a table's columns",cat:"Schema",freq:5},
+  {os:"Oracle",cmd:true,keys:["EXIT;"],action:"Exit SQL*Plus",cat:"Session",freq:5},
+  {os:"Oracle",cmd:true,keys:["SELECT * FROM dual;"],action:"Test a query against the dummy DUAL table",cat:"Query",freq:5},
+  {os:"Oracle",cmd:true,keys:["SHOW USER;"],action:"Show the currently connected user",cat:"Session",freq:5},
+  {os:"Oracle",cmd:true,keys:["CREATE TABLE table (col1 TYPE, col2 TYPE);"],action:"Create a new table",cat:"Schema",freq:4},
+  {os:"Oracle",cmd:true,keys:["ALTER TABLE table ADD (col TYPE);"],action:"Add a column to a table",cat:"Schema",freq:4},
+  {os:"Oracle",cmd:true,keys:["DROP TABLE table;"],action:"Delete a table",cat:"Schema",freq:4},
+  {os:"Oracle",cmd:true,keys:["CREATE INDEX idx_name ON table (col);"],action:"Create an index",cat:"Schema",freq:4},
+  {os:"Oracle",cmd:true,keys:["sqlplus user/password@db"],action:"Connect to a database via SQL*Plus",cat:"Session",freq:4},
+  {os:"Oracle",cmd:true,keys:["SELECT table_name FROM user_tables;"],action:"List tables owned by the current user",cat:"Schema",freq:4},
+  {os:"Oracle",cmd:true,keys:["SET LINESIZE 200"],action:"Set the display line width",cat:"Session",freq:4},
+  {os:"Oracle",cmd:true,keys:["SET PAGESIZE 50"],action:"Set the number of rows per page",cat:"Session",freq:4},
+  {os:"Oracle",cmd:true,keys:["SPOOL file.txt;"],action:"Save query output to a file",cat:"Session",freq:4},
+  {os:"Oracle",cmd:true,keys:["expdp user/password DIRECTORY=dir DUMPFILE=file.dmp"],action:"Export data with Data Pump",cat:"Admin",freq:4},
+  {os:"Oracle",cmd:true,keys:["EXPLAIN PLAN FOR SELECT ...;"],action:"Generate a query execution plan",cat:"Performance",freq:3},
+  {os:"Oracle",cmd:true,keys:["GRANT SELECT ON table TO user;"],action:"Grant a privilege to a user",cat:"Security",freq:3},
+  {os:"Oracle",cmd:true,keys:["CREATE VIEW view_name AS SELECT ...;"],action:"Create a view",cat:"Schema",freq:3},
+  {os:"Oracle",cmd:true,keys:["CREATE SEQUENCE seq_name;"],action:"Create a sequence generator",cat:"Schema",freq:3},
+  {os:"Oracle",cmd:true,keys:["TRUNCATE TABLE table;"],action:"Remove all rows from a table quickly",cat:"Query",freq:3},
+  {os:"Oracle",cmd:true,keys:["SELECT * FROM v$session;"],action:"List active sessions",cat:"Admin",freq:3},
+  {os:"Oracle",cmd:true,keys:["ALTER SESSION SET parameter = value;"],action:"Change a setting for the current session",cat:"Session",freq:3},
+  {os:"Oracle",cmd:true,keys:["CREATE OR REPLACE PROCEDURE proc_name AS ..."],action:"Create or replace a stored procedure",cat:"Schema",freq:3},
+  {os:"Oracle",cmd:true,keys:["SHUTDOWN IMMEDIATE;"],action:"Shut down the database instance",cat:"Admin",freq:3},
+  {os:"Oracle",cmd:true,keys:["STARTUP;"],action:"Start up the database instance",cat:"Admin",freq:2},
+  {os:"Oracle",cmd:true,keys:["ALTER SYSTEM SWITCH LOGFILE;"],action:"Force a redo log switch",cat:"Admin",freq:2},
+  {os:"Oracle",cmd:true,keys:["SELECT * FROM v$instance;"],action:"Show instance status details",cat:"Admin",freq:2},
+  {os:"Oracle",cmd:true,keys:["rman target /"],action:"Open the RMAN backup and recovery utility",cat:"Admin",freq:2},
+  {os:"Oracle",cmd:true,keys:["ALTER TABLESPACE ts ADD DATAFILE 'file.dbf';"],action:"Add a data file to a tablespace",cat:"Admin",freq:2},
+  {os:"Oracle",cmd:true,keys:["ALTER DATABASE OPEN;"],action:"Open the database after mount",cat:"Admin",freq:1},
+  {os:"Oracle",cmd:true,keys:["ALTER SYSTEM SET parameter=value SCOPE=BOTH;"],action:"Change a system parameter permanently",cat:"Admin",freq:1},
+  {os:"Oracle",cmd:true,keys:["SELECT * FROM v$parameter;"],action:"List current instance parameters",cat:"Admin",freq:1},
+
+  // POSTGRESQL (psql)
+  {os:"PostgreSQL",cmd:true,keys:["SELECT * FROM table;"],action:"Retrieve all rows from a table",cat:"Query",freq:5},
+  {os:"PostgreSQL",cmd:true,keys:["INSERT INTO table (col1, col2) VALUES (v1, v2);"],action:"Insert a new row",cat:"Query",freq:5},
+  {os:"PostgreSQL",cmd:true,keys:["UPDATE table SET col = value WHERE condition;"],action:"Update existing rows",cat:"Query",freq:5},
+  {os:"PostgreSQL",cmd:true,keys:["DELETE FROM table WHERE condition;"],action:"Delete rows",cat:"Query",freq:5},
+  {os:"PostgreSQL",cmd:true,keys:["\\dt"],action:"List tables in the current database",cat:"Schema",freq:5},
+  {os:"PostgreSQL",cmd:true,keys:["\\d table"],action:"Describe a table's structure",cat:"Schema",freq:5},
+  {os:"PostgreSQL",cmd:true,keys:["\\q"],action:"Quit psql",cat:"Session",freq:5},
+  {os:"PostgreSQL",cmd:true,keys:["\\l"],action:"List all databases",cat:"Schema",freq:5},
+  {os:"PostgreSQL",cmd:true,keys:["\\c dbname"],action:"Connect to a different database",cat:"Session",freq:5},
+  {os:"PostgreSQL",cmd:true,keys:["SELECT NOW();"],action:"Get the current date and time",cat:"Query",freq:5},
+  {os:"PostgreSQL",cmd:true,keys:["CREATE TABLE table (col1 TYPE, col2 TYPE);"],action:"Create a new table",cat:"Schema",freq:4},
+  {os:"PostgreSQL",cmd:true,keys:["ALTER TABLE table ADD COLUMN col TYPE;"],action:"Add a column to a table",cat:"Schema",freq:4},
+  {os:"PostgreSQL",cmd:true,keys:["DROP TABLE table;"],action:"Delete a table",cat:"Schema",freq:4},
+  {os:"PostgreSQL",cmd:true,keys:["CREATE INDEX idx_name ON table (col);"],action:"Create an index",cat:"Schema",freq:4},
+  {os:"PostgreSQL",cmd:true,keys:["\\du"],action:"List roles and users",cat:"Security",freq:4},
+  {os:"PostgreSQL",cmd:true,keys:["\\timing"],action:"Toggle display of query execution time",cat:"Session",freq:4},
+  {os:"PostgreSQL",cmd:true,keys:["COPY table TO 'file.csv' CSV;"],action:"Export table data to a CSV file",cat:"Data",freq:4},
+  {os:"PostgreSQL",cmd:true,keys:["pg_dump dbname > file.sql"],action:"Back up a database to a SQL file",cat:"Admin",freq:4},
+  {os:"PostgreSQL",cmd:true,keys:["psql -U user -d dbname"],action:"Connect to a database from the shell",cat:"Session",freq:4},
+  {os:"PostgreSQL",cmd:true,keys:["\\x"],action:"Toggle expanded (vertical) row display",cat:"Session",freq:4},
+  {os:"PostgreSQL",cmd:true,keys:["EXPLAIN ANALYZE SELECT ...;"],action:"Show and run a query's execution plan",cat:"Performance",freq:3},
+  {os:"PostgreSQL",cmd:true,keys:["VACUUM ANALYZE table;"],action:"Reclaim space and update planner statistics",cat:"Performance",freq:3},
+  {os:"PostgreSQL",cmd:true,keys:["GRANT SELECT ON table TO user;"],action:"Grant a privilege to a user",cat:"Security",freq:3},
+  {os:"PostgreSQL",cmd:true,keys:["\\df"],action:"List available functions",cat:"Schema",freq:3},
+  {os:"PostgreSQL",cmd:true,keys:["\\dn"],action:"List schemas",cat:"Schema",freq:3},
+  {os:"PostgreSQL",cmd:true,keys:["pg_restore -d dbname file.dump"],action:"Restore a database from a dump file",cat:"Admin",freq:3},
+  {os:"PostgreSQL",cmd:true,keys:["ALTER TABLE table RENAME TO new_name;"],action:"Rename a table",cat:"Schema",freq:3},
+  {os:"PostgreSQL",cmd:true,keys:["CREATE VIEW view_name AS SELECT ...;"],action:"Create a view",cat:"Schema",freq:3},
+  {os:"PostgreSQL",cmd:true,keys:["TRUNCATE TABLE table;"],action:"Remove all rows from a table quickly",cat:"Query",freq:3},
+  {os:"PostgreSQL",cmd:true,keys:["\\e"],action:"Edit the current query in $EDITOR",cat:"Session",freq:2},
+  {os:"PostgreSQL",cmd:true,keys:["\\i file.sql"],action:"Execute commands from a file",cat:"Session",freq:2},
+  {os:"PostgreSQL",cmd:true,keys:["CREATE EXTENSION extension_name;"],action:"Enable a database extension",cat:"Schema",freq:2},
+  {os:"PostgreSQL",cmd:true,keys:["SELECT pg_size_pretty(pg_database_size('db'));"],action:"Show human-readable database size",cat:"Admin",freq:2},
+  {os:"PostgreSQL",cmd:true,keys:["\\conninfo"],action:"Show current connection details",cat:"Session",freq:2},
+  {os:"PostgreSQL",cmd:true,keys:["ALTER USER user WITH PASSWORD 'x';"],action:"Change a user's password",cat:"Security",freq:2},
+  {os:"PostgreSQL",cmd:true,keys:["\\! command"],action:"Run a shell command from within psql",cat:"Session",freq:1},
+  {os:"PostgreSQL",cmd:true,keys:["\\watch"],action:"Repeatedly run the last query at an interval",cat:"Session",freq:1},
+  {os:"PostgreSQL",cmd:true,keys:["pg_basebackup -D dir"],action:"Take a base backup for replication",cat:"Admin",freq:1},
+
+  // SQL SERVER (T-SQL / sqlcmd)
+  {os:"SQLServer",cmd:true,keys:["SELECT * FROM table;"],action:"Retrieve all rows from a table",cat:"Query",freq:5},
+  {os:"SQLServer",cmd:true,keys:["INSERT INTO table (col1, col2) VALUES (v1, v2);"],action:"Insert a new row",cat:"Query",freq:5},
+  {os:"SQLServer",cmd:true,keys:["UPDATE table SET col = value WHERE condition;"],action:"Update existing rows",cat:"Query",freq:5},
+  {os:"SQLServer",cmd:true,keys:["DELETE FROM table WHERE condition;"],action:"Delete rows",cat:"Query",freq:5},
+  {os:"SQLServer",cmd:true,keys:["USE dbname;"],action:"Switch the active database",cat:"Session",freq:5},
+  {os:"SQLServer",cmd:true,keys:["SELECT @@VERSION;"],action:"Show the server version",cat:"Admin",freq:5},
+  {os:"SQLServer",cmd:true,keys:["EXEC sp_who;"],action:"List active connections",cat:"Admin",freq:5},
+  {os:"SQLServer",cmd:true,keys:["GO"],action:"Execute the current batch",cat:"Session",freq:5},
+  {os:"SQLServer",cmd:true,keys:["EXEC sp_help table;"],action:"Show details about a table",cat:"Schema",freq:5},
+  {os:"SQLServer",cmd:true,keys:["SELECT TOP 10 * FROM table;"],action:"Retrieve the first 10 rows",cat:"Query",freq:5},
+  {os:"SQLServer",cmd:true,keys:["CREATE TABLE table (col1 TYPE, col2 TYPE);"],action:"Create a new table",cat:"Schema",freq:4},
+  {os:"SQLServer",cmd:true,keys:["ALTER TABLE table ADD col TYPE;"],action:"Add a column to a table",cat:"Schema",freq:4},
+  {os:"SQLServer",cmd:true,keys:["DROP TABLE table;"],action:"Delete a table",cat:"Schema",freq:4},
+  {os:"SQLServer",cmd:true,keys:["CREATE INDEX idx_name ON table (col);"],action:"Create an index",cat:"Schema",freq:4},
+  {os:"SQLServer",cmd:true,keys:["BACKUP DATABASE dbname TO DISK='file.bak';"],action:"Back up a database to disk",cat:"Admin",freq:4},
+  {os:"SQLServer",cmd:true,keys:["RESTORE DATABASE dbname FROM DISK='file.bak';"],action:"Restore a database from a backup file",cat:"Admin",freq:4},
+  {os:"SQLServer",cmd:true,keys:["EXEC sp_helpdb;"],action:"List database information",cat:"Admin",freq:4},
+  {os:"SQLServer",cmd:true,keys:["EXEC sp_databases;"],action:"List available databases",cat:"Admin",freq:4},
+  {os:"SQLServer",cmd:true,keys:["sqlcmd -S server -U user -P password"],action:"Connect to a server from the shell",cat:"Session",freq:4},
+  {os:"SQLServer",cmd:true,keys:["SELECT * FROM sys.tables;"],action:"List all tables via system catalog",cat:"Schema",freq:4},
+  {os:"SQLServer",cmd:true,keys:["EXEC sp_rename 'old', 'new';"],action:"Rename an object",cat:"Schema",freq:3},
+  {os:"SQLServer",cmd:true,keys:["TRUNCATE TABLE table;"],action:"Remove all rows from a table quickly",cat:"Query",freq:3},
+  {os:"SQLServer",cmd:true,keys:["CREATE VIEW view_name AS SELECT ...;"],action:"Create a view",cat:"Schema",freq:3},
+  {os:"SQLServer",cmd:true,keys:["CREATE PROCEDURE proc_name AS ..."],action:"Create a stored procedure",cat:"Schema",freq:3},
+  {os:"SQLServer",cmd:true,keys:["ALTER DATABASE dbname SET option;"],action:"Change a database option",cat:"Admin",freq:3},
+  {os:"SQLServer",cmd:true,keys:["DBCC CHECKDB;"],action:"Check database integrity",cat:"Admin",freq:3},
+  {os:"SQLServer",cmd:true,keys:["EXEC sp_who2;"],action:"List detailed session/process info",cat:"Admin",freq:3},
+  {os:"SQLServer",cmd:true,keys:["GRANT SELECT ON table TO user;"],action:"Grant a privilege to a user",cat:"Security",freq:3},
+  {os:"SQLServer",cmd:true,keys:["EXEC sp_configure;"],action:"Show server configuration options",cat:"Admin",freq:3},
+  {os:"SQLServer",cmd:true,keys:["SET STATISTICS TIME ON;"],action:"Show query execution time statistics",cat:"Performance",freq:3},
+  {os:"SQLServer",cmd:true,keys:["EXEC sp_lock;"],action:"Show current lock information",cat:"Performance",freq:2},
+  {os:"SQLServer",cmd:true,keys:["DBCC FREEPROCCACHE;"],action:"Clear the procedure cache",cat:"Performance",freq:2},
+  {os:"SQLServer",cmd:true,keys:["ALTER INDEX idx_name ON table REBUILD;"],action:"Rebuild an index",cat:"Performance",freq:2},
+  {os:"SQLServer",cmd:true,keys:["EXEC sp_spaceused;"],action:"Show space used by the database",cat:"Admin",freq:2},
+  {os:"SQLServer",cmd:true,keys:["KILL session_id;"],action:"Terminate a session",cat:"Admin",freq:2},
+  {os:"SQLServer",cmd:true,keys:["DBCC SHRINKDATABASE(dbname);"],action:"Shrink a database's file size",cat:"Admin",freq:1},
+  {os:"SQLServer",cmd:true,keys:["EXEC sp_addlinkedserver 'server';"],action:"Add a linked server",cat:"Admin",freq:1},
+  {os:"SQLServer",cmd:true,keys:["EXEC sp_helpindex table;"],action:"List indexes on a table",cat:"Schema",freq:1},
+
+  // MYSQL
+  {os:"MySQL",cmd:true,keys:["SELECT * FROM table;"],action:"Retrieve all rows from a table",cat:"Query",freq:5},
+  {os:"MySQL",cmd:true,keys:["INSERT INTO table (col1, col2) VALUES (v1, v2);"],action:"Insert a new row",cat:"Query",freq:5},
+  {os:"MySQL",cmd:true,keys:["UPDATE table SET col = value WHERE condition;"],action:"Update existing rows",cat:"Query",freq:5},
+  {os:"MySQL",cmd:true,keys:["DELETE FROM table WHERE condition;"],action:"Delete rows",cat:"Query",freq:5},
+  {os:"MySQL",cmd:true,keys:["SHOW DATABASES;"],action:"List all databases",cat:"Schema",freq:5},
+  {os:"MySQL",cmd:true,keys:["SHOW TABLES;"],action:"List tables in the current database",cat:"Schema",freq:5},
+  {os:"MySQL",cmd:true,keys:["USE dbname;"],action:"Switch the active database",cat:"Session",freq:5},
+  {os:"MySQL",cmd:true,keys:["DESCRIBE table;"],action:"Describe a table's columns",cat:"Schema",freq:5},
+  {os:"MySQL",cmd:true,keys:["EXIT;"],action:"Exit the MySQL shell",cat:"Session",freq:5},
+  {os:"MySQL",cmd:true,keys:["SHOW COLUMNS FROM table;"],action:"List a table's columns and types",cat:"Schema",freq:5},
+  {os:"MySQL",cmd:true,keys:["CREATE TABLE table (col1 TYPE, col2 TYPE);"],action:"Create a new table",cat:"Schema",freq:4},
+  {os:"MySQL",cmd:true,keys:["ALTER TABLE table ADD COLUMN col TYPE;"],action:"Add a column to a table",cat:"Schema",freq:4},
+  {os:"MySQL",cmd:true,keys:["DROP TABLE table;"],action:"Delete a table",cat:"Schema",freq:4},
+  {os:"MySQL",cmd:true,keys:["CREATE INDEX idx_name ON table (col);"],action:"Create an index",cat:"Schema",freq:4},
+  {os:"MySQL",cmd:true,keys:["mysqldump -u user -p dbname > file.sql"],action:"Back up a database to a SQL file",cat:"Admin",freq:4},
+  {os:"MySQL",cmd:true,keys:["mysql -u user -p dbname"],action:"Connect to a database from the shell",cat:"Session",freq:4},
+  {os:"MySQL",cmd:true,keys:["SHOW PROCESSLIST;"],action:"List running queries and connections",cat:"Admin",freq:4},
+  {os:"MySQL",cmd:true,keys:["FLUSH PRIVILEGES;"],action:"Reload the grant tables",cat:"Security",freq:4},
+  {os:"MySQL",cmd:true,keys:["GRANT ALL PRIVILEGES ON db.* TO 'user'@'host';"],action:"Grant all privileges to a user",cat:"Security",freq:4},
+  {os:"MySQL",cmd:true,keys:["SET PASSWORD FOR 'user'@'host' = PASSWORD('x');"],action:"Change a user's password",cat:"Security",freq:4},
+  {os:"MySQL",cmd:true,keys:["EXPLAIN SELECT ...;"],action:"Show a query's execution plan",cat:"Performance",freq:3},
+  {os:"MySQL",cmd:true,keys:["SHOW CREATE TABLE table;"],action:"Show the CREATE statement for a table",cat:"Schema",freq:3},
+  {os:"MySQL",cmd:true,keys:["SHOW STATUS;"],action:"Show server status counters",cat:"Admin",freq:3},
+  {os:"MySQL",cmd:true,keys:["SHOW VARIABLES;"],action:"Show server configuration variables",cat:"Admin",freq:3},
+  {os:"MySQL",cmd:true,keys:["TRUNCATE TABLE table;"],action:"Remove all rows from a table quickly",cat:"Query",freq:3},
+  {os:"MySQL",cmd:true,keys:["ALTER TABLE table RENAME TO new_name;"],action:"Rename a table",cat:"Schema",freq:3},
+  {os:"MySQL",cmd:true,keys:["CREATE VIEW view_name AS SELECT ...;"],action:"Create a view",cat:"Schema",freq:3},
+  {os:"MySQL",cmd:true,keys:["SHOW GRANTS FOR 'user'@'host';"],action:"Show privileges granted to a user",cat:"Security",freq:3},
+  {os:"MySQL",cmd:true,keys:["mysqlimport -u user -p dbname file.txt"],action:"Import data from a text file",cat:"Data",freq:3},
+  {os:"MySQL",cmd:true,keys:["LOCK TABLES table WRITE;"],action:"Lock a table for writing",cat:"Performance",freq:3},
+  {os:"MySQL",cmd:true,keys:["OPTIMIZE TABLE table;"],action:"Reclaim unused space and defragment a table",cat:"Performance",freq:2},
+  {os:"MySQL",cmd:true,keys:["ANALYZE TABLE table;"],action:"Update table key distribution statistics",cat:"Performance",freq:2},
+  {os:"MySQL",cmd:true,keys:["SHOW ENGINE INNODB STATUS;"],action:"Show detailed InnoDB engine status",cat:"Performance",freq:2},
+  {os:"MySQL",cmd:true,keys:["SET GLOBAL variable = value;"],action:"Change a global server variable",cat:"Admin",freq:2},
+  {os:"MySQL",cmd:true,keys:["SOURCE file.sql;"],action:"Execute commands from a file",cat:"Session",freq:2},
+  {os:"MySQL",cmd:true,keys:["KILL process_id;"],action:"Terminate a running query or connection",cat:"Admin",freq:2},
+  {os:"MySQL",cmd:true,keys:["SHOW BINARY LOGS;"],action:"List binary log files",cat:"Admin",freq:1},
+  {os:"MySQL",cmd:true,keys:["RESET MASTER;"],action:"Clear all binary log files",cat:"Admin",freq:1},
+  {os:"MySQL",cmd:true,keys:["SHOW SLAVE STATUS;"],action:"Show replication status",cat:"Admin",freq:1},
+
+  // REDIS (redis-cli)
+  {os:"Redis",cmd:true,keys:["GET key"],action:"Retrieve the value of a key",cat:"Query",freq:5},
+  {os:"Redis",cmd:true,keys:["SET key value"],action:"Set the value of a key",cat:"Query",freq:5},
+  {os:"Redis",cmd:true,keys:["DEL key"],action:"Delete a key",cat:"Query",freq:5},
+  {os:"Redis",cmd:true,keys:["EXISTS key"],action:"Check whether a key exists",cat:"Query",freq:5},
+  {os:"Redis",cmd:true,keys:["KEYS pattern"],action:"Find keys matching a pattern",cat:"Query",freq:5},
+  {os:"Redis",cmd:true,keys:["EXPIRE key seconds"],action:"Set a key's time-to-live",cat:"Query",freq:5},
+  {os:"Redis",cmd:true,keys:["TTL key"],action:"Get the remaining time-to-live of a key",cat:"Query",freq:5},
+  {os:"Redis",cmd:true,keys:["PING"],action:"Check server connectivity",cat:"Session",freq:5},
+  {os:"Redis",cmd:true,keys:["FLUSHALL"],action:"Delete all keys in all databases",cat:"Admin",freq:5},
+  {os:"Redis",cmd:true,keys:["INCR key"],action:"Increment an integer value by 1",cat:"Query",freq:5},
+  {os:"Redis",cmd:true,keys:["HSET key field value"],action:"Set a field in a hash",cat:"Data structures",freq:4},
+  {os:"Redis",cmd:true,keys:["HGET key field"],action:"Get a field's value from a hash",cat:"Data structures",freq:4},
+  {os:"Redis",cmd:true,keys:["LPUSH key value"],action:"Push a value to the left of a list",cat:"Data structures",freq:4},
+  {os:"Redis",cmd:true,keys:["RPUSH key value"],action:"Push a value to the right of a list",cat:"Data structures",freq:4},
+  {os:"Redis",cmd:true,keys:["LRANGE key start stop"],action:"Get a range of elements from a list",cat:"Data structures",freq:4},
+  {os:"Redis",cmd:true,keys:["SADD key member"],action:"Add a member to a set",cat:"Data structures",freq:4},
+  {os:"Redis",cmd:true,keys:["SMEMBERS key"],action:"Get all members of a set",cat:"Data structures",freq:4},
+  {os:"Redis",cmd:true,keys:["ZADD key score member"],action:"Add a member to a sorted set",cat:"Data structures",freq:4},
+  {os:"Redis",cmd:true,keys:["TYPE key"],action:"Get the data type stored at a key",cat:"Query",freq:4},
+  {os:"Redis",cmd:true,keys:["RENAME key newkey"],action:"Rename a key",cat:"Query",freq:4},
+  {os:"Redis",cmd:true,keys:["HGETALL key"],action:"Get all fields and values in a hash",cat:"Data structures",freq:3},
+  {os:"Redis",cmd:true,keys:["SCAN cursor"],action:"Incrementally iterate over keys",cat:"Query",freq:3},
+  {os:"Redis",cmd:true,keys:["MULTI"],action:"Start a transaction block",cat:"Transaction",freq:3},
+  {os:"Redis",cmd:true,keys:["EXEC"],action:"Execute a queued transaction",cat:"Transaction",freq:3},
+  {os:"Redis",cmd:true,keys:["DISCARD"],action:"Discard a queued transaction",cat:"Transaction",freq:3},
+  {os:"Redis",cmd:true,keys:["SUBSCRIBE channel"],action:"Subscribe to a pub/sub channel",cat:"Pub/Sub",freq:3},
+  {os:"Redis",cmd:true,keys:["PUBLISH channel message"],action:"Publish a message to a channel",cat:"Pub/Sub",freq:3},
+  {os:"Redis",cmd:true,keys:["PERSIST key"],action:"Remove the expiration from a key",cat:"Query",freq:3},
+  {os:"Redis",cmd:true,keys:["SETEX key seconds value"],action:"Set a key's value with an expiration",cat:"Query",freq:3},
+  {os:"Redis",cmd:true,keys:["DBSIZE"],action:"Get the number of keys in the current database",cat:"Admin",freq:3},
+  {os:"Redis",cmd:true,keys:["CONFIG GET parameter"],action:"Get a configuration parameter's value",cat:"Admin",freq:2},
+  {os:"Redis",cmd:true,keys:["CONFIG SET parameter value"],action:"Set a configuration parameter",cat:"Admin",freq:2},
+  {os:"Redis",cmd:true,keys:["INFO"],action:"Show server information and statistics",cat:"Admin",freq:2},
+  {os:"Redis",cmd:true,keys:["MONITOR"],action:"Stream every command processed by the server",cat:"Admin",freq:2},
+  {os:"Redis",cmd:true,keys:["CLIENT LIST"],action:"List connected clients",cat:"Admin",freq:2},
+  {os:"Redis",cmd:true,keys:["FLUSHDB"],action:"Delete all keys in the current database",cat:"Admin",freq:2},
+  {os:"Redis",cmd:true,keys:["SHUTDOWN NOSAVE"],action:"Shut down the server without saving",cat:"Admin",freq:1},
+  {os:"Redis",cmd:true,keys:["DEBUG SLEEP seconds"],action:"Pause the server for testing purposes",cat:"Admin",freq:1},
+  {os:"Redis",cmd:true,keys:["CLUSTER INFO"],action:"Show cluster state information",cat:"Admin",freq:1},
+
+  // MONGODB (mongosh)
+  {os:"MongoDB",cmd:true,keys:["db.collection.find()"],action:"Retrieve all documents in a collection",cat:"Query",freq:5},
+  {os:"MongoDB",cmd:true,keys:["db.collection.insertOne({...})"],action:"Insert a single document",cat:"Query",freq:5},
+  {os:"MongoDB",cmd:true,keys:["db.collection.updateOne({...}, {$set:{...}})"],action:"Update a single document",cat:"Query",freq:5},
+  {os:"MongoDB",cmd:true,keys:["db.collection.deleteOne({...})"],action:"Delete a single document",cat:"Query",freq:5},
+  {os:"MongoDB",cmd:true,keys:["show dbs"],action:"List all databases",cat:"Schema",freq:5},
+  {os:"MongoDB",cmd:true,keys:["use dbname"],action:"Switch the active database",cat:"Session",freq:5},
+  {os:"MongoDB",cmd:true,keys:["show collections"],action:"List collections in the current database",cat:"Schema",freq:5},
+  {os:"MongoDB",cmd:true,keys:["db.collection.countDocuments()"],action:"Count documents in a collection",cat:"Query",freq:5},
+  {os:"MongoDB",cmd:true,keys:["exit"],action:"Exit the mongosh shell",cat:"Session",freq:5},
+  {os:"MongoDB",cmd:true,keys:["db.collection.find().pretty()"],action:"Display query results formatted for readability",cat:"Query",freq:5},
+  {os:"MongoDB",cmd:true,keys:["db.collection.find({field: value})"],action:"Query documents matching a filter",cat:"Query",freq:4},
+  {os:"MongoDB",cmd:true,keys:["db.collection.insertMany([...])"],action:"Insert multiple documents",cat:"Query",freq:4},
+  {os:"MongoDB",cmd:true,keys:["db.collection.updateMany({...}, {$set:{...}})"],action:"Update multiple documents",cat:"Query",freq:4},
+  {os:"MongoDB",cmd:true,keys:["db.collection.deleteMany({...})"],action:"Delete multiple documents",cat:"Query",freq:4},
+  {os:"MongoDB",cmd:true,keys:["db.createCollection(\"name\")"],action:"Create a new collection",cat:"Schema",freq:4},
+  {os:"MongoDB",cmd:true,keys:["db.collection.drop()"],action:"Delete a collection",cat:"Schema",freq:4},
+  {os:"MongoDB",cmd:true,keys:["db.collection.createIndex({field: 1})"],action:"Create an index on a field",cat:"Schema",freq:4},
+  {os:"MongoDB",cmd:true,keys:["db.stats()"],action:"Show database statistics",cat:"Admin",freq:4},
+  {os:"MongoDB",cmd:true,keys:["db.collection.aggregate([...])"],action:"Run an aggregation pipeline",cat:"Query",freq:4},
+  {os:"MongoDB",cmd:true,keys:["mongodump --db=dbname"],action:"Back up a database",cat:"Admin",freq:4},
+  {os:"MongoDB",cmd:true,keys:["db.collection.find().sort({field: 1})"],action:"Sort query results",cat:"Query",freq:3},
+  {os:"MongoDB",cmd:true,keys:["db.collection.find().limit(n)"],action:"Limit the number of returned documents",cat:"Query",freq:3},
+  {os:"MongoDB",cmd:true,keys:["db.collection.distinct(\"field\")"],action:"Get distinct values for a field",cat:"Query",freq:3},
+  {os:"MongoDB",cmd:true,keys:["db.collection.findOne({...})"],action:"Retrieve a single matching document",cat:"Query",freq:3},
+  {os:"MongoDB",cmd:true,keys:["db.getCollectionNames()"],action:"List collection names programmatically",cat:"Schema",freq:3},
+  {os:"MongoDB",cmd:true,keys:["mongorestore --db=dbname"],action:"Restore a database from a backup",cat:"Admin",freq:3},
+  {os:"MongoDB",cmd:true,keys:["db.collection.stats()"],action:"Show statistics for a collection",cat:"Admin",freq:3},
+  {os:"MongoDB",cmd:true,keys:["db.collection.renameCollection(\"newname\")"],action:"Rename a collection",cat:"Schema",freq:3},
+  {os:"MongoDB",cmd:true,keys:["db.dropDatabase()"],action:"Delete the current database",cat:"Admin",freq:3},
+  {os:"MongoDB",cmd:true,keys:["db.collection.explain()"],action:"Show a query's execution plan",cat:"Performance",freq:3},
+  {os:"MongoDB",cmd:true,keys:["db.currentOp()"],action:"Show currently running operations",cat:"Admin",freq:2},
+  {os:"MongoDB",cmd:true,keys:["db.killOp(opid)"],action:"Terminate a running operation",cat:"Admin",freq:2},
+  {os:"MongoDB",cmd:true,keys:["db.serverStatus()"],action:"Show detailed server status",cat:"Admin",freq:2},
+  {os:"MongoDB",cmd:true,keys:["rs.status()"],action:"Show replica set status",cat:"Admin",freq:2},
+  {os:"MongoDB",cmd:true,keys:["db.collection.getIndexes()"],action:"List indexes on a collection",cat:"Schema",freq:2},
+  {os:"MongoDB",cmd:true,keys:["db.adminCommand({...})"],action:"Run an administrative command",cat:"Admin",freq:2},
+  {os:"MongoDB",cmd:true,keys:["db.shutdownServer()"],action:"Shut down the mongod server",cat:"Admin",freq:1},
+  {os:"MongoDB",cmd:true,keys:["db.collection.reIndex()"],action:"Rebuild all indexes on a collection",cat:"Performance",freq:1},
+  {os:"MongoDB",cmd:true,keys:["sh.status()"],action:"Show sharding status",cat:"Admin",freq:1},
+];
+
+const HEAT = {5:"var(--h5)",4:"var(--h4)",3:"var(--h3)",2:"var(--h2)",1:"var(--h1)"};
+const HEAT_LABEL = {5:"Very frequent",4:"Frequent",3:"Occasional",2:"Rare",1:"Very rare"};
+
+let state = { os:"All", query:"", sort:"freqDesc" };
+
+function getFiltered(){
+  let rows = DATA.filter(r=>{
+    const matchOs = state.os==="All" || r.os===state.os;
+    const q = state.query.trim().toLowerCase();
+    const matchQ = !q || r.action.toLowerCase().includes(q) || r.cat.toLowerCase().includes(q) || r.keys.join("+").toLowerCase().includes(q);
+    return matchOs && matchQ;
+  });
+  if(state.sort==="freqDesc") rows.sort((a,b)=>b.freq-a.freq);
+  else if(state.sort==="freqAsc") rows.sort((a,b)=>a.freq-b.freq);
+  else if(state.sort==="az") rows.sort((a,b)=>a.action.localeCompare(b.action));
+  return rows;
+}
+
+function render(){
+  const rows = getFiltered();
+  document.getElementById("countLabel").textContent = `Showing ${rows.length} of ${DATA.length} entries`;
+  const tbody = document.getElementById("tbody");
+  tbody.innerHTML = rows.map(r=>`
+    <tr>
+      <td><span class="os-badge os-${r.os}">${r.os}</span></td>
+      <td>${r.cmd ? `<code class="cmdline">${r.keys[0]}</code>` : `<div class="keys">${r.keys.map((k,i)=>`${i>0?'<span class="plus">+</span>':''}<kbd>${k}</kbd>`).join("")}</div>`}</td>
+      <td class="action">${r.action}</td>
+      <td class="category">${r.cat}</td>
+      <td>
+        <div class="heat">
+          <div class="heat-bar"><div class="heat-fill" style="width:${r.freq*20}%; background:${HEAT[r.freq]}"></div></div>
+          <span class="heat-label">${HEAT_LABEL[r.freq]}</span>
+        </div>
+      </td>
+    </tr>
+  `).join("");
+}
+
+document.getElementById("osTabs").addEventListener("click", e=>{
+  const btn = e.target.closest(".tab");
+  if(!btn) return;
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  btn.classList.add("active");
+  state.os = btn.dataset.os;
+  render();
+});
+document.getElementById("searchInput").addEventListener("input", e=>{
+  state.query = e.target.value;
+  render();
+});
+document.getElementById("sortSel").addEventListener("change", e=>{
+  state.sort = e.target.value;
+  render();
+});
+
+// ---------- EXPORTS ----------
+function currentRows(){ return getFiltered(); }
+function tsLabel(){
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+
+document.getElementById("btnExcel").addEventListener("click", ()=>{
+  const rows = currentRows();
+  const aoa = [["Tool","Shortcut/Command","Action","Category","Frequency"]];
+  rows.forEach(r=> aoa.push([r.os, r.keys.join(" + "), r.action, r.cat, HEAT_LABEL[r.freq]]));
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{wch:10},{wch:22},{wch:38},{wch:16},{wch:16}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Cheat Sheet");
+  XLSX.writeFile(wb, `keyboard-cheatsheet-${tsLabel()}.xlsx`);
+});
+
+document.getElementById("btnWord").addEventListener("click", ()=>{
+  const rows = currentRows();
+  const trs = rows.map(r=>`
+    <tr>
+      <td>${r.os}</td>
+      <td>${r.keys.join(" + ")}</td>
+      <td>${r.action}</td>
+      <td>${r.cat}</td>
+      <td>${HEAT_LABEL[r.freq]}</td>
+    </tr>`).join("");
+  const html = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+    <head><meta charset="utf-8"><title>Keyboard Cheat Sheet</title></head>
+    <body>
+      <h1 style="font-family:Calibri;">Keyboard Shortcut Cheat Sheet</h1>
+      <p style="font-family:Calibri;color:#555;">Exported on ${tsLabel()} — ${rows.length} shortcuts total.</p>
+      <table border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;font-family:Calibri;font-size:11pt;width:100%;">
+        <thead>
+          <tr style="background:#1a1a1a;color:#fff;">
+            <th>Tool</th><th>Shortcut/Command</th><th>Action</th><th>Category</th><th>Frequency</th>
+          </tr>
+        </thead>
+        <tbody>${trs}</tbody>
+      </table>
+    </body></html>`;
+  const blob = new Blob(['\ufeff', html], {type:'application/msword'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `keyboard-cheatsheet-${tsLabel()}.doc`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById("btnHtml").addEventListener("click", ()=>{
+  const rows = currentRows();
+  const trs = rows.map(r=>`
+    <tr>
+      <td><span class="badge b-${r.os}">${r.os}</span></td>
+      <td>${r.cmd ? `<code class="cmdline">${r.keys[0]}</code>` : r.keys.map(k=>`<kbd>${k}</kbd>`).join('<span class="plus">+</span>')}</td>
+      <td>${r.action}</td>
+      <td class="muted">${r.cat}</td>
+      <td><span class="heatdot" style="background:${HEAT[r.freq]}"></span> ${HEAT_LABEL[r.freq]}</td>
+    </tr>`).join("");
+  const staticHtml = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<title>Shortcut & Command Cheat Sheet (Static)</title>
+<style>
+  body{font-family:-apple-system,Segoe UI,Arial,sans-serif;background:#0a0c10;color:#e9ebf0;margin:0;padding:40px 24px;}
+  .wrap{max-width:1100px;margin:0 auto;}
+  h1{font-family:'Courier New',monospace;}
+  table{width:100%;border-collapse:collapse;margin-top:20px;background:#12151b;border:1px solid #262b35;border-radius:8px;overflow:hidden;}
+  th,td{padding:10px 14px;text-align:left;font-size:13px;border-bottom:1px solid #262b35;}
+  th{background:#171b22;text-transform:uppercase;font-size:11px;letter-spacing:.06em;color:#8b93a3;}
+  kbd{font-family:'Courier New',monospace;background:#232833;border:1px solid #363c48;border-bottom:2px solid #0c0e12;border-radius:5px;padding:3px 7px;font-size:12px;}
+  .cmdline{font-family:'Courier New',monospace;background:#171b22;border:1px solid #262b35;border-radius:6px;padding:4px 8px;font-size:12px;color:#8ee6c4;display:inline-block;}
+  .plus{color:#8b93a3;margin:0 4px;font-size:11px;}
+  .badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;font-family:'Courier New',monospace;}
+  .b-Windows{background:rgba(95,198,255,.15);color:#5fc6ff;}
+  .b-Linux{background:rgba(255,159,77,.15);color:#ff9f4d;}
+  .b-macOS{background:rgba(200,200,210,.15);color:#d6d9e0;}
+  .b-Photoshop{background:rgba(49,168,255,.15);color:#31a8ff;}
+  .b-Excel{background:rgba(33,115,70,.2);color:#3dba7a;}
+  .b-Word{background:rgba(43,87,154,.2);color:#5a8fd6;}
+  .b-GoogleSheets{background:rgba(15,157,88,.18);color:#2fbf71;}
+  .b-GoogleDocs{background:rgba(66,133,244,.18);color:#6ea1f7;}
+  .b-Oracle{background:rgba(248,0,0,.15);color:#ff5c5c;}
+  .b-PostgreSQL{background:rgba(51,103,145,.22);color:#6fa8d1;}
+  .b-SQLServer{background:rgba(169,30,34,.2);color:#e2585c;}
+  .b-MySQL{background:rgba(228,142,0,.18);color:#f2a93c;}
+  .b-Redis{background:rgba(216,44,32,.18);color:#ff6a54;}
+  .b-MongoDB{background:rgba(77,179,61,.18);color:#6fd45c;}
+  .muted{color:#8b93a3;}
+  .heatdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;}
+  .foot{margin-top:20px;font-size:11px;color:#8b93a3;font-family:'Courier New',monospace;}
+</style></head>
+<body><div class="wrap">
+  <h1>Shortcut & Command Cheat Sheet</h1>
+  <p class="muted">Static page — no server or internet connection required. Exported ${tsLabel()}, ${rows.length} entries.</p>
+  <table><thead><tr><th>Tool</th><th>Shortcut/Command</th><th>Action</th><th>Category</th><th>Frequency</th></tr></thead>
+  <tbody>${trs}</tbody></table>
+  <div class="foot">Command Deck · exported static build</div>
+</div></body></html>`;
+  const blob = new Blob([staticHtml], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `cheatsheet-static-${tsLabel()}.html`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+render();
+</script>
+</body>
+</html>

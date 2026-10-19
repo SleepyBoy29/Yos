@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TypeTrack // Sentence Typing Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0d0b;
+    --bg-raised: #121613;
+    --bg-panel: #171c19;
+    --line: #263029;
+    --amber: #ffb000;
+    --amber-dim: #a87400;
+    --cyan: #5fb3c9;
+    --err: #e5484d;
+    --text: #d9ddd6;
+    --text-dim: #7c877e;
+    --text-faint: #4a534c;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at 50% -10%, rgba(255,176,0,0.06), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'JetBrains Mono', monospace;
+    min-height:100vh;
+    padding:28px 16px 60px;
+    position:relative;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background:repeating-linear-gradient(
+      to bottom, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px,
+      transparent 1px, transparent 3px);
+    pointer-events:none;
+    z-index:50;
+  }
+  .wrap{max-width:820px; margin:0 auto;}
+
+  /* header */
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px; flex-wrap:wrap;
+    border-bottom:1px solid var(--line);
+    padding-bottom:16px; margin-bottom:20px;
+  }
+  .brand{display:flex; align-items:baseline; gap:10px;}
+  .brand .cursor-blk{
+    display:inline-block; width:11px; height:20px; background:var(--amber);
+    animation:blink 1.1s steps(1) infinite; vertical-align:-3px;
+  }
+  .brand h1{font-size:19px; letter-spacing:0.5px; margin:0; font-weight:800; color:var(--text);}
+  .brand h1 span{color:var(--amber);}
+  .brand .tag{font-size:11px; color:var(--text-faint); letter-spacing:1px; text-transform:uppercase;}
+  @keyframes blink{0%,45%{opacity:1;}50%,95%{opacity:0;}100%{opacity:1;}}
+
+  .stat-bar{display:flex; gap:18px; font-size:12px; color:var(--text-dim);}
+  .stat-bar b{display:block; font-size:18px; color:var(--amber); font-weight:700;}
+  .stat-bar .item{text-align:right;}
+
+  .admin-btn{
+    background:var(--bg-panel); border:1px solid var(--line); color:var(--text-dim);
+    font-family:inherit; font-size:12px; padding:8px 12px; border-radius:4px;
+    cursor:pointer; letter-spacing:0.3px; transition:.15s;
+  }
+  .admin-btn:hover{border-color:var(--amber-dim); color:var(--amber);}
+
+  /* category chips */
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:22px;}
+  .chip{
+    background:var(--bg-panel); border:1px solid var(--line); color:var(--text-dim);
+    padding:7px 13px; border-radius:20px; font-size:12.5px; cursor:pointer;
+    font-family:inherit; transition:.15s;
+  }
+  .chip:hover{border-color:var(--cyan); color:var(--cyan);}
+  .chip.active{background:rgba(255,176,0,0.12); border-color:var(--amber); color:var(--amber);}
+
+  /* terminal panel */
+  .panel{
+    background:var(--bg-raised); border:1px solid var(--line); border-radius:8px;
+    padding:26px 24px 20px; position:relative; min-height:210px;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.2), 0 20px 50px -20px rgba(0,0,0,0.6);
+  }
+  .panel-topbar{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:11px; color:var(--text-faint); margin-bottom:18px; letter-spacing:0.5px;
+  }
+  .dots{display:flex; gap:6px;}
+  .dots span{width:9px; height:9px; border-radius:50%; background:var(--line);}
+
+  .prompt-line{color:var(--text-faint); font-size:12.5px; margin-bottom:10px; min-height:16px;}
+  .prompt-line .caret{color:var(--amber);}
+
+  #sentence{
+    font-size:22px; line-height:1.75; letter-spacing:0.2px;
+    min-height:100px; word-spacing:2px;
+  }
+  #sentence span{position:relative; white-space:pre-wrap;}
+  #sentence .pending{color:var(--text-faint);}
+  #sentence .correct{color:var(--text);}
+  #sentence .incorrect{color:var(--err); background:rgba(229,72,77,0.16); border-radius:2px;}
+  #sentence .current{
+    color:var(--text); border-left:2px solid var(--amber); animation:cur 1s steps(1) infinite;
+  }
+  @keyframes cur{0%,45%{border-color:var(--amber);}50%,95%{border-color:transparent;}100%{border-color:var(--amber);}}
+
+  .hint{font-size:11.5px; color:var(--text-faint); margin-top:18px; letter-spacing:0.3px;}
+  .hint b{color:var(--cyan);}
+
+  .live-stats{
+    display:flex; gap:26px; margin-top:16px; padding-top:14px;
+    border-top:1px dashed var(--line); font-size:12px; color:var(--text-dim);
+  }
+  .live-stats b{color:var(--amber); font-size:15px;}
+
+  footer{margin-top:22px; text-align:center; font-size:11px; color:var(--text-faint); letter-spacing:0.5px;}
+
+  /* overlay result */
+  .overlay{
+    position:fixed; inset:0; background:rgba(6,8,7,0.82); backdrop-filter:blur(3px);
+    display:none; align-items:center; justify-content:center; z-index:100; padding:20px;
+  }
+  .overlay.show{display:flex;}
+  .result-card{
+    background:var(--bg-panel); border:1px solid var(--amber-dim); border-radius:10px;
+    padding:30px 32px; width:100%; max-width:420px; text-align:center;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,0.8);
+  }
+  .result-card h2{margin:0 0 4px; color:var(--amber); font-size:15px; letter-spacing:2px;}
+  .result-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:22px 0;}
+  .result-grid .box{background:var(--bg-raised); border:1px solid var(--line); border-radius:6px; padding:14px 8px;}
+  .result-grid .box .n{font-size:26px; font-weight:800; color:var(--text);}
+  .result-grid .box .l{font-size:10.5px; color:var(--text-faint); letter-spacing:1px; margin-top:4px;}
+  .best-note{font-size:11.5px; color:var(--cyan); margin-bottom:6px; min-height:16px;}
+  .btn-row{display:flex; gap:10px; margin-top:6px;}
+  .btn{
+    flex:1; padding:11px; border-radius:6px; border:1px solid var(--line); cursor:pointer;
+    font-family:inherit; font-size:12.5px; letter-spacing:0.3px; background:var(--bg-raised); color:var(--text);
+  }
+  .btn.primary{background:var(--amber); color:#141b12; border-color:var(--amber); font-weight:700;}
+  .btn:hover{filter:brightness(1.12);}
+
+  /* admin drawer */
+  .drawer-overlay{
+    position:fixed; inset:0; background:rgba(6,8,7,0.75); display:none; z-index:90;
+  }
+  .drawer-overlay.show{display:block;}
+  .drawer{
+    position:fixed; top:0; right:0; height:100%; width:100%; max-width:440px;
+    background:var(--bg-panel); border-left:1px solid var(--line); z-index:91;
+    transform:translateX(100%); transition:transform .25s ease; overflow-y:auto;
+    padding:22px 20px 40px;
+  }
+  .drawer.show{transform:translateX(0);}
+  .drawer h3{color:var(--amber); font-size:14px; letter-spacing:1px; margin:0 0 4px;}
+  .drawer .sub{font-size:11.5px; color:var(--text-faint); margin-bottom:20px;}
+  .drawer-close{
+    position:absolute; top:18px; right:18px; background:none; border:none; color:var(--text-dim);
+    font-size:18px; cursor:pointer; font-family:inherit;
+  }
+  .field{margin-bottom:16px;}
+  .field label{font-size:11px; color:var(--text-dim); display:block; margin-bottom:6px; letter-spacing:0.5px;}
+  .field input, .field textarea, .field select{
+    width:100%; background:var(--bg-raised); border:1px solid var(--line); color:var(--text);
+    font-family:inherit; font-size:13px; padding:9px 10px; border-radius:5px; resize:vertical;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus{outline:none; border-color:var(--amber-dim);}
+  .row-inline{display:flex; gap:8px;}
+  .row-inline .field{flex:1; margin-bottom:0;}
+  .mini-btn{
+    background:var(--amber); color:#141b12; border:none; border-radius:5px; padding:9px 14px;
+    font-family:inherit; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap;
+  }
+  .cat-list{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px;}
+  .cat-pill{
+    display:flex; align-items:center; gap:6px; background:var(--bg-raised); border:1px solid var(--line);
+    padding:6px 6px 6px 12px; border-radius:16px; font-size:12px; cursor:pointer;
+  }
+  .cat-pill.active{border-color:var(--amber); color:var(--amber);}
+  .cat-pill .del{color:var(--err); font-size:14px; cursor:pointer; padding:0 4px;}
+  .sent-item{
+    display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
+    background:var(--bg-raised); border:1px solid var(--line); border-radius:6px;
+    padding:10px 12px; margin-bottom:8px; font-size:12.5px; line-height:1.5;
+  }
+  .sent-item .del{color:var(--err); cursor:pointer; font-size:15px; flex-shrink:0;}
+  .divider{border:none; border-top:1px solid var(--line); margin:22px 0;}
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(10px);
+    background:var(--amber); color:#141b12; padding:9px 18px; border-radius:20px;
+    font-size:12px; font-weight:700; opacity:0; transition:.25s; z-index:200; pointer-events:none;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .empty-msg{font-size:12px; color:var(--text-faint); text-align:center; padding:16px 0;}
+
+  @media (max-width:520px){
+    #sentence{font-size:18px;}
+    .stat-bar{gap:12px;}
+    .result-grid{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <span class="cursor-blk"></span>
+      <h1>Type<span>Track</span></h1>
+      <span class="tag">sentence typing trainer</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:16px;">
+      <div class="stat-bar">
+        <div class="item"><b id="hdrWpm">0</b>best wpm</div>
+        <div class="item"><b id="hdrAcc">–</b>accuracy</div>
+      </div>
+      <button class="admin-btn" id="btnAdmin">⚙ Manage Sentences</button>
+    </div>
+  </header>
+
+  <div class="chips" id="chips"></div>
+
+  <div class="panel">
+    <div class="panel-topbar">
+      <div class="dots"><span></span><span></span><span></span></div>
+      <div id="catLabel">— select a category —</div>
+    </div>
+    <div class="prompt-line"><span class="caret">&gt;</span> <span id="bootline">type the sentence below exactly as shown</span></div>
+    <div id="sentence"></div>
+    <div class="hint">Press <b>Tab</b> or the <b>Retry</b> button to restart. Mistyped letters turn red — fix them with <b>Backspace</b>.</div>
+    <div class="live-stats">
+      <div><b id="lWpm">0</b>WPM</div>
+      <div><b id="lAcc">100%</b>accuracy</div>
+      <div><b id="lTime">0.0s</b>time</div>
+      <div><b id="lErr">0</b>errors</div>
+    </div>
+  </div>
+
+  <footer>press any key on the sentence to start the timer automatically</footer>
+</div>
+
+<!-- result overlay -->
+<div class="overlay" id="overlay">
+  <div class="result-card">
+    <h2>TEST RESULTS</h2>
+    <div class="best-note" id="bestNote"></div>
+    <div class="result-grid">
+      <div class="box"><div class="n" id="rWpm">0</div><div class="l">WPM</div></div>
+      <div class="box"><div class="n" id="rAcc">0%</div><div class="l">ACCURACY</div></div>
+      <div class="box"><div class="n" id="rTime">0s</div><div class="l">TIME</div></div>
+      <div class="box"><div class="n" id="rErr">0</div><div class="l">ERRORS</div></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="btnRetry">Retry</button>
+      <button class="btn primary" id="btnNext">Next Sentence →</button>
+    </div>
+  </div>
+</div>
+
+<!-- admin drawer -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<div class="drawer" id="drawer">
+  <button class="drawer-close" id="drawerClose">✕</button>
+  <h3>MANAGE SENTENCES</h3>
+  <div class="sub">Add or remove categories & sentences. Saved automatically.</div>
+
+  <div class="field">
+    <label>Categories</label>
+    <div class="cat-list" id="adminCatList"></div>
+    <div class="row-inline">
+      <div class="field"><input type="text" id="newCatName" placeholder="New category name…"></div>
+      <button class="mini-btn" id="addCatBtn">+ Category</button>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="field">
+    <label>Add a sentence to "<span id="activeCatName">-</span>"</label>
+    <textarea id="newSentenceText" rows="3" placeholder="Write a new sentence here…"></textarea>
+  </div>
+  <button class="mini-btn" id="addSentBtn" style="width:100%; padding:11px;">+ Add Sentence</button>
+
+  <hr class="divider">
+
+  <div class="field">
+    <label>Sentence list</label>
+    <div id="sentList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Saved</div>
+
+<script>
+const STORAGE_KEY = 'typetrack-data-v2-en';
+
+const DEFAULT_DATA = {
+  categories: [
+    { id:'general', name:'General', sentences:[
+      'The gentle notebook slowly moved across the market.',
+      'They decided to explore the bridge after afternoon.',
+      'The bright bridge follows near the forest every afternoon.',
+      'They decided to organize the notebook after spring.',
+      'The curious lantern watches near the harbor every spring.',
+      'She painted the painting before the spring began.',
+      'She painted the garden before the weekend began.',
+      'She painted the staircase before the sunset began.',
+      'The stranger looked old under the soft sunlight.',
+      'The tired letter remembers near the courtyard every spring.',
+      'The gentle staircase slowly moved across the hallway.',
+      'The curious garden protects near the forest every holiday.',
+      'He always remembers the bridge without any complaint.',
+      'He always ignores the notebook without any warning.',
+      'A gentle bridge was sitting quietly by the station.',
+      'It took her hours to rebuild the tired river.',
+      'The calm letter slowly moved across the station.',
+      'The lantern looked tired under the soft sunlight.',
+      'It took her hours to rebuild the busy garden.',
+      'The warm clock avoids near the harbor every weekend.',
+      'It took her hours to photograph the tall clock.',
+      'The distant river watches near the forest every afternoon.',
+      'We spent the whole holiday talking about the garden.',
+      'She carried the letter before the afternoon began.',
+      'She painted the stranger before the weekend began.',
+      'We spent the whole spring talking about the painting.',
+      'A calm painting was sitting quietly by the courtyard.',
+      'The bright melody crosses near the station every afternoon.',
+      'They decided to describe the staircase after afternoon.',
+      'The curious melody slowly moved across the forest.',
+      'We spent the whole evening talking about the notebook.',
+      'Everyone in the village noticed the busy lantern.',
+      'A tall river was sitting quietly by the harbor.',
+      'They decided to describe the river after morning.',
+      'It took her hours to photograph the busy stranger.',
+      'She closed the notebook before the evening began.',
+      'She repaired the clock before the morning began.',
+      'The old notebook slowly moved across the harbor.',
+      'The notebook looked old under the soft lamplight.',
+      'She carried the window before the evening began.',
+      'A distant painting was sitting quietly by the hallway.',
+      'The tall window slowly moved across the forest.',
+      'The curious staircase slowly moved across the hallway.',
+      'The distant melody slowly moved across the station.',
+      'It took her hours to photograph the warm bridge.',
+      'He always protects the painting without any explanation.',
+      'She folded the clock before the weekend began.',
+      'They decided to remember the letter after morning.',
+      'It took her hours to explore the curious melody.',
+      'He always remembers the staircase without any warning.',
+    ]},
+    { id:'programming', name:'Programming', sentences:[
+      'Caching the database improves performance during heavy technical debt.',
+      'Caching the repository improves performance during heavy latency.',
+      'Engineers test the codebase to fix a critical latency.',
+      'Developers should refactor the function before deploying to development.',
+      'Engineers monitor the architecture to fix a critical memory usage.',
+      'Developers should review the module before deploying to testing.',
+      'The variable throws an error when the parameter is null.',
+      'Each algorithm in the application needs a clear and descriptive name.',
+      'Engineers test the pipeline to fix a critical latency.',
+      'Developers should document the database before deploying to development.',
+      'Each algorithm in the system needs a clear and descriptive name.',
+      'The request is validated before it reaches the repository.',
+      'The algorithm was refactored to reduce duplication across the interface.',
+      'A well designed endpoint makes the codebase easier to maintain.',
+      'The component returns a undefined value when the query fails.',
+      'The response is validated before it reaches the container.',
+      'The endpoint was refactored to reduce duplication across the system.',
+      'A well designed component makes the system easier to maintain.',
+      'Engineers monitor the codebase to fix a critical downtime.',
+      'Engineers monitor the system to fix a critical latency.',
+      'Developers should refactor the database before deploying to staging.',
+      'A well designed module makes the application easier to maintain.',
+      'Engineers review the codebase to fix a critical duplication.',
+      'The payload is validated before it reaches the database.',
+      'The database throws an error when the request is undefined.',
+      'The staging pipeline runs automated tests on every variable.',
+      'Caching the server improves performance during heavy complexity.',
+      'Engineers refactor the application to fix a critical downtime.',
+      'Caching the variable improves performance during heavy memory usage.',
+      'Caching the module improves performance during heavy memory usage.',
+      'The endpoint throws an error when the response is malformed.',
+      'A well designed module makes the interface easier to maintain.',
+      'The testing pipeline runs automated tests on every component.',
+      'Engineers document the interface to fix a critical latency.',
+      'Developers should review the algorithm before deploying to production.',
+      'Developers should document the repository before deploying to staging.',
+      'Each container in the application needs a clear and descriptive name.',
+      'The request is validated before it reaches the database.',
+      'A well designed algorithm makes the pipeline easier to maintain.',
+      'A well designed variable makes the codebase easier to maintain.',
+      'The staging pipeline runs automated tests on every database.',
+      'The function was refactored to reduce complexity across the pipeline.',
+      'The repository returns a invalid value when the query fails.',
+      'Each module in the architecture needs a clear and descriptive name.',
+      'The server throws an error when the token is null.',
+      'The token is validated before it reaches the database.',
+      'The endpoint throws an error when the payload is invalid.',
+      'The component was refactored to reduce memory usage across the pipeline.',
+      'The function throws an error when the response is undefined.',
+      'The container was refactored to reduce latency across the pipeline.',
+    ]},
+    { id:'business', name:'Business', sentences:[
+      'The manager scheduled a meeting to discuss the founder report.',
+      'A strong partnership deal helped the committee increase profit margin significantly.',
+      'A strong pricing model helped the committee increase profit margin significantly.',
+      'A strong budget proposal helped the shareholders increase market share significantly.',
+      'Leadership announced changes to the pricing model during the next week meeting.',
+      'The consultant presented a new pricing model to the board on next week.',
+      'A strong product roadmap helped the board increase profit margin significantly.',
+      'The committee reviewed the budget before approving the partnership deal.',
+      'Quarterly sales figures improved after the company launched the expansion plan.',
+      'Quarterly customer retention improved after the company launched the expansion plan.',
+      'Quarterly profit margin improved after the company launched the expansion plan.',
+      'The director negotiated a better contract with the investors.',
+      'Investors were optimistic about the company\'s latest profit margin.',
+      'Investors were cautious about the company\'s latest revenue.',
+      'The manager scheduled a meeting to discuss the consultant report.',
+      'Investors were concerned about the company\'s latest sales figures.',
+      'The team agreed to review the pricing model before the the quarter.',
+      'The analyst presented a new partnership deal to the investors on Monday.',
+      'The investors agreed to review the budget proposal before the next week.',
+      'The manager scheduled a meeting to discuss the director report.',
+      'The committee reviewed the budget before approving the budget proposal.',
+      'The board agreed to review the budget proposal before the the annual review.',
+      'Quarterly profit margin improved after the company launched the partnership deal.',
+      'Investors were confident about the company\'s latest market share.',
+      'Customers responded well to the company\'s new pricing model.',
+      'The investors reviewed the budget before approving the partnership deal.',
+      'The manager scheduled a meeting to discuss the executive report.',
+      'Quarterly market share improved after the company launched the product roadmap.',
+      'Leadership announced changes to the product roadmap during the Monday meeting.',
+      'The clients agreed to review the pricing model before the the quarter.',
+      'The consultant negotiated a better contract with the committee.',
+      'The consultant negotiated a better contract with the board.',
+      'The founder negotiated a better contract with the shareholders.',
+      'The founder negotiated a better contract with the clients.',
+      'Customers responded well to the company\'s new partnership deal.',
+      'The committee agreed to review the partnership deal before the the annual review.',
+      'The board reviewed the budget before approving the expansion plan.',
+      'Quarterly customer retention improved after the company launched the budget proposal.',
+      'Investors were concerned about the company\'s latest customer retention.',
+      'The clients agreed to review the pricing model before the next week.',
+      'The consultant negotiated a better contract with the team.',
+      'Leadership announced changes to the expansion plan during the Monday meeting.',
+      'Customers responded well to the company\'s new budget proposal.',
+      'The manager scheduled a meeting to discuss the analyst report.',
+      'The director negotiated a better contract with the team.',
+      'Investors were cautious about the company\'s latest customer retention.',
+      'Customers responded well to the company\'s new product roadmap.',
+      'Quarterly revenue improved after the company launched the partnership deal.',
+      'The investors agreed to review the product roadmap before the the annual review.',
+      'Investors were confident about the company\'s latest customer retention.',
+    ]},
+    { id:'science', name:'Science', sentences:[
+      'The chemist recorded data about cell growth for several months.',
+      'The experiment showed that light absorption depends heavily on humidity.',
+      'Scientists in the field station are studying the effects of temperature.',
+      'A new researcher was developed to measure climate patterns more accurately.',
+      'The experiment showed that light absorption depends heavily on radiation.',
+      'Researchers discovered that light absorption reacts strongly to gravity.',
+      'The experiment showed that climate patterns depends heavily on temperature.',
+      'The research center team published findings about soil composition last decades.',
+      'The field station team published findings about ocean currents last years.',
+      'A new biologist was developed to measure soil composition more accurately.',
+      'Further tests are needed to confirm how light absorption responds to temperature.',
+      'Understanding gene expression requires careful analysis of gravity.',
+      'A new biologist was developed to measure gene expression more accurately.',
+      'The field station team published findings about plant tissue last decades.',
+      'Understanding climate patterns requires careful analysis of pressure.',
+      'The field station team published findings about plant tissue last years.',
+      'A new chemist was developed to measure climate patterns more accurately.',
+      'Understanding cell growth requires careful analysis of humidity.',
+      'The instrument observed how climate patterns changes under different temperature.',
+      'The laboratory team published findings about climate patterns last months.',
+      'Scientists in the field station are studying the effects of humidity.',
+      'The chemist observed how gene expression changes under different humidity.',
+      'Further tests are needed to confirm how plant tissue responds to humidity.',
+      'The researcher observed how ocean currents changes under different pressure.',
+      'The research center team published findings about climate patterns last decades.',
+      'Further tests are needed to confirm how ocean currents responds to radiation.',
+      'The research center team published findings about gene expression last months.',
+      'Understanding soil composition requires careful analysis of gravity.',
+      'The biologist observed how light absorption changes under different radiation.',
+      'Understanding ocean currents requires careful analysis of radiation.',
+      'Further tests are needed to confirm how climate patterns responds to gravity.',
+      'A new researcher was developed to measure light absorption more accurately.',
+      'Understanding gene expression requires careful analysis of temperature.',
+      'The physicist recorded data about soil composition for several months.',
+      'A new physicist was developed to measure plant tissue more accurately.',
+      'The experiment showed that climate patterns depends heavily on gravity.',
+      'Scientists in the university are studying the effects of temperature.',
+      'The laboratory team published findings about light absorption last decades.',
+      'The laboratory observed how ocean currents changes under different pressure.',
+      'A new laboratory was developed to measure gene expression more accurately.',
+      'The laboratory recorded data about climate patterns for several months.',
+      'The field station team published findings about light absorption last months.',
+      'Scientists in the university are studying the effects of humidity.',
+      'The laboratory team published findings about plant tissue last decades.',
+      'The biologist explained how pressure influences cell growth over decades.',
+      'The university team published findings about ocean currents last decades.',
+      'Further tests are needed to confirm how soil composition responds to gravity.',
+      'Scientists in the university are studying the effects of radiation.',
+      'Understanding cell growth requires careful analysis of radiation.',
+      'A new instrument was developed to measure soil composition more accurately.',
+    ]},
+    { id:'travel', name:'Travel', sentences:[
+      'The ferry arrived at the market square just before sunset.',
+      'After landing, we took a guide straight to the old town.',
+      'We booked a guide near the market square for the midnight.',
+      'The ancient temple looked stunning during the dusk.',
+      'Travelers often visit the harbor to see the ancient temple.',
+      'The ferry arrived at the airport just before sunset.',
+      'After landing, we took a bus straight to the coastal city.',
+      'The bus arrived at the train station just before sunrise.',
+      'We booked a ferry near the harbor for the dusk.',
+      'Our flight was delayed because of weather near the mountain village.',
+      'After landing, we took a guide straight to the coastal city.',
+      'Travelers often visit the market square to see the stone bridge.',
+      'We booked a taxi near the old town for the sunrise.',
+      'She packed light before heading to the train station.',
+      'The castle ruins looked stunning during the dusk.',
+      'We booked a taxi near the old town for the dusk.',
+      'We wandered through the mountain village until sunset.',
+      'We wandered through the train station until noon.',
+      'Travelers often visit the mountain village to see the castle ruins.',
+      'After landing, we took a ferry straight to the old town.',
+      'We wandered through the airport until midnight.',
+      'She packed light before heading to the mountain village.',
+      'After landing, we took a ferry straight to the airport.',
+      'Our guide was delayed because of weather near the harbor.',
+      'She packed light before heading to the old town.',
+      'Our train was delayed because of weather near the coastal city.',
+      'We booked a ferry near the harbor for the midnight.',
+      'Travelers often visit the market square to see the ancient temple.',
+      'Travelers often visit the airport to see the stone bridge.',
+      'After landing, we took a guide straight to the mountain village.',
+      'The guide led us through the train station toward the stone bridge.',
+      'The airport was crowded with tourists visiting the waterfall.',
+      'After landing, we took a flight straight to the old town.',
+      'The airport was crowded with tourists visiting the lighthouse.',
+      'The guide led us through the market square toward the cathedral.',
+      'After landing, we took a bus straight to the mountain village.',
+      'The guide led us through the airport toward the waterfall.',
+      'The stone bridge looked stunning during the sunrise.',
+      'Our flight was delayed because of weather near the train station.',
+      'Travelers often visit the coastal city to see the waterfall.',
+      'We wandered through the coastal city until dusk.',
+      'The coastal city was crowded with tourists visiting the lighthouse.',
+      'Travelers often visit the coastal city to see the castle ruins.',
+      'Travelers often visit the train station to see the stone bridge.',
+      'We wandered through the train station until dusk.',
+      'The airport was crowded with tourists visiting the castle ruins.',
+      'After landing, we took a taxi straight to the harbor.',
+      'The ferry arrived at the harbor just before dusk.',
+      'After landing, we took a train straight to the harbor.',
+      'She packed light before heading to the airport.',
+    ]},
+    { id:'nature', name:'Nature', sentences:[
+      'The river carried fallen leaves past the cold riverbank.',
+      'A family of crickets crossed the meadow near late afternoon.',
+      'Sunlight filtered through the trees onto the still forest.',
+      'Leaves fell slowly from the trees during the quiet late afternoon.',
+      'Sunlight filtered through the trees onto the damp hillside.',
+      'Sunlight filtered through the trees onto the still riverbank.',
+      'A family of crickets crossed the marsh near late afternoon.',
+      'A cold wind swept across the hillside before the late afternoon.',
+      'Leaves fell slowly from the trees during the damp dawn.',
+      'A quiet wind swept across the valley before the dawn.',
+      'The rabbit rested beneath the damp branches until dusk.',
+      'The hillside was filled with the sound of frogs.',
+      'Rain clouds gathered above the marsh as late afternoon approached.',
+      'The river carried fallen leaves past the misty hillside.',
+      'Rain clouds gathered above the hillside as early morning approached.',
+      'The wolf rested beneath the cold branches until late afternoon.',
+      'A cold wind swept across the valley before the late afternoon.',
+      'Sunlight filtered through the trees onto the cold hillside.',
+      'The valley was filled with the sound of frogs.',
+      'Sunlight filtered through the trees onto the damp riverbank.',
+      'Rain clouds gathered above the riverbank as dawn approached.',
+      'The heron moved quietly through the meadow at late afternoon.',
+      'Sunlight filtered through the trees onto the damp meadow.',
+      'The marsh was filled with the sound of crickets.',
+      'The valley was filled with the sound of crickets.',
+      'Sunlight filtered through the trees onto the still hillside.',
+      'The meadow was filled with the sound of birds.',
+      'A family of birds crossed the meadow near early morning.',
+      'A family of insects crossed the marsh near dusk.',
+      'Sunlight filtered through the trees onto the cold forest.',
+      'The deer rested beneath the still branches until dawn.',
+      'The deer searched for food near the valley.',
+      'The river carried fallen leaves past the golden valley.',
+      'The heron rested beneath the cold branches until early morning.',
+      'Rain clouds gathered above the hillside as late afternoon approached.',
+      'The owl searched for food near the valley.',
+      'The rabbit searched for food near the marsh.',
+      'A misty wind swept across the valley before the late afternoon.',
+      'The river carried fallen leaves past the misty valley.',
+      'Leaves fell slowly from the trees during the golden dawn.',
+      'Sunlight filtered through the trees onto the damp forest.',
+      'A golden wind swept across the riverbank before the early morning.',
+      'The fox moved quietly through the hillside at early morning.',
+      'The hillside was filled with the sound of birds.',
+      'Sunlight filtered through the trees onto the still valley.',
+      'The deer moved quietly through the meadow at dawn.',
+      'The fox rested beneath the quiet branches until dusk.',
+      'A misty wind swept across the riverbank before the early morning.',
+      'The fox moved quietly through the riverbank at dusk.',
+      'The deer rested beneath the damp branches until dawn.',
+    ]},
+    { id:'sports', name:'Sports', sentences:[
+      'The athlete warmed up quietly before entering the field.',
+      'The captain trained for months before the tournament.',
+      'The coach changed strategy during the second half of the championship.',
+      'Injuries forced the sprinter to miss the qualifying round.',
+      'The athlete broke a record during the tournament.',
+      'Injuries forced the sprinter to miss the tournament.',
+      'Fans cheered loudly as the defender entered the field.',
+      'The defender trained for months before the tournament.',
+      'The goalkeeper warmed up quietly before entering the stadium.',
+      'The striker scored in the final minutes of the tournament.',
+      'Fans cheered loudly as the captain entered the stadium.',
+      'The arena was packed before the start of the league game.',
+      'Fans cheered loudly as the captain entered the training ground.',
+      'The team celebrated their victory after the league game.',
+      'Fans cheered loudly as the athlete entered the arena.',
+      'The sprinter broke a record during the championship.',
+      'The coach changed strategy during the second half of the tournament.',
+      'A last minute goal decided the outcome of the championship.',
+      'A last minute goal decided the outcome of the final match.',
+      'Injuries forced the athlete to miss the tournament.',
+      'Injuries forced the defender to miss the league game.',
+      'The sprinter warmed up quietly before entering the arena.',
+      'The defender broke a record during the tournament.',
+      'The training ground was packed before the start of the qualifying round.',
+      'Injuries forced the goalkeeper to miss the tournament.',
+      'Injuries forced the striker to miss the qualifying round.',
+      'The goalkeeper broke a record during the final match.',
+      'The team celebrated their victory after the tournament.',
+      'The sprinter scored in the final minutes of the championship.',
+      'A last minute goal decided the outcome of the league game.',
+      'The defender trained for months before the league game.',
+      'The coach changed strategy during the second half of the qualifying round.',
+      'Fans cheered loudly as the athlete entered the training ground.',
+      'The striker broke a record during the final match.',
+      'The athlete warmed up quietly before entering the stadium.',
+      'The captain broke a record during the tournament.',
+      'Injuries forced the defender to miss the final match.',
+      'The athlete broke a record during the championship.',
+      'The athlete warmed up quietly before entering the arena.',
+      'The coach changed strategy during the second half of the final match.',
+      'The captain broke a record during the championship.',
+      'Injuries forced the striker to miss the championship.',
+      'A last minute goal decided the outcome of the tournament.',
+      'The sprinter scored in the final minutes of the league game.',
+      'The field was packed before the start of the final match.',
+      'The defender scored in the final minutes of the tournament.',
+      'A last minute goal decided the outcome of the qualifying round.',
+      'The defender trained for months before the final match.',
+      'The captain trained for months before the qualifying round.',
+      'Injuries forced the sprinter to miss the championship.',
+    ]},
+    { id:'food', name:'Food', sentences:[
+      'The recipe calls for lemon zest and a bit of red wine.',
+      'The recipe calls for tomatoes and a bit of fresh cream.',
+      'She seasoned the soup with a pinch of lemon zest.',
+      'The recipe calls for black pepper and a bit of red wine.',
+      'The aroma of black pepper filled the kitchen during dinner.',
+      'The curry was slowly simmered with fresh basil.',
+      'She seasoned the salad with a pinch of garlic.',
+      'She seasoned the stew with a pinch of olive oil.',
+      'He chopped the garlic finely before adding it to the bread.',
+      'The aroma of olive oil filled the kitchen during dinner.',
+      'The bread was slowly simmered with fresh lemon zest.',
+      'She seasoned the bread with a pinch of tomatoes.',
+      'The soup was slowly simmered with fresh tomatoes.',
+      'The market sold fresh garlic early in the morning.',
+      'Guests praised the curry made with local olive oil.',
+      'The salad was slowly simmered with fresh tomatoes.',
+      'The recipe calls for basil and a bit of fresh cream.',
+      'The curry was slowly simmered with fresh olive oil.',
+      'She seasoned the soup with a pinch of basil.',
+      'Guests praised the salad made with local basil.',
+      'The curry tasted better after resting for an hour.',
+      'The pasta was slowly simmered with fresh lemon zest.',
+      'Guests praised the bread made with local garlic.',
+      'The recipe calls for black pepper and a bit of fresh cream.',
+      'The market sold fresh basil early in the morning.',
+      'The market sold fresh olive oil early in the morning.',
+      'The bread tasted better after resting for an hour.',
+      'The market sold fresh lemon zest early in the morning.',
+      'The stew pairs well with a glass of sparkling water.',
+      'The curry pairs well with a glass of herbal tea.',
+      'The salad pairs well with a glass of red wine.',
+      'The pasta was slowly simmered with fresh tomatoes.',
+      'The aroma of tomatoes filled the kitchen during dinner.',
+      'Guests praised the soup made with local black pepper.',
+      'The chef added basil to the salad just before serving.',
+      'The soup was slowly simmered with fresh black pepper.',
+      'Guests praised the pasta made with local lemon zest.',
+      'The soup pairs well with a glass of fresh cream.',
+      'The recipe calls for tomatoes and a bit of herbal tea.',
+      'The chef added garlic to the stew just before serving.',
+      'He chopped the tomatoes finely before adding it to the pasta.',
+      'She seasoned the curry with a pinch of basil.',
+      'He chopped the garlic finely before adding it to the soup.',
+      'The pasta was slowly simmered with fresh garlic.',
+      'The soup tasted better after resting for an hour.',
+      'The stew tasted better after resting for an hour.',
+      'The soup pairs well with a glass of herbal tea.',
+      'The pasta was slowly simmered with fresh ginger.',
+      'The aroma of ginger filled the kitchen during dinner.',
+      'The chef added black pepper to the pasta just before serving.',
+    ]},
+    { id:'technology', name:'Technology', sentences:[
+      'The laptop connects automatically to the nearest cellular network.',
+      'The processor was upgraded to support the newest cellular network standard.',
+      'The laptop connects automatically to the nearest wireless network.',
+      'The battery was upgraded to support the newest fiber connection standard.',
+      'The artificial intelligence industry is growing faster than expected this year.',
+      'Engineers redesigned the battery to reduce power consumption.',
+      'The new router features a faster chip and longer battery life.',
+      'The new router features a faster camera and longer battery life.',
+      'The camera was upgraded to support the newest satellite link standard.',
+      'The fiber connection experienced downtime during peak usage hours.',
+      'Users reported issues with the laptop after the latest update.',
+      'The smartphone connects automatically to the nearest wireless network.',
+      'Security experts warned about vulnerabilities in the laptop.',
+      'Engineers redesigned the chip to reduce power consumption.',
+      'Engineers redesigned the camera to reduce power consumption.',
+      'Security experts warned about vulnerabilities in the smartphone.',
+      'Advances in biotechnology are changing how people interact with wearables.',
+      'Users reported issues with the sensor after the latest update.',
+      'The cellular network experienced downtime during peak usage hours.',
+      'Security experts warned about vulnerabilities in the sensor.',
+      'Advances in biotechnology are changing how people interact with tablets.',
+      'The sensor connects automatically to the nearest fiber connection.',
+      'The new laptop features a faster chip and longer battery life.',
+      'Companies are investing heavily in automation to improve efficiency.',
+      'The sensor connects automatically to the nearest satellite link.',
+      'Advances in automation are changing how people interact with smartphones.',
+      'The camera was upgraded to support the newest wireless network standard.',
+      'Companies are investing heavily in cloud computing to improve reliability.',
+      'The new laptop features a faster display and longer battery life.',
+      'Engineers redesigned the display to reduce power consumption.',
+      'The new laptop features a faster battery and longer battery life.',
+      'The wireless network experienced downtime during peak usage hours.',
+      'Companies are investing heavily in robotics to improve reliability.',
+      'Users reported issues with the wearable after the latest update.',
+      'Advances in robotics are changing how people interact with sensors.',
+      'The wearable connects automatically to the nearest satellite link.',
+      'The tablet connects automatically to the nearest wireless network.',
+      'Security experts warned about vulnerabilities in the tablet.',
+      'Users reported issues with the smartphone after the latest update.',
+      'Companies are investing heavily in biotechnology to improve accuracy.',
+      'Security experts warned about vulnerabilities in the router.',
+      'The biotechnology industry is growing faster than expected this year.',
+      'The display was upgraded to support the newest wireless network standard.',
+      'Companies are investing heavily in artificial intelligence to improve reliability.',
+      'The new sensor features a faster camera and longer battery life.',
+      'Advances in cloud computing are changing how people interact with smartphones.',
+      'The cloud computing industry is growing faster than expected this year.',
+      'Advances in cloud computing are changing how people interact with tablets.',
+      'The battery was upgraded to support the newest wireless network standard.',
+      'Advances in artificial intelligence are changing how people interact with smartphones.',
+    ]},
+    { id:'history', name:'History', sentences:[
+      'The king led an army across the province during the expedition.',
+      'The province flourished after the expedition ended.',
+      'The empire built monuments to commemorate the famine.',
+      'Historians studied the uprising to understand its influence.',
+      'Ancient records describe the famine in great detail.',
+      'The empire flourished after the expedition ended.',
+      'Trade routes through the province shaped the region\'s influence.',
+      'The king ruled the region for nearly three hundred years.',
+      'Trade routes through the territory shaped the region\'s culture.',
+      'Life in the region changed dramatically after the expedition.',
+      'The territory flourished after the expedition ended.',
+      'Life in the empire changed dramatically after the expedition.',
+      'Ancient records describe the conquest in great detail.',
+      'The dynasty built monuments to commemorate the famine.',
+      'The king ruled the empire for nearly several decades.',
+      'Scholars still debate the causes of the revolution.',
+      'Life in the empire changed dramatically after the famine.',
+      'The region flourished after the famine ended.',
+      'The expedition changed the political structure of the kingdom.',
+      'Trade routes through the kingdom shaped the region\'s borders.',
+      'Trade routes through the kingdom shaped the region\'s traditions.',
+      'Historians studied the famine to understand its culture.',
+      'The famine changed the political structure of the city state.',
+      'The famine changed the political structure of the province.',
+      'The empire flourished after the revolution ended.',
+      'Trade routes through the region shaped the region\'s traditions.',
+      'The famine changed the political structure of the territory.',
+      'Historians studied the conquest to understand its borders.',
+      'Life in the region changed dramatically after the revolution.',
+      'Ancient records describe the treaty in great detail.',
+      'The conquest changed the political structure of the empire.',
+      'Scholars still debate the causes of the conquest.',
+      'The dynasty led an army across the kingdom during the revolution.',
+      'Historians studied the uprising to understand its culture.',
+      'Life in the kingdom changed dramatically after the expedition.',
+      'The general built monuments to commemorate the revolution.',
+      'The general led an army across the territory during the uprising.',
+      'Trade routes through the region shaped the region\'s borders.',
+      'The philosopher built monuments to commemorate the uprising.',
+      'Historians studied the famine to understand its influence.',
+      'The general led an army across the province during the conquest.',
+      'Historians studied the uprising to understand its traditions.',
+      'The philosopher ruled the city state for nearly three hundred years.',
+      'The empire built monuments to commemorate the expedition.',
+      'The city state flourished after the revolution ended.',
+      'The general ruled the territory for nearly three hundred years.',
+      'Scholars still debate the causes of the uprising.',
+      'Scholars still debate the causes of the treaty.',
+      'The king ruled the kingdom for nearly several decades.',
+      'Life in the city state changed dramatically after the conquest.',
+    ]},
+  ],
+  bests: {}
+};
+
+let db = null;
+let currentCatId = null;
+let target = '';
+let typedArr = [];
+let totalKeystrokes = 0;
+let correctKeystrokes = 0;
+let startTime = null;
+let testActive = false;
+let liveTimer = null;
+let lastSentenceIdx = -1;
+let adminActiveCat = null;
+
+const $ = s => document.querySelector(s);
+
+async function loadDB(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    if(res && res.value){ return JSON.parse(res.value); }
+  }catch(e){ /* not found yet */ }
+  return JSON.parse(JSON.stringify(DEFAULT_DATA));
+}
+async function saveDB(){
+  try{
+    await window.storage.set(STORAGE_KEY, JSON.stringify(db), false);
+    showToast('Saved');
+  }catch(e){ console.error('storage error', e); }
+}
+
+function showToast(msg){
+  const t = $('#toast'); t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>t.classList.remove('show'), 1400);
+}
+
+function renderChips(){
+  const chips = $('#chips'); chips.innerHTML = '';
+  db.categories.forEach(cat=>{
+    const c = document.createElement('button');
+    c.className = 'chip' + (cat.id===currentCatId ? ' active':'');
+    c.textContent = cat.name + ' (' + cat.sentences.length + ')';
+    c.onclick = ()=>{ currentCatId = cat.id; renderChips(); newSentence(true); };
+    chips.appendChild(c);
+  });
+}
+
+function pickSentence(cat){
+  if(!cat.sentences.length) return null;
+  if(cat.sentences.length===1) return 0;
+  let idx;
+  do{ idx = Math.floor(Math.random()*cat.sentences.length); }while(idx===lastSentenceIdx);
+  lastSentenceIdx = idx;
+  return idx;
+}
+
+function newSentence(boot){
+  const cat = db.categories.find(c=>c.id===currentCatId);
+  $('#catLabel').textContent = cat ? cat.name : '—';
+  if(!cat || !cat.sentences.length){
+    $('#sentence').innerHTML = '<span class="empty-msg" style="display:block;">No sentences in this category yet. Add some via "Manage Sentences".</span>';
+    resetStatsDisplay();
+    testActive = false;
+    return;
+  }
+  const idx = pickSentence(cat);
+  target = cat.sentences[idx];
+  typedArr = []; totalKeystrokes = 0; correctKeystrokes = 0; startTime = null; testActive = true;
+  resetStatsDisplay();
+
+  if(boot){
+    const bl = $('#bootline');
+    const msgs = ['preparing buffer…','loading sentence…','ready.'];
+    let i = 0;
+    bl.textContent = msgs[0];
+    const iv = setInterval(()=>{
+      i++;
+      if(i>=msgs.length){ clearInterval(iv); bl.textContent = 'type the sentence below exactly as shown'; renderSentence(); }
+      else bl.textContent = msgs[i];
+    }, 130);
+  } else {
+    renderSentence();
+  }
+}
+
+function resetStatsDisplay(){
+  $('#lWpm').textContent='0'; $('#lAcc').textContent='100%';
+  $('#lTime').textContent='0.0s'; $('#lErr').textContent='0';
+}
+
+function renderSentence(){
+  const el = $('#sentence'); el.innerHTML = '';
+  for(let i=0;i<target.length;i++){
+    const span = document.createElement('span');
+    span.textContent = target[i];
+    if(i < typedArr.length){
+      span.className = (typedArr[i]===target[i]) ? 'correct' : 'incorrect';
+    } else if(i === typedArr.length){
+      span.className = 'current';
+    } else {
+      span.className = 'pending';
+    }
+    el.appendChild(span);
+  }
+}
+
+function startLiveTimer(){
+  clearInterval(liveTimer);
+  liveTimer = setInterval(()=>{
+    if(!startTime) return;
+    const elapsed = (performance.now()-startTime)/1000;
+    $('#lTime').textContent = elapsed.toFixed(1)+'s';
+    const correctSoFar = typedArr.filter((c,i)=>c===target[i]).length;
+    const wpm = elapsed>0 ? Math.round((correctSoFar/5)/(elapsed/60)) : 0;
+    $('#lWpm').textContent = wpm;
+    const acc = totalKeystrokes>0 ? Math.round(correctKeystrokes/totalKeystrokes*100) : 100;
+    $('#lAcc').textContent = acc+'%';
+    const errCount = typedArr.filter((c,i)=>c!==target[i]).length;
+    $('#lErr').textContent = errCount;
+  }, 200);
+}
+
+function onKeyDown(e){
+  if(!testActive) return;
+  if($('#drawer').classList.contains('show')) return;
+  if($('#overlay').classList.contains('show')) return;
+
+  if(e.key === 'Tab'){ e.preventDefault(); newSentence(false); return; }
+  if(e.key === 'Backspace'){
+    e.preventDefault();
+    if(typedArr.length>0){ typedArr.pop(); renderSentence(); }
+    return;
+  }
+  if(e.key.length !== 1) return;
+  e.preventDefault();
+  if(typedArr.length >= target.length) return;
+
+  if(!startTime){ startTime = performance.now(); startLiveTimer(); }
+
+  const idx = typedArr.length;
+  totalKeystrokes++;
+  if(e.key === target[idx]) correctKeystrokes++;
+  typedArr.push(e.key);
+  renderSentence();
+
+  if(typedArr.length === target.length){
+    finishTest();
+  }
+}
+document.addEventListener('keydown', onKeyDown);
+
+function finishTest(){
+  testActive = false;
+  clearInterval(liveTimer);
+  const elapsed = Math.max(0.3,(performance.now()-startTime)/1000);
+  const wpm = Math.round((target.length/5)/(elapsed/60));
+  const acc = totalKeystrokes>0 ? Math.round(correctKeystrokes/totalKeystrokes*100) : 100;
+  const errCount = typedArr.filter((c,i)=>c!==target[i]).length;
+
+  $('#rWpm').textContent = wpm;
+  $('#rAcc').textContent = acc+'%';
+  $('#rTime').textContent = elapsed.toFixed(1)+'s';
+  $('#rErr').textContent = errCount;
+
+  const prevBest = db.bests[currentCatId] || 0;
+  let noteEl = $('#bestNote');
+  if(wpm > prevBest){
+    db.bests[currentCatId] = wpm;
+    noteEl.textContent = '★ NEW RECORD for this category!';
+    saveDB();
+  } else {
+    noteEl.textContent = 'Category best: '+prevBest+' WPM';
+  }
+  updateHeaderBest();
+
+  setTimeout(()=>$('#overlay').classList.add('show'), 150);
+}
+
+function updateHeaderBest(){
+  const best = db.bests[currentCatId] || 0;
+  $('#hdrWpm').textContent = best;
+  $('#hdrAcc').textContent = best ? 'per category' : '–';
+}
+
+$('#btnNext').onclick = ()=>{ $('#overlay').classList.remove('show'); newSentence(true); };
+$('#btnRetry').onclick = ()=>{
+  $('#overlay').classList.remove('show');
+  typedArr=[]; totalKeystrokes=0; correctKeystrokes=0; startTime=null; testActive=true;
+  resetStatsDisplay(); renderSentence();
+};
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){ closeDrawer(); $('#overlay').classList.remove('show'); }
+});
+
+/* ---------- Admin drawer ---------- */
+function openDrawer(){
+  $('#drawer').classList.add('show');
+  $('#drawerOverlay').classList.add('show');
+  adminActiveCat = currentCatId || (db.categories[0] && db.categories[0].id);
+  renderAdmin();
+}
+function closeDrawer(){
+  $('#drawer').classList.remove('show');
+  $('#drawerOverlay').classList.remove('show');
+}
+$('#btnAdmin').onclick = openDrawer;
+$('#drawerClose').onclick = closeDrawer;
+$('#drawerOverlay').onclick = closeDrawer;
+
+function renderAdmin(){
+  const list = $('#adminCatList'); list.innerHTML = '';
+  db.categories.forEach(cat=>{
+    const pill = document.createElement('div');
+    pill.className = 'cat-pill' + (cat.id===adminActiveCat ? ' active':'');
+    pill.innerHTML = '<span>'+escapeHtml(cat.name)+'</span>';
+    pill.onclick = ()=>{ adminActiveCat = cat.id; renderAdmin(); };
+    const del = document.createElement('span');
+    del.className = 'del'; del.textContent = '✕';
+    del.onclick = (e)=>{
+      e.stopPropagation();
+      if(db.categories.length<=1){ showToast('You need at least 1 category'); return; }
+      if(!confirm('Delete category "'+cat.name+'" and all its sentences?')) return;
+      db.categories = db.categories.filter(c=>c.id!==cat.id);
+      if(adminActiveCat===cat.id) adminActiveCat = db.categories[0].id;
+      if(currentCatId===cat.id){ currentCatId = db.categories[0].id; renderChips(); newSentence(true); }
+      saveDB(); renderAdmin();
+    };
+    pill.appendChild(del);
+    list.appendChild(pill);
+  });
+  const activeCat = db.categories.find(c=>c.id===adminActiveCat);
+  $('#activeCatName').textContent = activeCat ? activeCat.name : '-';
+  renderSentList(activeCat);
+}
+
+function renderSentList(cat){
+  const wrap = $('#sentList'); wrap.innerHTML = '';
+  if(!cat || !cat.sentences.length){
+    wrap.innerHTML = '<div class="empty-msg">No sentences yet.</div>';
+    return;
+  }
+  cat.sentences.forEach((s, i)=>{
+    const item = document.createElement('div');
+    item.className = 'sent-item';
+    const span = document.createElement('span');
+    span.textContent = s;
+    const del = document.createElement('span');
+    del.className = 'del'; del.textContent = '✕';
+    del.onclick = ()=>{
+      cat.sentences.splice(i,1);
+      saveDB(); renderAdmin(); renderChips();
+      if(currentCatId===cat.id) lastSentenceIdx = -1;
+    };
+    item.appendChild(span); item.appendChild(del);
+    wrap.appendChild(item);
+  });
+}
+
+$('#addCatBtn').onclick = ()=>{
+  const input = $('#newCatName');
+  const name = input.value.trim();
+  if(!name){ showToast('Category name is empty'); return; }
+  const id = name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') + '-' + Date.now().toString(36).slice(-4);
+  db.categories.push({ id, name, sentences:[] });
+  adminActiveCat = id;
+  input.value = '';
+  saveDB(); renderAdmin(); renderChips();
+};
+
+$('#addSentBtn').onclick = ()=>{
+  const ta = $('#newSentenceText');
+  const text = ta.value.trim();
+  if(!text){ showToast('Sentence is empty'); return; }
+  const cat = db.categories.find(c=>c.id===adminActiveCat);
+  if(!cat){ showToast('Select a category first'); return; }
+  cat.sentences.push(text);
+  ta.value = '';
+  saveDB(); renderAdmin(); renderChips();
+  if(currentCatId===cat.id) lastSentenceIdx = -1;
+};
+
+function escapeHtml(str){
+  const d = document.createElement('div'); d.textContent = str; return d.innerHTML;
+}
+
+/* ---------- init ---------- */
+(async function init(){
+  db = await loadDB();
+  if(!db.bests) db.bests = {};
+  currentCatId = db.categories[0] ? db.categories[0].id : null;
+  renderChips();
+  updateHeaderBest();
+  newSentence(true);
+  await saveDB.call ? null : null;
+  // persist defaults on very first load silently
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    if(!res){ await saveDB(); }
+  }catch(e){ await saveDB(); }
+})();
+</script>
+</body>
+</html>

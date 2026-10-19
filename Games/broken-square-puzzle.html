@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Broken Square Mix</title>
+<style>
+  :root{
+    --bg:#e6ecf1;
+    --ink:#14213d;
+    --muted:#5b6b82;
+    --paper:#ffffff;
+    --accent:#2d3a8c;
+    --ok:#2a9d8f;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Avenir Next","Segoe UI",system-ui,sans-serif;
+    display:flex;justify-content:center;
+    min-height:100vh;
+  }
+  [hidden]{display:none !important}
+  .app{width:100%;max-width:780px;padding:18px 14px 48px}
+  h1{font-size:30px;line-height:1.05;margin:0 0 4px;font-weight:800;letter-spacing:-.03em}
+  .sub{margin:0 0 10px;color:var(--muted);font-size:14px;line-height:1.45;max-width:62ch}
+  .legend{margin:0 0 4px;font-size:14px;color:var(--muted)}
+  .hint{margin:0 0 6px;font-size:13px;color:var(--muted);line-height:1.45;max-width:70ch}
+
+  .btn{
+    font:inherit;font-size:13px;font-weight:700;
+    padding:7px 12px;border-radius:9px;cursor:pointer;
+    border:2px solid var(--ink);background:var(--paper);color:var(--ink);
+  }
+  .btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .btn[aria-pressed="true"]{background:var(--ink);color:#fff}
+
+  /* ---------- Menu ---------- */
+  .menu{max-width:520px;margin:0 auto;padding-top:18px}
+  .field{margin:22px 0 0}
+  .label{font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between}
+  .label b{color:var(--ink);letter-spacing:0}
+  .count-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+  .count-grid .btn{padding:12px 0;font-size:17px}
+  .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .seg .btn{padding:12px 8px;font-size:14px}
+  .note{margin:8px 0 0;font-size:13px;color:var(--muted);line-height:1.45}
+  .summary{
+    margin:22px 0 14px;padding:12px 14px;border-radius:12px;background:var(--paper);
+    border:2px solid var(--ink);font-size:14px;display:flex;justify-content:space-between;gap:10px;
+  }
+  .start{
+    width:100%;padding:15px;font-size:17px;border-radius:12px;
+    background:var(--ink);color:#fff;
+  }
+
+  /* ---------- Game ---------- */
+  .bar{
+    position:sticky;top:0;z-index:5;
+    display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;
+    background:var(--bg);padding:8px 0;margin-bottom:6px;
+  }
+  .stats{display:flex;gap:16px;font-weight:700;font-size:15px}
+  .stats span{color:var(--muted);font-weight:500}
+  .btns{display:flex;gap:6px}
+
+  svg{
+    width:100%;height:auto;display:block;
+    background:#f7f9fb;border:2px solid var(--ink);border-radius:14px;
+    user-select:none;-webkit-user-select:none;
+  }
+  .piece{cursor:grab;touch-action:none;transition:transform .2s ease}
+  .piece.dragging{cursor:grabbing;transition:none;filter:drop-shadow(0 6px 6px rgba(20,33,61,.3))}
+  .piece.locked{cursor:default;pointer-events:none}
+  .piece polygon{stroke:var(--ink);stroke-width:1.6;stroke-linejoin:round}
+  .piece.locked polygon{stroke-width:1.2}
+  #guideG{transition:opacity .2s}
+  #guideG.off{opacity:0}
+
+  .win{
+    display:none;margin-top:14px;padding:14px 16px;border-radius:12px;
+    background:var(--ink);color:#fff;
+  }
+  .win.show{display:block}
+  .win b{font-size:18px;display:block;margin-bottom:4px}
+  .win p{margin:0 0 10px;font-size:14px;color:#cfd8e6}
+  .win .btn{background:#fff;border-color:#fff;margin-right:6px}
+
+  @media (prefers-reduced-motion:reduce){.piece{transition:none}}
+</style>
+</head>
+<body>
+<main class="app">
+
+  <!-- ================= MENU ================= -->
+  <section class="menu" id="menu">
+    <h1>Broken Square Mix</h1>
+    <p class="sub">Every square is broken into 7 pieces, and all the pieces are thrown into one pile. Choose how many squares you want to rebuild.</p>
+
+    <div class="field">
+      <div class="label"><span>Number of squares</span><b id="countVal">5</b></div>
+      <div class="count-grid" id="countGrid"></div>
+    </div>
+
+    <div class="field">
+      <div class="label"><span>Cut pattern</span></div>
+      <div class="seg" id="modeSeg">
+        <button class="btn" type="button" data-mode="same">Same for all</button>
+        <button class="btn" type="button" data-mode="different">Different for each</button>
+      </div>
+      <p class="note" id="modeNote"></p>
+    </div>
+
+    <div class="summary">
+      <div><b id="sumSquares">5</b> squares</div>
+      <div><b id="sumPieces">35</b> pieces in the pile</div>
+    </div>
+    <button class="btn start" id="startBtn" type="button">Start</button>
+  </section>
+
+  <!-- ================= GAME ================= -->
+  <section id="game" hidden>
+    <div class="hint">Drag pieces onto the boards. Tap a piece once to rotate it 90&deg;. A piece snaps in when its position and angle fit an empty spot on any board.</div>
+
+    <div class="bar">
+      <div class="stats">
+        <div id="squares"></div>
+        <div id="placed"></div>
+      </div>
+      <div class="btns">
+        <button class="btn" id="hintBtn" aria-pressed="false" type="button">Hint</button>
+        <button class="btn" id="shuffleBtn" type="button">Shuffle</button>
+        <button class="btn" id="menuBtn" type="button">Menu</button>
+      </div>
+    </div>
+
+    <svg id="svg" viewBox="0 0 640 1200" role="img" aria-label="Puzzle boards and a pile of mixed pieces">
+      <g id="boardG"></g>
+      <g id="guideG" class="off"></g>
+      <g id="lockedG"></g>
+      <g id="piecesG"></g>
+    </svg>
+
+    <div class="win" id="win" role="status">
+      <b id="winTitle"></b>
+      <p>Every piece is back where it belongs.</p>
+      <button class="btn" id="againBtn" type="button">Shuffle again</button>
+      <button class="btn" id="winMenuBtn" type="button">Back to menu</button>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ---------- Cut patterns: an 8x8 square broken into 7 pieces each ---------- */
+const PATTERNS = [
+  // A
+  [
+    [[0,0],[8,0],[8,2],[0,2]],
+    [[0,2],[3,2],[3,8],[0,8]],
+    [[3,2],[6,2],[8,4],[5,4]],
+    [[6,2],[8,2],[8,4]],
+    [[3,2],[5,4],[3,4]],
+    [[3,4],[8,4],[8,8]],
+    [[3,4],[8,8],[3,8]]
+  ],
+  // B
+  [
+    [[0,0],[3,0],[3,2]],
+    [[0,0],[3,2],[3,8],[0,6]],
+    [[0,6],[3,8],[0,8]],
+    [[3,0],[8,0],[8,2],[3,2]],
+    [[3,2],[5,2],[5,8],[3,8]],
+    [[5,2],[8,2],[8,8]],
+    [[5,2],[8,8],[5,8]]
+  ],
+  // C (pinwheel)
+  [
+    [[0,0],[6,0],[6,2],[0,2]],
+    [[6,0],[8,0],[8,5],[6,5]],
+    [[3,5],[8,5],[8,8],[3,8]],
+    [[3,2],[6,2],[6,5],[3,5]],
+    [[0,2],[3,4],[3,8],[0,6]],
+    [[0,2],[3,2],[3,4]],
+    [[0,6],[3,8],[0,8]]
+  ],
+  // D
+  [
+    [[0,0],[5,0],[8,3],[3,3]],
+    [[5,0],[8,0],[8,3]],
+    [[0,0],[3,3],[0,3]],
+    [[0,3],[8,3],[8,6],[0,6]],
+    [[0,6],[5,6],[8,8],[3,8]],
+    [[0,6],[3,8],[0,8]],
+    [[5,6],[8,6],[8,8]]
+  ],
+  // E
+  [
+    [[0,0],[4,0],[8,4],[4,4]],
+    [[4,0],[8,0],[8,4]],
+    [[0,0],[4,4],[0,4]],
+    [[4,4],[8,4],[8,8]],
+    [[4,4],[8,8],[4,8]],
+    [[0,4],[4,4],[4,5],[0,5]],
+    [[0,5],[4,5],[4,8],[0,8]]
+  ]
+];
+const SAME_PATTERN = 2;
+const PER = 7;
+const COLORS = ['#2d3a8c','#f2b134','#ef6f6c','#2a9d8f','#7b2d5f','#7cb7e8','#8bb174'];
+const U = 24, GAP = 16, BOARD = 8*U, LABEL_H = 28, MIN_VW = 2*(BOARD+GAP)+GAP;
+const TOL = 0.75 * U;
+const NS = 'http://www.w3.org/2000/svg';
+
+/* ---------- Elements ---------- */
+const $ = id => document.getElementById(id);
+const svg = $('svg'), boardG = $('boardG'), guideG = $('guideG'), lockedG = $('lockedG'), piecesG = $('piecesG');
+const menuEl = $('menu'), gameEl = $('game');
+const countGrid = $('countGrid'), countVal = $('countVal'), modeSeg = $('modeSeg'), modeNote = $('modeNote');
+const sumSquares = $('sumSquares'), sumPieces = $('sumPieces');
+const squaresEl = $('squares'), placedEl = $('placed');
+const winEl = $('win'), winTitle = $('winTitle');
+const hintBtn = $('hintBtn');
+
+const cfg = {count:5, mode:'same'};
+let boards = [], slots = [], pieces = [], drag = null, VW = 640;
+
+/* ---------- Geometry ---------- */
+function centroid(v){
+  let a=0, cx=0, cy=0;
+  for(let i=0;i<v.length;i++){
+    const [x0,y0]=v[i], [x1,y1]=v[(i+1)%v.length];
+    const f = x0*y1 - x1*y0;
+    a += f; cx += (x0+x1)*f; cy += (y0+y1)*f;
+  }
+  a /= 2;
+  return [cx/(6*a), cy/(6*a)];
+}
+function rotPt([x,y], deg){
+  const k = (((Math.round(deg/90))%4)+4)%4;
+  const c = [1,0,-1,0][k], s = [0,1,0,-1][k];
+  return [x*c - y*s, x*s + y*c];
+}
+function worldVerts(p){
+  return p.local.map(v => { const r = rotPt(v, p.rot); return [r[0]+p.x, r[1]+p.y]; });
+}
+function shapeDist(a, b){
+  const d = (p,q)=>Math.hypot(p[0]-q[0], p[1]-q[1]);
+  const one = (A,B)=>Math.max(...A.map(p=>Math.min(...B.map(q=>d(p,q)))));
+  return Math.max(one(a,b), one(b,a));
+}
+function kind(v){
+  if(v.length===3) return 'triangle';
+  const e = [0,1,2,3].map(i=>[v[(i+1)%4][0]-v[i][0], v[(i+1)%4][1]-v[i][1]]);
+  const right = e.every((a,i)=>a[0]*e[(i+1)%4][0] + a[1]*e[(i+1)%4][1] === 0);
+  if(!right) return 'parallelogram';
+  return Math.hypot(...e[0]) === Math.hypot(...e[1]) ? 'square' : 'rectangle';
+}
+function svgPoint(e){
+  const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+  const r = pt.matrixTransform(svg.getScreenCTM().inverse());
+  return {x:r.x, y:r.y};
+}
+function el(name, attrs){
+  const n = document.createElementNS(NS, name);
+  for(const k in attrs) n.setAttribute(k, attrs[k]);
+  return n;
+}
+function shuffleArr(a){
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function apply(p){
+  p.el.style.transform = `translate(${p.x}px, ${p.y}px) rotate(${p.rot}deg)`;
+}
+function patternOf(b){ return cfg.mode === 'same' ? SAME_PATTERN : b % PATTERNS.length; }
+
+/* ---------- Menu ---------- */
+for(let n=1;n<=10;n++){
+  const b = document.createElement('button');
+  b.className = 'btn'; b.type = 'button'; b.textContent = n; b.dataset.n = n;
+  b.addEventListener('click', () => { cfg.count = n; renderMenu(); });
+  countGrid.appendChild(b);
+}
+modeSeg.querySelectorAll('button').forEach(b => {
+  b.addEventListener('click', () => { cfg.mode = b.dataset.mode; renderMenu(); });
+});
+function renderMenu(){
+  countGrid.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.n === cfg.count));
+  modeSeg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === cfg.mode));
+  countVal.textContent = cfg.count;
+  sumSquares.textContent = cfg.count;
+  sumPieces.textContent = cfg.count * PER;
+  modeNote.textContent = cfg.mode === 'same'
+    ? 'All squares use one cut, so identical pieces fit on any board.'
+    : 'Each square has its own cut (5 patterns, repeating from the 6th square). Hint shows the pattern of each square.';
+}
+$('startBtn').addEventListener('click', startGame);
+$('menuBtn').addEventListener('click', showMenu);
+$('winMenuBtn').addEventListener('click', showMenu);
+
+function showMenu(){
+  gameEl.hidden = true; menuEl.hidden = false;
+  window.scrollTo({top:0});
+}
+function startGame(){
+  menuEl.hidden = true; gameEl.hidden = false;
+  hintBtn.setAttribute('aria-pressed', 'false');
+  guideG.classList.add('off');
+  build();
+  window.scrollTo({top:0});
+}
+
+/* ---------- Build ---------- */
+function build(){
+  const count = cfg.count;
+  const cols = Math.min(window.innerWidth >= 700 ? 3 : 2, count);
+  const usedW = GAP + cols*(BOARD+GAP);
+  VW = Math.max(usedW, MIN_VW);
+  const offX = (VW - usedW) / 2;
+
+  boardG.innerHTML = guideG.innerHTML = lockedG.innerHTML = piecesG.innerHTML = '';
+  boards = []; slots = []; pieces = [];
+  winEl.classList.remove('show');
+
+  const rows = Math.ceil(count/cols);
+  const trayY = GAP + rows*(BOARD+GAP+LABEL_H) + 30;
+
+  for(let b=0;b<count;b++){
+    const bx = offX + GAP + (b%cols)*(BOARD+GAP);
+    const by = GAP + Math.floor(b/cols)*(BOARD+GAP+LABEL_H);
+    const pat = PATTERNS[patternOf(b)];
+
+    const rect = el('rect',{x:bx,y:by,width:BOARD,height:BOARD,fill:'#ffffff',stroke:'#14213d','stroke-width':1.6,'stroke-dasharray':'5 4'});
+    boardG.appendChild(rect);
+    for(let i=1;i<8;i++){
+      boardG.appendChild(el('line',{x1:bx+i*U,y1:by,x2:bx+i*U,y2:by+BOARD,stroke:'#e6ebf0','stroke-width':1}));
+      boardG.appendChild(el('line',{x1:bx,y1:by+i*U,x2:bx+BOARD,y2:by+i*U,stroke:'#e6ebf0','stroke-width':1}));
+    }
+    const t = el('text',{x:bx,y:by-4,fill:'#5b6b82','font-size':11,'font-weight':700});
+    t.textContent = 'Square ' + (b+1);
+    boardG.appendChild(t);
+    boards.push({rect, count:0});
+    compositionLines(pat).forEach((line, li) => {
+      const ht = el('text',{x:bx,y:by+BOARD+14+li*12,fill:'#2d3a8c','font-size':10.5,'font-weight':700});
+      ht.textContent = line;
+      guideG.appendChild(ht);
+    });
+
+    pat.forEach((verts, i) => {
+      const [cx,cy] = centroid(verts);
+      const tv = verts.map(([x,y]) => [bx + x*U, by + y*U]);
+      slots.push({board:b, tv, cx:bx + cx*U, cy:by + cy*U, taken:false});
+      guideG.appendChild(el('polygon',{
+        points: tv.map(p=>p.join(',')).join(' '),
+        fill:'none', stroke:'#9db0c4','stroke-width':1.3,'stroke-dasharray':'4 3','stroke-linejoin':'round'
+      }));
+
+      const local = verts.map(([x,y]) => [(x-cx)*U, (y-cy)*U]);
+      const g = el('g',{class:'piece'});
+      g.dataset.i = pieces.length;
+      g.appendChild(el('polygon',{points: local.map(p=>p.join(',')).join(' '), fill: COLORS[i % COLORS.length]}));
+      pieces.push({local, x:0, y:0, rot:90*Math.floor(Math.random()*4), locked:false, el:g});
+    });
+  }
+
+  const lbl = el('text',{x:GAP,y:trayY-12,fill:'#5b6b82','font-size':12,'font-weight':700});
+  lbl.textContent = 'Piece pile (' + pieces.length + ')';
+  boardG.appendChild(lbl);
+
+  scatter(trayY);
+  pieces.forEach(p => { apply(p); piecesG.appendChild(p.el); });
+  updateStats();
+}
+
+function scatter(trayY){
+  const items = shuffleArr(pieces.slice()).map(p => {
+    const rv = p.local.map(v => rotPt(v, p.rot));
+    const xs = rv.map(v=>v[0]), ys = rv.map(v=>v[1]);
+    return {p, minx:Math.min(...xs), miny:Math.min(...ys), w:Math.max(...xs)-Math.min(...xs), h:Math.max(...ys)-Math.min(...ys)};
+  });
+  const maxX = VW - GAP, gap = 8;
+  let x = GAP, y = trayY, rowH = 0;
+  items.forEach(it => {
+    if(x + it.w > maxX && x > GAP){ x = GAP; y += rowH + gap; rowH = 0; }
+    it.p.x = x - it.minx;
+    it.p.y = y - it.miny;
+    x += it.w + gap;
+    rowH = Math.max(rowH, it.h);
+  });
+  svg.setAttribute('viewBox', `0 0 ${VW} ${y + rowH + GAP}`);
+}
+
+function compositionLines(pat){
+  const tally = {};
+  pat.forEach(v => { const k = kind(v); tally[k] = (tally[k]||0)+1; });
+  const parts = Object.entries(tally).map(([k,n]) => n + ' ' + k + (n>1?'s':''));
+  const lines = []; let cur = '';
+  parts.forEach(p => {
+    if(cur && (cur + ', ' + p).length > 28){ lines.push(cur + ','); cur = p; }
+    else cur = cur ? cur + ', ' + p : p;
+  });
+  if(cur) lines.push(cur);
+  return lines;
+}
+
+/* ---------- Snap ---------- */
+function trySnap(p){
+  const wv = worldVerts(p);
+  let best = null, bd = Infinity;
+  for(const s of slots){
+    if(s.taken) continue;
+    const d = shapeDist(wv, s.tv);
+    if(d < bd){ bd = d; best = s; }
+  }
+  if(!best || bd > TOL) return;
+  best.taken = true;
+  p.locked = true;
+  p.x = best.cx; p.y = best.cy;
+  apply(p);
+  p.el.classList.add('locked');
+  lockedG.appendChild(p.el);
+
+  const b = boards[best.board];
+  b.count++;
+  if(b.count === PER) b.rect.setAttribute('fill', '#dff2ee');
+  updateStats();
+  if(boards.every(x => x.count === PER)){
+    winTitle.textContent = cfg.count === 1 ? 'The square is complete.' : `All ${cfg.count} squares are complete.`;
+    winEl.classList.add('show');
+    winEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+}
+
+function updateStats(){
+  const sq = boards.filter(b => b.count === PER).length;
+  const pl = pieces.filter(p => p.locked).length;
+  squaresEl.innerHTML = `${sq} / ${cfg.count} <span>${cfg.count === 1 ? 'square' : 'squares'}</span>`;
+  placedEl.innerHTML = `${pl} / ${pieces.length} <span>pieces</span>`;
+}
+
+/* ---------- Drag, tap-to-rotate, edge auto-scroll ---------- */
+function moveTo(){
+  const pt = svgPoint({clientX:drag.cx, clientY:drag.cy});
+  const vb = svg.viewBox.baseVal;
+  drag.p.x = Math.min(vb.width,  Math.max(0, pt.x + drag.dx));
+  drag.p.y = Math.min(vb.height, Math.max(0, pt.y + drag.dy));
+  apply(drag.p);
+}
+function loop(){
+  if(!drag) return;
+  if(drag.moved){
+    let dy = 0;
+    if(drag.cy < 100) dy = -12;
+    else if(drag.cy > window.innerHeight - 70) dy = 12;
+    if(dy){ window.scrollBy(0, dy); moveTo(); }
+  }
+  drag.raf = requestAnimationFrame(loop);
+}
+
+svg.addEventListener('pointerdown', e => {
+  const g = e.target.closest('.piece');
+  if(!g) return;
+  const p = pieces[+g.dataset.i];
+  if(p.locked) return;
+  e.preventDefault();
+  g.setPointerCapture(e.pointerId);
+  const pt = svgPoint(e);
+  drag = {p, dx:p.x-pt.x, dy:p.y-pt.y, sx:e.clientX, sy:e.clientY, cx:e.clientX, cy:e.clientY, moved:false, raf:0};
+  g.classList.add('dragging');
+  piecesG.appendChild(g);
+  drag.raf = requestAnimationFrame(loop);
+});
+svg.addEventListener('pointermove', e => {
+  if(!drag) return;
+  drag.cx = e.clientX; drag.cy = e.clientY;
+  if(!drag.moved && Math.hypot(e.clientX-drag.sx, e.clientY-drag.sy) > 6) drag.moved = true;
+  if(drag.moved) moveTo();
+});
+function endDrag(){
+  if(!drag) return;
+  const {p, moved, raf} = drag;
+  cancelAnimationFrame(raf);
+  drag = null;
+  p.el.classList.remove('dragging');
+  if(!moved){ p.rot += 90; apply(p); }
+  trySnap(p);
+}
+svg.addEventListener('pointerup', endDrag);
+svg.addEventListener('pointercancel', endDrag);
+
+/* ---------- Game controls ---------- */
+hintBtn.addEventListener('click', () => {
+  const on = hintBtn.getAttribute('aria-pressed') !== 'true';
+  hintBtn.setAttribute('aria-pressed', on);
+  guideG.classList.toggle('off', !on);
+});
+$('shuffleBtn').addEventListener('click', build);
+$('againBtn').addEventListener('click', () => { build(); window.scrollTo({top:0, behavior:'smooth'}); });
+
+renderMenu();
+</script>
+</body>
+</html>

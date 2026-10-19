@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yosua Kusnady — Credentials</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0a0808;
+    --ink-2:#161011;
+    --ink-3:#1e1517;
+    --paper:#f3ece6;
+    --red:#9c1c24;
+    --red-deep:#5c1015;
+    --red-bright:#d43b3f;
+    --slate:#948a86;
+    --line:rgba(243,236,230,0.10);
+    --verified:#c95a5a;
+    --avatar-grad:linear-gradient(150deg,#241416,#0a0808);
+    --hero-glow:rgba(156,28,36,0.16);
+  }
+  html[data-theme="light"]{
+    --ink:#f3ece6;
+    --ink-2:#ffffff;
+    --ink-3:#fbf7f3;
+    --paper:#1c1412;
+    --red:#9c1c24;
+    --red-deep:#5c1015;
+    --red-bright:#b5222a;
+    --slate:#6b615d;
+    --line:rgba(10,8,8,0.10);
+    --verified:#a23434;
+    --avatar-grad:linear-gradient(150deg,#ffffff,#ece3db);
+    --hero-glow:rgba(156,28,36,0.08);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse 900px 480px at 50% -8%, var(--hero-glow), transparent 60%),
+      var(--ink);
+    color:var(--paper);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    display:flex;
+    justify-content:center;
+    padding:0 0 80px;
+    transition:background-color .25s ease, color .25s ease;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important;}
+  }
+
+  .page{
+    width:100%;
+    max-width:640px;
+    padding:56px 20px 0;
+  }
+
+  /* ---------- TOPBAR (CLOCK + THEME TOGGLE) ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:28px;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .clock{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    line-height:1.3;
+  }
+  .clock-date{
+    font-size:11px;
+    letter-spacing:0.04em;
+    color:var(--slate);
+  }
+  .clock-time{
+    font-size:15px;
+    font-weight:500;
+    color:var(--paper);
+    font-variant-numeric:tabular-nums;
+    letter-spacing:0.02em;
+  }
+  .theme-toggle{
+    width:36px;height:36px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--paper);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    flex-shrink:0;
+    transition:border-color .2s ease, background .2s ease, transform .2s ease;
+  }
+  .theme-toggle:hover{ border-color:var(--red); background:rgba(156,28,36,0.10); transform:translateY(-2px); }
+  .theme-toggle svg{width:17px;height:17px;}
+  .theme-toggle .icon-moon{display:block;}
+  .theme-toggle .icon-sun{display:none;}
+  html[data-theme="light"] .theme-toggle .icon-moon{display:none;}
+  html[data-theme="light"] .theme-toggle .icon-sun{display:block;}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    text-align:center;
+    padding-bottom:36px;
+    border-bottom:1px solid var(--line);
+  }
+  .avatar{
+    width:88px;height:88px;border-radius:50%;
+    margin:0 auto 20px;
+    background:var(--avatar-grad);
+    border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Fraunces',serif;
+    font-size:30px;
+    color:var(--red-bright);
+    position:relative;
+  }
+  .avatar::after{
+    content:'';
+    position:absolute;
+    inset:-6px;
+    border-radius:50%;
+    border:1px solid rgba(156,28,36,0.4);
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--red-bright);
+    margin:0 0 14px;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:clamp(30px,7vw,42px);
+    margin:0 0 8px;
+    letter-spacing:-0.01em;
+  }
+  .role{
+    color:var(--slate);
+    font-size:15px;
+    margin:0 0 18px;
+    line-height:1.6;
+  }
+  .socials{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .socials a{
+    width:36px;height:36px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--paper);
+    text-decoration:none;
+    transition:border-color .2s ease, transform .2s ease, background .2s ease;
+  }
+  .socials a:hover{
+    border-color:var(--red);
+    background:rgba(156,28,36,0.10);
+    transform:translateY(-2px);
+  }
+  .socials svg{width:16px;height:16px;}
+
+  /* ---------- CTA BUTTON ROW ---------- */
+  .cta-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    padding:28px 0 34px;
+  }
+  .cta{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:2px;
+    text-decoration:none;
+    border-radius:12px;
+    padding:16px 10px;
+    font-family:'Inter',sans-serif;
+    text-align:center;
+    transition:transform .18s ease, box-shadow .18s ease, background .18s ease;
+  }
+  .cta-primary{
+    background:linear-gradient(180deg,var(--red),var(--red-deep));
+    color:#f8ecec;
+  }
+  .cta-secondary{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--paper);
+  }
+  .cta:hover{transform:translateY(-2px);}
+  .cta-primary:hover{box-shadow:0 10px 26px -8px rgba(156,28,36,0.6);}
+  .cta-secondary:hover{border-color:var(--red); background:rgba(156,28,36,0.06);}
+  .cta-label{font-weight:600; font-size:14.5px;}
+  .cta-sub{font-size:11.5px; opacity:0.72; font-family:'JetBrains Mono',monospace;}
+
+  /* ---------- SECTION HEAD ---------- */
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:22px;
+  }
+  .section-head h2{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:20px;
+    margin:0;
+  }
+  .section-head span{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--slate);
+  }
+  section + section{
+    margin-top:48px;
+    padding-top:44px;
+    border-top:1px solid var(--line);
+  }
+
+  /* ---------- JOURNEY (TIMELINE) ---------- */
+  .timeline{
+    position:relative;
+    padding-left:26px;
+  }
+  .timeline::before{
+    content:'';
+    position:absolute;
+    left:5px; top:6px; bottom:6px;
+    width:1px;
+    background:linear-gradient(var(--red), transparent 95%);
+    opacity:0.5;
+  }
+  .t-item{
+    position:relative;
+    padding-bottom:28px;
+  }
+  .t-item:last-child{padding-bottom:0;}
+  .t-item::before{
+    content:'';
+    position:absolute;
+    left:-26px; top:5px;
+    width:9px;height:9px;
+    border-radius:50%;
+    background:var(--ink);
+    border:1.5px solid var(--red-bright);
+  }
+  .t-item .t-date{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.04em;
+    color:var(--red-bright);
+    display:block;
+    margin-bottom:4px;
+  }
+  .t-item h3{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:15.5px;
+    margin:0 0 4px;
+  }
+  .t-item .t-org{
+    font-size:12.5px;
+    color:var(--slate);
+    margin:0 0 8px;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .t-item p{
+    font-size:13.5px;
+    line-height:1.6;
+    color:var(--slate);
+    margin:0;
+  }
+
+  /* ---------- ACHIEVEMENTS (CAROUSEL) ---------- */
+  .carousel{ position:relative; }
+  .carousel-viewport{
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    scrollbar-width:none;
+    -ms-overflow-style:none;
+  }
+  .carousel-viewport::-webkit-scrollbar{ display:none; }
+  .carousel-track{ display:flex; }
+  .carousel-page{
+    flex:0 0 100%;
+    scroll-snap-align:start;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    align-content:start;
+  }
+  .car-btn{
+    position:absolute;
+    top:50%;
+    transform:translateY(-50%);
+    width:34px;height:34px;
+    border-radius:50%;
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    color:var(--paper);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    z-index:2;
+    transition:border-color .2s ease, background .2s ease, transform .2s ease;
+  }
+  .car-btn:hover{ border-color:var(--red-bright); background:rgba(156,28,36,0.14); }
+  .car-btn svg{ width:15px; height:15px; }
+  .car-prev{ left:-6px; }
+  .car-next{ right:-6px; }
+  .car-dots{
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    margin-top:18px;
+  }
+  .car-dot{
+    width:6px;height:6px;
+    border-radius:3px;
+    background:var(--line);
+    border:none;
+    cursor:pointer;
+    padding:0;
+    transition:background .2s ease, width .2s ease;
+  }
+  .car-dot.active{ background:var(--red-bright); width:16px; }
+
+  .card{
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px;
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    text-decoration:none;
+    color:inherit;
+    transition:border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+  }
+  .card:hover{
+    border-color:rgba(156,28,36,0.5);
+    transform:translateY(-3px);
+    box-shadow:0 14px 28px -16px rgba(0,0,0,0.6);
+  }
+  .card > p{ flex:1; }
+  .card-top{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    margin-bottom:12px;
+  }
+  .badge{
+    width:32px;height:32px;
+    border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(156,28,36,0.14);
+    color:var(--red-bright);
+    flex-shrink:0;
+  }
+  .badge svg{width:16px;height:16px;}
+  .ext{
+    width:13px;height:13px;
+    color:var(--slate);
+    opacity:0.6;
+    transition:opacity .2s ease, transform .2s ease, color .2s ease;
+  }
+  .card:hover .ext{opacity:1; transform:translate(1px,-1px); color:var(--red-bright);}
+  .source{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    color:var(--slate);
+    display:block;
+    margin-bottom:8px;
+  }
+  .date{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    color:var(--slate);
+    display:block;
+    margin-top:auto;
+    padding-top:12px;
+  }
+  .verified{
+    color:var(--verified);
+    font-size:9px;
+    margin-left:2px;
+  }
+  .card h3{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:14.5px;
+    line-height:1.35;
+    margin:0 0 6px;
+  }
+  .card p{
+    font-size:12.5px;
+    line-height:1.55;
+    color:var(--slate);
+    margin:0;
+  }
+
+  footer{
+    text-align:center;
+    margin-top:48px;
+    padding-top:24px;
+    border-top:1px solid var(--line);
+    color:var(--slate);
+    font-size:12px;
+    font-family:'JetBrains Mono',monospace;
+  }
+
+  /* ---------- DESKTOP ENHANCEMENT ---------- */
+  @media (min-width:768px){
+    .page{max-width:760px; padding-top:80px;}
+    h1{font-size:48px;}
+    .cta-row{
+      max-width:520px;
+      margin:0 auto;
+      gap:18px;
+      padding:36px 0 44px;
+    }
+    .cta{
+      padding:24px 16px;
+      border-radius:16px;
+    }
+    .cta-label{font-size:16.5px;}
+    .cta-sub{font-size:12.5px;}
+    .card{padding:20px;}
+    .carousel-page{grid-template-columns:1fr 1fr 1fr; gap:16px;}
+    .car-prev{ left:-42px; }
+    .car-next{ right:-42px; }
+    .car-btn{ width:40px; height:40px; }
+    .timeline{padding-left:32px;}
+    .t-item::before{left:-32px;}
+  }
+  /* ---------- NEURAL NETWORK BACKGROUND ---------- */
+  /* Sits behind everything (z-index:-1 is above the body background, below all content). */
+  #neuralBg{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    z-index:-1;
+    pointer-events:none;
+    display:block;
+  }
+</style>
+</head>
+<body>
+<canvas id="neuralBg" aria-hidden="true"></canvas>
+<div class="page">
+
+  <!-- TOPBAR: CLOCK + THEME TOGGLE -->
+  <div class="topbar">
+    <div class="clock">
+      <span class="clock-date" id="clockDate"></span>
+      <span class="clock-time" id="clockTime"></span>
+    </div>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle light and dark theme">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.3A9 9 0 1 1 11.7 3a7 7 0 0 0 9.3 9.3z"/></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8L6 18M18 6l1.8-1.8"/></svg>
+    </button>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="avatar">YK</div>
+    <p class="eyebrow">IT Operation · IT Database Administrator</p>
+    <h1>Yosua Kusnady</h1>
+    <p class="role">I keep systems stable and databases secure, day in and day out.<br>A lifelong learner engaged with open source to keep pace with a changing industry.</p>
+    <div class="socials">
+      <a href="https://id.linkedin.com/in/yosua-kusnady" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5C4.98 4.88 3.86 6 2.48 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.5 8.25h4V23h-4V8.25zM8.5 8.25h3.83v2.01h.05c.53-1 1.84-2.06 3.79-2.06 4.05 0 4.8 2.67 4.8 6.14V23h-4v-6.86c0-1.64-.03-3.75-2.29-3.75-2.29 0-2.64 1.79-2.64 3.63V23h-4V8.25z"/></svg></a>
+	<a href="https://www.instagram.com/USERNAME_ANDA" aria-label="Instagram" target="_blank" rel="noopener">
+	<svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.794.646-1.439 1.44-1.439.793-.001 1.44.645 1.44 1.439z"/>
+	</svg></a>
+	<a href="D:\simpen\Porto\Tools\KeeWeb-1.18.7.html\index.html" aria-label="Kunci" target="_blank" rel="noopener">
+	<svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+		<path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C8.686 2 6 4.686 6 8c0 2.652 1.717 4.903 4.105 5.688V20a2 2 0 002 2h0.5a1.5 1.5 0 001.5-1.5V19h1a1 1 0 001-1v-1h-2v-1.5h2a1 1 0 001-1V13.5h-2v-0.188C16.283 12.532 18 10.42 18 8c0-3.314-2.686-6-6-6zm0 3a3 3 0 100 6 3 3 0 000-6z"/>
+	</svg>
+	</a>
+	<a href="https://www.facebook.com/USERNAME_ANDA" aria-label="Facebook" target="_blank" rel="noopener">
+	<svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+	</svg></a>
+	  
+	  <a href="https://github.com/SleepyBoy29" aria-label="GitHub"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56v-2.17c-3.2.7-3.87-1.36-3.87-1.36-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.17.08 1.78 1.2 1.78 1.2 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.64 1.59.24 2.76.12 3.05.74.8 1.19 1.83 1.19 3.09 0 4.43-2.7 5.41-5.27 5.69.42.36.78 1.08.78 2.18v3.23c0 .31.21.68.8.56A10.51 10.51 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5z"/></svg></a>
+      <!--<a href="#" aria-label="Behance"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.8 10.1c1 0 1.7-.6 1.7-1.5 0-1-.7-1.5-1.7-1.5H4v3h3.8zm.3 2H4v3.4h4.1c1.1 0 1.9-.6 1.9-1.7 0-1.1-.8-1.7-1.9-1.7zM1 4.9h7.2c2.5 0 4 1.2 4 3.3 0 1.4-.7 2.3-1.9 2.8 1.6.4 2.5 1.6 2.5 3.2 0 2.4-1.9 3.8-4.7 3.8H1V4.9zm16.6 2.6c2.9 0 4.7 1.9 4.7 5v.6h-7.1c.1 1.5 1 2.4 2.5 2.4 1 0 1.8-.4 2.1-1.2h2.3c-.5 1.9-2.2 3-4.4 3-2.9 0-4.8-1.9-4.8-5s1.9-4.8 4.7-4.8zm-2.4 4h4.5c-.1-1.2-.9-2-2.2-2-1.2 0-2 .7-2.3 2zM14.5 6h5v1.3h-5V6z"/></svg></a>-->
+      <a href="mailto:yosuakusnady@gmail.com" aria-label="Email"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 6l10 7 10-7"/></svg></a>
+	  </div>
+  </div>
+
+  <!-- CTA BUTTONS -->
+  <div class="cta-row">
+    <a href="#" class="cta cta-primary">
+      <span class="cta-label">View Résumé</span>
+      <span class="cta-sub">PDF · updated 2026</span>
+    </a>
+    <a href="https://wa.me/+628568827739" class="cta cta-secondary">
+      <span class="cta-label">Get in Touch</span>
+      <span class="cta-sub">reply within 24h</span>
+    </a>
+  </div>
+
+  <!-- JOURNEY (TIMELINE) -->
+  <section>
+    <div class="section-head">
+      <h2>Journey</h2>
+      <span>2014 — now</span>
+    </div>
+    <div class="timeline">
+
+      <div class="t-item">
+        <span class="t-date">2026 — Present</span>
+        <h3>IT Database Administrator Section Head</h3>
+        <p class="t-org">Bank Sinarmas</p>
+        <p>??</p>
+      </div>
+
+      <div class="t-item">
+        <span class="t-date">2023 — 2026</span>
+        <h3>IT Database Administrator</h3>
+        <p class="t-org">Bank Sinarmas</p>
+        <p>??</p>
+      </div>
+
+      <div class="t-item">
+        <span class="t-date">2019 — 2023</span>
+        <h3>IT Operation</h3>
+        <p class="t-org">Bank Mayapada International</p>
+        <p>??</p>
+      </div>
+
+      <div class="t-item">
+        <span class="t-date">2014-2018</span>
+        <h3>Information System</h3>
+        <p class="t-org">kwik kian gie school of business</p>
+        <p>??</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ACHIEVEMENTS (CAROUSEL) -->
+  <section>
+    <div class="section-head">
+      <h2>Achievements</h2>
+      <span>next records >></span>
+    </div>
+
+    <div class="carousel">
+      <div class="carousel-viewport" id="achViewport">
+        <div class="carousel-track" id="achTrack">
+
+          <!-- PAGE 1 (first 6) -->
+          <div class="carousel-page">
+
+            <a class="card" href="#" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5C4.98 4.88 3.86 6 2.48 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.5 8.25h4V23h-4V8.25zM8.5 8.25h3.83v2.01h.05c.53-1 1.84-2.06 3.79-2.06 4.05 0 4.8 2.67 4.8 6.14V23h-4v-6.86c0-1.64-.03-3.75-2.29-3.75-2.29 0-2.64 1.79-2.64 3.63V23h-4V8.25z"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">LinkedIn <span class="verified">● verified</span></span>
+              <h3>My Profile On Linkedin</h3>
+              <p>Portfolio from working experience and other certification</p>
+              <span class="date">Jun 2026</span>
+            </a>
+			
+			<a class="card" href="https://github.com/SleepyBoy29" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56v-2.17c-3.2.7-3.87-1.36-3.87-1.36-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.17.08 1.78 1.2 1.78 1.2 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.64 1.59.24 2.76.12 3.05.74.8 1.19 1.83 1.19 3.09 0 4.43-2.7 5.41-5.27 5.69.42.36.78 1.08.78 2.18v3.23c0 .31.21.68.8.56A10.51 10.51 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5z"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">GitHub <span class="verified">● verified</span></span>
+              <h3>Open Source Contributor</h3>
+              <p>Active using Open Source aplication and contribute for public</p>
+              <span class="date">Mar 2026</span>
+            </a>
+
+            <a class="card" href="https://learn.microsoft.com/en-us/users/yosuakusnady-8153/" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6.3L12 16.8 6.5 19.5l1-6.3L3 8.9 9 8z"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Microsoft Learn<span class="verified">● verified</span></span>
+              <h3>Microsoft Learn Badges</h3>
+              <p>Portfolio from Microsoft Learn.</p>
+              <span class="date">Jun 2026</span>
+            </a>
+			
+			<a class="card" href="https://www.hackerrank.com/profile/Yosua_Kusnady" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6.3L12 16.8 6.5 19.5l1-6.3L3 8.9 9 8z"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Hackerrank<span class="verified">● verified</span></span>
+              <h3>Hackerrank Badges</h3>
+              <p>Portfolio from Hackerrank.</p>
+              <span class="date">Jun 2026</span>
+            </a>
+
+			<a class="card" href="https://www.kaggle.com/yosuakusnady" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6.3L12 16.8 6.5 19.5l1-6.3L3 8.9 9 8z"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">kaggle<span class="verified">● verified</span></span>
+              <h3>kaggle Badges</h3>
+              <p>Portfolio from kaggle.</p>
+              <span class="date">Sep 2026</span>
+            </a>
+			
+			<a class="card" href="https://www.freecodecamp.org/Yosua_Kusnady" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6.3L12 16.8 6.5 19.5l1-6.3L3 8.9 9 8z"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">freecodecamp<span class="verified">● verified</span></span>
+              <h3>freecodecamp Badges</h3>
+              <p>Portfolio from freecodecamp.</p>
+              <span class="date">Sep 2026</span>
+            </a>
+			
+
+
+          </div>
+
+          <!-- PAGE 2 (remaining) -->
+          <div class="carousel-page">
+
+            
+			<a class="card" href="https://www.credly.com/users/yosua_kusnady" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6.3L12 16.8 6.5 19.5l1-6.3L3 8.9 9 8z"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">credly<span class="verified">● verified</span></span>
+              <h3>credly Badges</h3>
+              <p>Portfolio from credly.</p>
+              <span class="date">Sep 2026</span>
+            </a>
+			
+			<a class="card" href="??" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6.3L12 16.8 6.5 19.5l1-6.3L3 8.9 9 8z"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">accredible<span class="verified">● verified</span></span>
+              <h3>accredible Badges</h3>
+              <p>Portfolio from accredible.</p>
+              <span class="date">Sep 2026</span>
+            </a>
+			
+			<a class="card" href="??" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6.3L12 16.8 6.5 19.5l1-6.3L3 8.9 9 8z"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">leetcode<span class="verified">● verified</span></span>
+              <h3>leetcode Badges</h3>
+              <p>Portfolio from leetcode.</p>
+              <span class="date">Sep 2026</span>
+            </a>
+			
+			<a class="card" href="??" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6 .9-4.5 4.3 1 6.3L12 16.8 6.5 19.5l1-6.3L3 8.9 9 8z"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Google Developers Profile<span class="verified">● verified</span></span>
+              <h3>Google Developers Profile Badges</h3>
+              <p>Portfolio from Google Developers Profile.</p>
+              <span class="date">Sep 2026</span>
+            </a>
+			
+			
+			
+          </div>
+
+        </div>
+      </div>
+
+      <button class="car-btn car-prev" id="achPrev" aria-label="Previous achievements">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button class="car-btn car-next" id="achNext" aria-label="Next achievements">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+
+      <div class="car-dots" id="achDots"></div>
+    </div>
+  </section>
+
+  <!-- PROJECTS (CAROUSEL) -->
+  <section>
+    <div class="section-head">
+      <h2>Projects</h2>
+      <span>next records >></span>
+    </div>
+
+    <div class="carousel">
+      <div class="carousel-viewport" id="projViewport">
+        <div class="carousel-track" id="projTrack">
+
+          <!-- PAGE 1 (first 6) -->
+          <div class="carousel-page">
+
+            <a class="card" href="D:\simpen\Porto\Games\memory-match.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Games</span>
+              <h3>Memory Match</h3>
+              <p>Retro Games.</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+
+            <a class="card" href="D:\simpen\Porto\Article\personality-compass.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Article</span>
+              <h3>Personality Compass</h3>
+              <p>Personality Quick Test</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			<a class="card" href="D:\simpen\Porto\Games\rock-paper-scissors-simulation.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Games</span>
+              <h3>Rock Paper Scissors Simulation</h3>
+              <p>rock paper scissors simmulation for fun</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			<a class="card" href="D:\simpen\Porto\keyboard-cheatsheet.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Article</span>
+              <h3>Keyboard Cheatsheet</h3>
+              <p>keyboard-cheatsheet</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			<a class="card" href="D:\simpen\Porto\Tools\typetrack.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Tools</span>
+              <h3>Typetrack</h3>
+              <p>Training for Typing with accuration.</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			<a class="card" href="D:\simpen\Porto\Tools\keyboard-checker.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Tools</span>
+              <h3>Keyboard Checker</h3>
+              <p>Free Online Keyboard Checker</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+
+
+
+          </div>
+
+          <!-- PAGE 2 (remaining) -->
+          <div class="carousel-page">
+
+			<a class="card" href="D:\simpen\Porto\Tools\flashcard-bahasa.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Tools</span>
+              <h3>Flashcard</h3>
+              <p>flashcard for language</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			
+			<a class="card" href="D:\simpen\Porto\Games\kraepelin-test.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Games</span>
+              <h3>Kraepelin Test</h3>
+              <p>kraepelin-test for Training your math speed</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			<a class="card" href="D:\simpen\Porto\Games\math-drill.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Games</span>
+              <h3>Math Drill</h3>
+              <p>math-drill for Training your math speed</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			<a class="card" href="D:\simpen\Porto\Tools\prompt-hall-of-fame.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Tools</span>
+              <h3>Prompt Hall of Fame</h3>
+              <p>prompt-hall-of-fame for keep prompt</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			<a class="card" href="D:\simpen\Porto\Tools\prompt-library-local.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Tools</span>
+              <h3>Prompt Library</h3>
+              <p>prompt-library book like</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			<a class="card" href="D:\simpen\Porto\Tools\prompt-hall-of-fame-sqlite.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Tools</span>
+              <h3>Prompt Hall of Fame sqlite</h3>
+              <p>prompt-hall-of-fame-sqlite for keep prompt but in sqlite</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			
+          </div>
+		  
+		  <!-- PAGE 3 (remaining) -->
+          <div class="carousel-page">
+			
+			<a class="card" href="D:\simpen\Porto\Games\wall-rush.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Games</span>
+              <h3>Wall Rush</h3>
+              <p>wall-rush for Mini Games</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			
+			<a class="card" href="D:\simpen\Porto\Games\guess-the-color.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Games</span>
+              <h3>Guess The Color</h3>
+              <p>guess-the-color for Training your color match</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			
+			<a class="card" href="D:\simpen\Porto\Tools\bouncing-logo.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Tools</span>
+              <h3>Bouncing Logo</h3>
+              <p>bouncing-logo for antic</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			<a class="card" href="D:\simpen\Porto\Games\frog-leap.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Games</span>
+              <h3>Frog Leap</h3>
+              <p>frog-leap for games</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			<a class="card" href="D:\simpen\Porto\Games\broken-square-puzzle.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Games</span>
+              <h3>Broken Square Puzzle</h3>
+              <p>broken-square-puzzle for games</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			<a class="card" href="D:\simpen\Porto\Games\15-puzzle.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Games</span>
+              <h3>15 Puzzle</h3>
+              <p>15-puzzle for games</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			
+          </div>
+		  
+		  
+          <!-- PAGE 4 (remaining) -->
+          <div class="carousel-page">
+
+			<a class="card" href="D:\simpen\Porto\Tools\qr-generator.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Tools</span>
+              <h3>QR Generator</h3>
+              <p>qr-generator for personal qr code</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			
+			<a class="card" href="D:\simpen\Porto\Tools\dieline-studio.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Tools</span>
+              <h3>Dieline Studio</h3>
+              <p>dieline-studio for editing photo</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			<a class="card" href="D:\simpen\Porto\Article\Quote_of_the_Day.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Article</span>
+              <h3>Quote of The Day</h3>
+              <p>Quote_of_the_Day for motivation</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			<a class="card" href="D:\simpen\Porto\Tools\google-index-search.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Tools</span>
+              <h3>Google Index Search</h3>
+              <p>google-index-search for better search</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			<a class="card" href="D:\simpen\Porto\Article\bmi-guide.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Article</span>
+              <h3>BMI Guide</h3>
+              <p>bmi-guide for better health</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			<a class="card" href="D:\simpen\Porto\Tools\pixel-art-generator.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Tools</span>
+              <h3>Pixel Art Generator</h3>
+              <p>pixel-art-generator for design</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+          </div>
+		  
+		  
+		  <!-- PAGE 5 (remaining) -->
+          <div class="carousel-page">
+
+			<a class="card" href="D:\simpen\Porto\Tools\Identicon_Generator.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Tools</span>
+              <h3>Identicon Generator</h3>
+              <p>Identicon_Generator inspired from StackOverflow</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			
+			<a class="card" href="D:\simpen\Porto\Tools\Countdown_and_Timer.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Tools</span>
+              <h3>Countdown And Timer</h3>
+              <p>Countdown_and_Timer for countdown or timer</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			<a class="card" href="D:\simpen\Porto\Tools\Password_Generator.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Tools</span>
+              <h3>Password Generator</h3>
+              <p>Password_Generator for safety</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			<a class="card" href="D:\simpen\Porto\Article\WorldMap.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Article</span>
+              <h3>World Map</h3>
+              <p>WorldMap for fun</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			<a class="card" href="D:\simpen\Porto\Article\ChineseZodiacCalculator.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Article</span>
+              <h3>Chinese Zodiac Calculator</h3>
+              <p>ChineseZodiacCalculator for chinese</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			<a class="card" href="D:\simpen\Porto\Games\bingo.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Games</span>
+              <h3>Bingo</h3>
+              <p>bingo for games</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+		  
+          </div>
+		  
+		  
+		  <!-- PAGE 6 (remaining) -->
+          <div class="carousel-page">
+
+			<a class="card" href="D:\simpen\Porto\Article\Workout_Plans.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Article</span>
+              <h3>Workout Plan</h3>
+              <p>Workout Plan for beginner</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			
+			<a class="card" href="D:\simpen\Porto\Article\Omikuji.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Article</span>
+              <h3>Omikuji</h3>
+              <p>Omikuji for Japanese Prayer</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			<a class="card" href="D:\simpen\Porto\Article\Fortune_Cookie.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Article</span>
+              <h3>Fortune Cookie</h3>
+              <p>Fortune_Cookie for fotune telling</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+			<a class="card" href="D:\simpen\Porto\Tools\Rewards\Rewards.html" target="_blank" rel="noopener">
+              <div class="card-top">
+                <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+                <svg class="ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M9 7h8v8"/></svg>
+              </div>
+              <span class="source">Tools</span>
+              <h3>Rewards</h3>
+              <p>Rewards from survei</p>
+              <span class="date">2026 · Completed</span>
+            </a>
+			
+		  
+          </div>
+
+        </div>
+      </div>
+
+      <button class="car-btn car-prev" id="projPrev" aria-label="Previous projects">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button class="car-btn car-next" id="projNext" aria-label="Next projects">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+
+      <div class="car-dots" id="projDots"></div>
+    </div>
+  </section>
+
+  <footer>
+    all rights reserved · © <span id="year"></span> Yosua Kusnady
+  </footer>
+
+</div>
+
+<script>
+document.getElementById("year").textContent = new Date().getFullYear();
+
+(function(){
+  var root = document.documentElement;
+  var toggleBtn = document.getElementById('themeToggle');
+  var saved = null;
+  try { saved = localStorage.getItem('theme'); } catch(e){}
+  if (saved === 'light' || saved === 'dark'){
+    root.setAttribute('data-theme', saved);
+  }
+  toggleBtn.addEventListener('click', function(){
+    var isLight = root.getAttribute('data-theme') === 'light';
+    var next = isLight ? 'dark' : 'light';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('theme', next); } catch(e){}
+  });
+})();
+
+(function(){
+  var dateEl = document.getElementById('clockDate');
+  var timeEl = document.getElementById('clockTime');
+  function pad(n){ return n < 10 ? '0' + n : '' + n; }
+  function tick(){
+    var now = new Date();
+    dateEl.textContent = now.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    timeEl.textContent = pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
+
+function initCarousel(prefix, autoplayMs){
+    const viewport = document.getElementById(prefix + 'Viewport');
+    const pages = viewport.querySelectorAll('.carousel-page');
+    const dotsWrap = document.getElementById(prefix + 'Dots');
+    const prevBtn = document.getElementById(prefix + 'Prev');
+    const nextBtn = document.getElementById(prefix + 'Next');
+
+    if(pages.length <= 1){
+      prevBtn.style.display = 'none';
+      nextBtn.style.display = 'none';
+      dotsWrap.style.display = 'none';
+      return;
+    }
+
+    let currentIndex = 0;
+    let autoplayTimer = null;
+
+    pages.forEach((_, i) => {
+      const dot = document.createElement('button');
+      dot.className = 'car-dot' + (i === 0 ? ' active' : '');
+      dot.setAttribute('aria-label', 'Go to page ' + (i + 1));
+      dot.addEventListener('click', () => { goTo(i); restartAutoplay(); });
+      dotsWrap.appendChild(dot);
+    });
+    const dotEls = dotsWrap.querySelectorAll('.car-dot');
+
+    function updateDotsUI(){
+      dotEls.forEach((d, i) => d.classList.toggle('active', i === currentIndex));
+    }
+
+    function goTo(i){
+      currentIndex = (i + pages.length) % pages.length;
+      viewport.scrollTo({ left: viewport.clientWidth * currentIndex, behavior: 'smooth' });
+      updateDotsUI();
+    }
+
+    function startAutoplay(){
+      clearInterval(autoplayTimer); // prevent stacked timers
+      autoplayTimer = setInterval(() => goTo(currentIndex + 1), autoplayMs);
+    }
+    function stopAutoplay(){
+      clearInterval(autoplayTimer);
+    }
+    function restartAutoplay(){
+      stopAutoplay();
+      startAutoplay();
+    }
+
+    prevBtn.addEventListener('click', () => { goTo(currentIndex - 1); restartAutoplay(); });
+    nextBtn.addEventListener('click', () => { goTo(currentIndex + 1); restartAutoplay(); });
+
+    viewport.addEventListener('mouseenter', stopAutoplay);
+    viewport.addEventListener('mouseleave', startAutoplay);
+    viewport.addEventListener('touchstart', stopAutoplay, { passive: true });
+    viewport.addEventListener('touchend', () => { setTimeout(startAutoplay, 1500); }, { passive: true });
+
+    let scrollTimeout;
+    viewport.addEventListener('scroll', () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        currentIndex = Math.round(viewport.scrollLeft / viewport.clientWidth);
+        updateDotsUI();
+      }, 80);
+    });
+
+    updateDotsUI();
+    startAutoplay();
+}
+
+initCarousel('ach', 5000);
+initCarousel('proj', 5000);
+</script>
+<script>
+/* Neural network background: drifting nodes + soft links, gently pulled toward the pointer */
+(function(){
+  var cv=document.getElementById('neuralBg');
+  if(!cv||!cv.getContext) return;
+  var ctx=cv.getContext('2d');
+  var root=document.documentElement;
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var coarse=window.matchMedia&&matchMedia('(pointer: coarse)').matches;
+
+  var W=0,H=0,dpr=1,nodes=[],color=[212,59,63],light=false;
+  var mouse={x:0,y:0,on:false};
+  var LINK=coarse?100:140;      // max distance between linked nodes
+  var PULL=coarse?130:180;      // pointer influence radius
+
+  function readTheme(){
+    light=root.getAttribute('data-theme')==='light';
+    var v=getComputedStyle(root).getPropertyValue('--red-bright').trim();
+    var m=/^#([0-9a-f]{6})$/i.exec(v);
+    if(m){var n=parseInt(m[1],16);color=[(n>>16)&255,(n>>8)&255,n&255];}
+  }
+  function mk(){
+    var a=Math.random()*Math.PI*2,sp=0.10+Math.random()*0.22;
+    return {x:Math.random()*W,y:Math.random()*H,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,ex:0,ey:0,r:0.9+Math.random()*1.3};
+  }
+  function resize(){
+    dpr=Math.min(window.devicePixelRatio||1,2);
+    W=window.innerWidth; H=window.innerHeight;
+    cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    var target=Math.max(30,Math.round(Math.min(W*H/(coarse?11000:8000),coarse?60:140)));
+    while(nodes.length<target) nodes.push(mk());
+    nodes.length=Math.min(nodes.length,target);
+    for(var i=0;i<nodes.length;i++){nodes[i].x=Math.min(nodes[i].x,W);nodes[i].y=Math.min(nodes[i].y,H);}
+    if(reduce) draw();
+  }
+
+  function step(dt){
+    var fr=Math.pow(0.93,dt);
+    for(var i=0;i<nodes.length;i++){
+      var n=nodes[i];
+      if(mouse.on){
+        var dx=mouse.x-n.x,dy=mouse.y-n.y,d=Math.sqrt(dx*dx+dy*dy);
+        if(d<PULL&&d>1){
+          var f=(1-d/PULL)*0.07*Math.min(1,d/60)*dt;   // soft pull, eases off near the cursor
+          n.ex+=dx/d*f; n.ey+=dy/d*f;
+        }
+      }
+      n.ex*=fr; n.ey*=fr;
+      n.ex=Math.max(-1.6,Math.min(1.6,n.ex)); n.ey=Math.max(-1.6,Math.min(1.6,n.ey));
+      n.x+=(n.vx+n.ex)*dt; n.y+=(n.vy+n.ey)*dt;
+      if(n.x<0){n.x=0;n.vx=Math.abs(n.vx);} else if(n.x>W){n.x=W;n.vx=-Math.abs(n.vx);}
+      if(n.y<0){n.y=0;n.vy=Math.abs(n.vy);} else if(n.y>H){n.y=H;n.vy=-Math.abs(n.vy);}
+    }
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    var c=color[0]+','+color[1]+','+color[2];
+    var lineA=light?0.15:0.20, nodeA=light?0.40:0.55, mouseA=light?0.42:0.55;
+    var i,j,a,b,dx,dy,d;
+
+    // soft glow around the pointer
+    if(mouse.on){
+      var g=ctx.createRadialGradient(mouse.x,mouse.y,0,mouse.x,mouse.y,PULL);
+      g.addColorStop(0,'rgba('+c+','+(light?0.07:0.09)+')');
+      g.addColorStop(1,'rgba('+c+',0)');
+      ctx.fillStyle=g; ctx.fillRect(mouse.x-PULL,mouse.y-PULL,PULL*2,PULL*2);
+    }
+
+    // links between nodes
+    ctx.lineWidth=0.7;
+    for(i=0;i<nodes.length;i++){
+      a=nodes[i];
+      for(j=i+1;j<nodes.length;j++){
+        b=nodes[j]; dx=a.x-b.x; if(dx>LINK||dx<-LINK) continue;
+        dy=a.y-b.y; if(dy>LINK||dy<-LINK) continue;
+        d=Math.sqrt(dx*dx+dy*dy);
+        if(d<LINK){
+          ctx.strokeStyle='rgba('+c+','+((1-d/LINK)*lineA).toFixed(3)+')';
+          ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+        }
+      }
+    }
+
+    // links from the pointer to nearby nodes
+    if(mouse.on){
+      ctx.lineWidth=0.9;
+      for(i=0;i<nodes.length;i++){
+        a=nodes[i]; dx=mouse.x-a.x; dy=mouse.y-a.y; d=Math.sqrt(dx*dx+dy*dy);
+        if(d<PULL){
+          ctx.strokeStyle='rgba('+c+','+((1-d/PULL)*mouseA).toFixed(3)+')';
+          ctx.beginPath(); ctx.moveTo(mouse.x,mouse.y); ctx.lineTo(a.x,a.y); ctx.stroke();
+        }
+      }
+    }
+
+    // nodes
+    ctx.fillStyle='rgba('+c+','+nodeA+')';
+    for(i=0;i<nodes.length;i++){
+      a=nodes[i]; ctx.beginPath(); ctx.arc(a.x,a.y,a.r,0,Math.PI*2); ctx.fill();
+    }
+  }
+
+  var last=0;
+  function frame(t){
+    var dt=last?Math.min(32,t-last)/16.667:1; last=t;
+    step(dt); draw();
+    requestAnimationFrame(frame);
+  }
+
+  // pointer tracking (mouse + touch); canvas has pointer-events:none so nothing else is affected
+  var offTimer;
+  window.addEventListener('pointermove',function(e){
+    clearTimeout(offTimer);
+    mouse.x=e.clientX; mouse.y=e.clientY; mouse.on=!reduce;
+  },{passive:true});
+  window.addEventListener('pointerup',function(e){
+    if(e.pointerType==='touch'){clearTimeout(offTimer);offTimer=setTimeout(function(){mouse.on=false;},700);}
+  },{passive:true});
+  document.addEventListener('mouseleave',function(){mouse.on=false;});
+  window.addEventListener('blur',function(){mouse.on=false;});
+
+  var rt;
+  window.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(resize,150);});
+  new MutationObserver(function(){readTheme(); if(reduce) draw();})
+    .observe(root,{attributes:true,attributeFilter:['data-theme']});
+
+  readTheme(); resize();
+  if(!reduce) requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
