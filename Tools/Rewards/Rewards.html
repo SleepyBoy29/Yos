@@ -54,6 +54,10 @@ summary{cursor:pointer;font-size:14px;color:var(--muted)}
     <h2>Contact via WhatsApp</h2>
     <label for="phone">WhatsApp number</label>
     <input type="tel" id="phone" inputmode="tel" placeholder="e.g. 08123456789 or +6281234567890">
+    <label for="intro">Opening message (editable)</label>
+    <input type="text" id="intro" maxlength="200" placeholder="e.g. Hi, I have completed the survey.">
+    <label for="claim">Reward sentence (comes before the chosen reward)</label>
+    <input type="text" id="claim" maxlength="100" placeholder="e.g. I would like to claim my reward:">
     <div class="scanme" id="scanLbl">SCAN ME</div>
     <div class="qr" id="qrBox" style="margin-top:0"></div>
     <div class="qnum" id="qrNum"></div>
@@ -107,13 +111,13 @@ summary{cursor:pointer;font-size:14px;color:var(--muted)}
   var COFFEE=['Starrycano','Kopi Dari Tani','Butterscotch Sea Salt Latte','Buttercream Latte','Aren Latte','Pandan Latte','Dirty Matchapresso','Bumi Latte','Americano','Berry Manuka Americano','Kopi Dari Tani 1L'].map(function(n){return {name:n,img:CI};});
   var NON=['Dark Chocolate','Matcha Green Tea','Classic Milo','Choco Cookie Shake','Butterscotch Milk Crumble','Choco Caramel Cloud','Hibiscus Lychee Peach Yakult'].map(function(n){return {name:n,img:NI};});
   var comm=[],db=null,dlNs=null,cardCanvas=null;
-  var state={logo:'',fg:'#0b6b35',bg:'#ffffff',style:'square',phone:'',sel:'',mine:[]};
+  var state={logo:'',fg:'#0b6b35',bg:'#ffffff',style:'square',phone:'',sel:'',mine:[],intro:'Hi, I have completed the survey.',claim:'I would like to claim my reward:'};
   try{var s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&typeof s==='object')state=Object.assign(state,s);}catch(e){}
   function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
   var $=function(id){return document.getElementById(id)};
 
   function normalize(p){p=(p||'').replace(/[^\d+]/g,'').replace(/^\+/,'');if(p.indexOf('0')===0)p='62'+p.slice(1);else if(p.indexOf('8')===0)p='62'+p;return p;}
-  function message(){var m='Hi, I have completed the survey.';if(state.sel){var it=(state.mine||[]).filter(function(x){return x.name===state.sel;})[0];m+=' I would like to claim my reward: '+state.sel+(it&&it.by?' (from '+it.by+')':'')+'.'+(it&&it.note?' Note: '+it.note:'');}return m;}
+  function message(){var m=(state.intro||'').trim();if(state.sel){var it=(state.mine||[]).filter(function(x){return x.name===state.sel;})[0];m+=(m?' ':'')+((state.claim||'').trim()||'Reward:')+' '+state.sel+(it&&it.by?' (from '+it.by+')':'')+'.'+(it&&it.note?' Note: '+it.note:'');}return m;}
 
   function buildCard(qrCv,n){
     var W=1000,H=1250,c=document.createElement('canvas');c.width=W;c.height=H;
@@ -175,6 +179,9 @@ summary{cursor:pointer;font-size:14px;color:var(--muted)}
   $('phone').value=state.phone;
   $('phone').addEventListener('input',function(e){state.phone=e.target.value;save();renderLink();renderQR();});
   $('waBtn').addEventListener('click',function(e){if($('waBtn').getAttribute('href')==='#'){e.preventDefault();$('phone').focus();}});
+  $('intro').value=state.intro;$('claim').value=state.claim;
+  $('intro').addEventListener('input',function(e){state.intro=e.target.value.slice(0,200);save();renderLink();renderQR();});
+  $('claim').addEventListener('input',function(e){state.claim=e.target.value.slice(0,100);save();renderLink();renderQR();});
   $('fg').value=state.fg;$('bg').value=state.bg;$('style').value=state.style;
   $('fg').addEventListener('input',function(e){state.fg=e.target.value;save();renderQR();});
   $('bg').addEventListener('input',function(e){state.bg=e.target.value;save();renderQR();});
