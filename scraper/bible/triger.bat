@@ -1,0 +1,3 @@
+@echo off
+echo Sedang menjalankan skrip Python...
+python "D:\scraper\bible\scrap_bible.py"

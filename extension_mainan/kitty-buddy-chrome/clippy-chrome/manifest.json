@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Calico Kitten Buddy",
+  "version": "1.2.0",
+  "description": "A friendly animated calico kitten. Drag it around, click it for a tip, and watch it walk, play, sleep, or celebrate on its own when you're not interacting with it.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Calico Kitten Buddy"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

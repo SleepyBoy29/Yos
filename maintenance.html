@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Under Maintenance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e16;
+    --panel:#0f1522;
+    --panel-2:#131b2b;
+    --line:#212c3f;
+    --text:#e7ebf2;
+    --muted:#7c8798;
+    --amber:#ffb020;
+    --amber-dim:#8a6420;
+    --green:#3ecf8e;
+    --red:#ff5d5d;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--bg);
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(255,176,32,0.06), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(62,207,142,0.05), transparent 40%);
+    color:var(--text);
+    font-family:'Inter', system-ui, sans-serif;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; animation-iteration-count:1 !important;}
+  }
+
+  .wrap{
+    width:100%;
+    max-width:720px;
+  }
+
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.18em;
+    color:var(--amber);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .eyebrow .dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--amber);
+    box-shadow:0 0 8px var(--amber);
+    animation:pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{opacity:1;}
+    50%{opacity:0.25;}
+  }
+
+  h1{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:clamp(26px, 5vw, 38px);
+    line-height:1.25;
+    margin:0 0 10px 0;
+    letter-spacing:-0.01em;
+  }
+  h1 .cursor{
+    display:inline-block;
+    width:0.5ch;
+    background:var(--amber);
+    animation:blink 1s step-end infinite;
+  }
+  @keyframes blink{
+    0%,49%{opacity:1;}
+    50%,100%{opacity:0;}
+  }
+
+  p.lead{
+    color:var(--muted);
+    font-size:15px;
+    line-height:1.65;
+    margin:0 0 28px 0;
+    max-width:56ch;
+  }
+
+  /* terminal card */
+  .terminal{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,0.45);
+  }
+  .terminal-bar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:11px 14px;
+    background:var(--panel-2);
+    border-bottom:1px solid var(--line);
+  }
+  .terminal-bar .tdot{width:10px;height:10px;border-radius:50%;}
+  .tdot.r{background:#ff5f57;}
+  .tdot.y{background:#febc2e;}
+  .tdot.g{background:#28c840;}
+  .terminal-title{
+    margin-left:8px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--muted);
+  }
+  .terminal-body{
+    padding:20px 22px 22px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    line-height:1.9;
+  }
+  .log-line{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    color:var(--muted);
+  }
+  .log-line .task::before{
+    content:"> ";
+    color:var(--amber-dim);
+  }
+  .status-ok{color:var(--green);}
+  .status-prog{color:var(--amber);}
+
+  .progress-row{
+    margin-top:16px;
+  }
+  .progress-track{
+    height:8px;
+    border-radius:99px;
+    background:#1a2233;
+    overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .progress-fill{
+    height:100%;
+    width:64%;
+    border-radius:99px;
+    background:linear-gradient(90deg, var(--amber-dim), var(--amber));
+    box-shadow:0 0 12px rgba(255,176,32,0.5);
+    animation:grow 3.5s ease-in-out infinite alternate;
+  }
+  @keyframes grow{
+    0%{width:58%;}
+    100%{width:72%;}
+  }
+  .progress-meta{
+    display:flex;
+    justify-content:space-between;
+    margin-top:8px;
+    font-size:11.5px;
+    color:var(--muted);
+  }
+  .progress-meta .eta{color:var(--text);}
+
+  /* divider */
+  .divider{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin:34px 0 18px;
+  }
+  .divider::before, .divider::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:var(--line);
+  }
+  .divider span{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.14em;
+    color:var(--muted);
+    white-space:nowrap;
+  }
+
+  /* game panel */
+  .game-panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px 16px 14px;
+  }
+  .game-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:10px;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .game-head .label{
+    font-size:12px;
+    color:var(--muted);
+    letter-spacing:0.06em;
+  }
+  .game-head .score{
+    font-size:13px;
+    color:var(--amber);
+  }
+  .puzzle-wrap{
+    position:relative;
+    width:100%;
+    max-width:340px;
+    margin:0 auto;
+  }
+  .puzzle-board{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:6px;
+    aspect-ratio:1/1;
+    background:
+      linear-gradient(180deg, #0d1320 0%, #0b0f19 100%);
+    border-radius:6px;
+    border:1px solid var(--line);
+    padding:6px;
+  }
+  .tile{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:clamp(16px, 4.4vw, 24px);
+    font-weight:600;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:5px;
+    color:var(--text);
+    cursor:pointer;
+    user-select:none;
+    -webkit-tap-highlight-color:transparent;
+    transition:transform 0.06s ease, border-color .15s ease, background .15s ease;
+  }
+  .tile:hover{border-color:var(--amber-dim);}
+  .tile:active{transform:scale(0.94);}
+  .tile.empty{
+    background:transparent;
+    border:1px dashed var(--line);
+    cursor:default;
+  }
+  .puzzle-win{
+    position:absolute;
+    inset:0;
+    background:rgba(10,14,22,0.88);
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    border-radius:6px;
+    text-align:center;
+    padding:16px;
+  }
+  .puzzle-win.show{ display:flex; }
+  .puzzle-win h3{
+    margin:0;
+    color:var(--green);
+    font-family:'JetBrains Mono', monospace;
+    font-size:15px;
+    letter-spacing:0.04em;
+  }
+  .puzzle-win p{
+    margin:0;
+    color:var(--muted);
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+  }
+  .shuffle-btn{
+    margin-top:12px;
+    display:block;
+    margin-left:auto;
+    margin-right:auto;
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--amber);
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:0.04em;
+    padding:7px 16px;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  .shuffle-btn:hover{ border-color:var(--amber); }
+  .shuffle-btn:active{ transform:translateY(1px); }
+  .game-hint{
+    margin-top:10px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:var(--muted);
+    text-align:center;
+  }
+  .game-hint kbd{
+    background:#1a2233;
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:1px 6px;
+    color:var(--text);
+    font-family:inherit;
+  }
+
+  footer{
+    margin-top:28px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+    font-size:12.5px;
+    color:var(--muted);
+  }
+  footer a{
+    color:var(--muted);
+    text-decoration:underline;
+    text-underline-offset:2px;
+  }
+  footer a:hover{color:var(--text);}
+
+  a:focus-visible, button:focus-visible{
+    outline:2px solid var(--amber);
+    outline-offset:2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="eyebrow"><span class="dot"></span> STATUS: MAINTENANCE</div>
+
+  <h1>System under maintenance<span class="cursor">&nbsp;</span></h1>
+  <p class="lead">
+    We're improving performance and security. Service will be back to normal
+    shortly. While you wait, try running the interactive diagnostic below.
+  </p>
+
+  <div class="terminal">
+    <div class="terminal-bar">
+      <span class="tdot r"></span><span class="tdot y"></span><span class="tdot g"></span>
+      <span class="terminal-title">system-status.log</span>
+    </div>
+    <div class="terminal-body">
+      <div class="log-line"><span class="task">Backing up database</span><span class="status-ok">[OK]</span></div>
+      <div class="log-line"><span class="task">Migrating schema</span><span class="status-ok">[OK]</span></div>
+      <div class="log-line"><span class="task">Updating core modules</span><span class="status-prog">[IN PROGRESS]</span></div>
+      <div class="log-line"><span class="task">Running security checks</span><span style="color:var(--muted)">[QUEUED]</span></div>
+
+      <div class="progress-row">
+        <div class="progress-track"><div class="progress-fill"></div></div>
+        <div class="progress-meta">
+          <span>Update progress</span>
+          <span class="eta">Estimated completion: ~30 min</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"><span>INTERACTIVE DIAGNOSTIC MODE</span></div>
+
+  <div class="game-panel">
+    <div class="game-head">
+      <span class="label">REORDER.SYS — restore the sequence</span>
+      <span class="score" id="movesLabel">MOVES: 0</span>
+    </div>
+    <div class="puzzle-wrap">
+      <div class="puzzle-board" id="puzzleBoard"></div>
+      <div class="puzzle-win" id="puzzleWin">
+        <h3>SEQUENCE RESTORED</h3>
+        <p id="puzzleWinMoves">Solved in 0 moves</p>
+        <button class="shuffle-btn" id="shuffleAgainBtn">[ run again ]</button>
+      </div>
+    </div>
+    <div class="game-hint" id="gameHint">
+      Click a tile next to the empty slot, or use arrow keys
+    </div>
+    <button class="shuffle-btn" id="shuffleBtn">[ shuffle ]</button>
+  </div>
+
+  <footer>
+    <span>Need help right away? <a href="mailto:support@example.com">support@example.com</a></span>
+    <span>&copy; 2026 — This page updates automatically</span>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  const SIZE = 4;
+  const board = document.getElementById('puzzleBoard');
+  const movesLabel = document.getElementById('movesLabel');
+  const hint = document.getElementById('gameHint');
+  const winPanel = document.getElementById('puzzleWin');
+  const winMovesLabel = document.getElementById('puzzleWinMoves');
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  const shuffleAgainBtn = document.getElementById('shuffleAgainBtn');
+
+  let tiles = [];
+  let moves = 0;
+  let solved = false;
+
+  function solvedState(){
+    const arr = [];
+    for(let i=1;i<SIZE*SIZE;i++) arr.push(i);
+    arr.push(0);
+    return arr;
+  }
+
+  function idxToRC(i){ return [Math.floor(i/SIZE), i % SIZE]; }
+  function rcToIdx(r,c){ return r*SIZE + c; }
+
+  function isSolved(arr){
+    const target = solvedState();
+    for(let i=0;i<arr.length;i++){ if(arr[i] !== target[i]) return false; }
+    return true;
+  }
+
+  function shuffle(){
+    tiles = solvedState();
+    let blank = tiles.indexOf(0);
+    let lastSwap = -1;
+    // do random legal moves from the solved state, guarantees solvability
+    for(let n=0; n<400; n++){
+      const [r,c] = idxToRC(blank);
+      const neighbors = [];
+      if(r>0) neighbors.push(rcToIdx(r-1,c));
+      if(r<SIZE-1) neighbors.push(rcToIdx(r+1,c));
+      if(c>0) neighbors.push(rcToIdx(r,c-1));
+      if(c<SIZE-1) neighbors.push(rcToIdx(r,c+1));
+      const candidates = neighbors.filter(i => i !== lastSwap);
+      const pick = candidates[Math.floor(Math.random()*candidates.length)];
+      [tiles[blank], tiles[pick]] = [tiles[pick], tiles[blank]];
+      lastSwap = blank;
+      blank = pick;
+    }
+    moves = 0;
+    solved = false;
+    movesLabel.textContent = 'MOVES: 0';
+    hint.textContent = 'Click a tile next to the empty slot, or use arrow keys';
+    winPanel.classList.remove('show');
+    render();
+  }
+
+  function render(){
+    board.innerHTML = '';
+    tiles.forEach((val, idx) => {
+      const cell = document.createElement('div');
+      cell.className = 'tile' + (val === 0 ? ' empty' : '');
+      cell.textContent = val === 0 ? '' : val;
+      if(val !== 0){
+        cell.addEventListener('click', () => trySlide(idx));
+      }
+      board.appendChild(cell);
+    });
+  }
+
+  function trySlide(idx){
+    if(solved) return;
+    const blank = tiles.indexOf(0);
+    const [r,c] = idxToRC(idx);
+    const [br,bc] = idxToRC(blank);
+    const adjacent = (r === br && Math.abs(c-bc) === 1) || (c === bc && Math.abs(r-br) === 1);
+    if(!adjacent) return;
+    [tiles[idx], tiles[blank]] = [tiles[blank], tiles[idx]];
+    afterMove();
+  }
+
+  function tryDirection(dr, dc){
+    if(solved) return;
+    const blank = tiles.indexOf(0);
+    const [br,bc] = idxToRC(blank);
+    const tr = br + dr, tc = bc + dc;
+    if(tr < 0 || tr >= SIZE || tc < 0 || tc >= SIZE) return;
+    const tileIdx = rcToIdx(tr, tc);
+    [tiles[blank], tiles[tileIdx]] = [tiles[tileIdx], tiles[blank]];
+    afterMove();
+  }
+
+  function afterMove(){
+    moves += 1;
+    movesLabel.textContent = 'MOVES: ' + moves;
+    render();
+    if(isSolved(tiles)){
+      solved = true;
+      winMovesLabel.textContent = 'Solved in ' + moves + ' move' + (moves === 1 ? '' : 's');
+      winPanel.classList.add('show');
+      hint.textContent = 'Sequence restored — run it again anytime';
+    }
+  }
+
+  window.addEventListener('keydown', function(e){
+    const keys = { ArrowUp:[1,0], ArrowDown:[-1,0], ArrowLeft:[0,1], ArrowRight:[0,-1] };
+    if(keys[e.code]){
+      e.preventDefault();
+      tryDirection(keys[e.code][0], keys[e.code][1]);
+    }
+  });
+
+  shuffleBtn.addEventListener('click', shuffle);
+  shuffleAgainBtn.addEventListener('click', shuffle);
+
+  shuffle();
+})();
+</script>
+
+</body>
+</html>
