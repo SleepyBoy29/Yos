@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>File Workshop</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#eef1ec;--fg:#1d2a24;--mut:#5d6b64;--card:#fff;--ln:#cfd8d1;--ac:#1f6f54;--acf:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141a17;--fg:#e6ece8;--mut:#93a39a;--card:#1c2420;--ln:#2f3b35;--ac:#5fc79f;--acf:#0d1a14}}
+:root[data-theme="dark"]{--bg:#141a17;--fg:#e6ece8;--mut:#93a39a;--card:#1c2420;--ln:#2f3b35;--ac:#5fc79f;--acf:#0d1a14}
+html{color-scheme:light dark;scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 "Segoe UI",system-ui,sans-serif}
+main{max-width:760px;margin:0 auto;padding:24px 16px 48px}
+h1{font:700 2rem/1.1 Georgia,"Times New Roman",serif;margin:0 0 4px}
+p.s{color:var(--mut);margin:0 0 20px}
+nav{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto}
+.tab{flex:1;min-width:80px;padding:10px;border:1px solid var(--ln);background:var(--card);color:var(--fg);border-radius:8px;font:inherit;cursor:pointer}
+.tab.on{background:var(--ac);color:var(--acf);border-color:var(--ac)}
+.pn{background:var(--card);border:1px solid var(--ln);border-radius:10px;padding:18px}
+.pn[hidden]{display:none}
+label{display:block;font-size:.9rem;color:var(--mut);margin:10px 0 3px}
+input,select{width:100%;padding:8px;border:1px solid var(--ln);border-radius:6px;background:var(--bg);color:var(--fg);font:inherit}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.r{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+button.b{padding:10px 16px;border:0;border-radius:8px;background:var(--ac);color:var(--acf);font:600 1rem inherit;cursor:pointer}
+button.b.o{background:none;color:var(--ac);border:1px solid var(--ac)}
+button:disabled{opacity:.5}
+.st{color:var(--mut);font-size:.9rem;margin-top:10px;min-height:1.3em}
+.res a{display:block;margin-top:6px;color:var(--ac);word-break:break-all}
+small{color:var(--mut)}
+</style></head><body><main>
+<h1>File Workshop</h1>
+<p class="s">Convert, trim, compress, and merge files right in your browser. Nothing is uploaded to a server.</p>
+<nav><button class="tab on" data-p="pi">Images</button><button class="tab" data-p="pa">Audio</button><button class="tab" data-p="pv">Video</button><button class="tab" data-p="pp">PDF</button></nav>
+
+<section class="pn" id="pi"><label>Choose images (multiple allowed)</label><input type="file" id="fi" accept="image/*" multiple>
+<div class="g"><div><label>Output format</label><select id="fm"><option value="image/jpeg">JPG</option><option value="image/png">PNG</option><option value="image/webp">WebP</option></select></div>
+<div><label>Quality (compress): <span id="qv">80</span>%</label><input type="range" id="q" min="10" max="100" value="80" oninput="qv.textContent=this.value"></div>
+<div><label>Max width (px, 0 = original)</label><input type="number" id="mw" value="0" min="0"></div></div>
+<label>Crop: remove edges (in %)</label>
+<div class="g"><input type="number" id="cl" value="0" min="0" max="90" placeholder="Left"><input type="number" id="ct" value="0" min="0" max="90" placeholder="Top"><input type="number" id="cr" value="0" min="0" max="90" placeholder="Right"><input type="number" id="cb" value="0" min="0" max="90" placeholder="Bottom"></div>
+<small>Order: left, top, right, bottom.</small>
+<div class="r"><button class="b" id="gi">Process images</button><button class="b o" id="gp">Merge into one PDF</button></div>
+<div class="st" id="si"></div><div class="res" id="ri"></div></section>
+
+<section class="pn" id="pa" hidden><label>Choose audio files (multiple allowed)</label><input type="file" id="fa" accept="audio/*" multiple>
+<div class="g"><div><label>Start (seconds)</label><input type="number" id="as" value="0" min="0" step="0.1"></div>
+<div><label>End (seconds, 0 = to the end)</label><input type="number" id="ae" value="0" min="0" step="0.1"></div>
+<div><label>Sample rate (compress)</label><select id="ar"><option value="44100">44.1 kHz</option><option value="22050">22 kHz</option><option value="16000">16 kHz</option><option value="8000">8 kHz</option></select></div>
+<div><label>Channels</label><select id="am"><option value="0">Original</option><option value="1">Mono (smaller)</option></select></div></div>
+<small>Trim applies to each file. Output is WAV.</small>
+<div class="r"><button class="b" id="ga">Process / trim</button><button class="b o" id="gm">Merge all</button></div>
+<div class="st" id="sa"></div><div class="res" id="ra"></div></section>
+
+<section class="pn" id="pv" hidden><label>Choose videos (select more than one to merge)</label><input type="file" id="fv" accept="video/*" multiple>
+<div class="g"><div><label>Start (seconds, single file)</label><input type="number" id="vs" value="0" min="0" step="0.1"></div>
+<div><label>End (seconds, 0 = to the end)</label><input type="number" id="ve" value="0" min="0" step="0.1"></div>
+<div><label>Max width</label><select id="vw"><option value="1280">1280 px</option><option value="854">854 px</option><option value="640">640 px</option><option value="426">426 px</option></select></div>
+<div><label>Bitrate (compress)</label><select id="vb"><option value="2500">2500 kbps</option><option value="1200">1200 kbps</option><option value="600">600 kbps</option><option value="300">300 kbps</option></select></div></div>
+<small>Video is processed in real time and saved as WebM. Keep this tab open and active while it runs.</small>
+<div class="r"><button class="b" id="gv">Process video</button></div>
+<div class="st" id="sv"></div><div class="res" id="rv"></div></section>
+
+<section class="pn" id="pp" hidden><label>Choose PDFs</label><input type="file" id="fp" accept="application/pdf" multiple>
+<label>Extract pages (first PDF), e.g. 1-3,5</label><input id="pr" placeholder="1-3,5">
+<div class="r"><button class="b" id="gj">Merge PDFs</button><button class="b o" id="gx">Extract pages</button></div>
+<div class="st" id="sp"></div><div class="res" id="rp"></div></section>
+</main>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+$$('.tab').forEach(t=>t.onclick=()=>{$$('.tab').forEach(x=>x.classList.toggle('on',x==t));$$('.pn').forEach(p=>p.hidden=p.id!=t.dataset.p)});
+const msg=(id,t)=>{$(id).textContent=t};
+const out=(id,blob,name)=>{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.textContent='Download '+name+' ('+Math.round(blob.size/1024)+' KB)';$(id).appendChild(a)};
+const base=f=>f.name.replace(/\.[^.]+$/,'');
+const need=(inp,st)=>{const f=[...$(inp).files];if(!f.length)msg(st,'Choose a file first.');return f};
+const run=async(btn,st,fn)=>{const b=$(btn);b.disabled=true;try{await fn()}catch(e){msg(st,'Failed: '+(e.message||'format not supported by this browser.'))}b.disabled=false};
+
+/* GAMBAR */
+const li=f=>new Promise((r,j)=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>j(new Error('image could not be read'));i.src=URL.createObjectURL(f)});
+async function imgBlob(f,fm){const i=await li(f);const L=+$('#cl').value/100,T=+$('#ct').value/100,R=+$('#cr').value/100,B=+$('#cb').value/100;
+const sx=i.width*L,sy=i.height*T,sw=i.width*(1-L-R),sh=i.height*(1-T-B);if(sw<1||sh<1)throw new Error('crop area is too small');
+let w=sw,h=sh;const mw=+$('#mw').value;if(mw&&w>mw){h=h*mw/w;w=mw}
+const c=document.createElement('canvas');c.width=Math.round(w);c.height=Math.round(h);const x=c.getContext('2d');
+if(fm=='image/jpeg'){x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height)}
+x.drawImage(i,sx,sy,sw,sh,0,0,c.width,c.height);
+return new Promise(r=>c.toBlob(r,fm,+$('#q').value/100))}
+$('#gi').onclick=()=>run('#gi','#si',async()=>{const fs=need('#fi','#si');if(!fs.length)return;$('#ri').innerHTML='';const fm=$('#fm').value,ex={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[fm];
+for(const f of fs){msg('#si','Processing '+f.name+'...');out('#ri',await imgBlob(f,fm),base(f)+'.'+ex)}msg('#si','Done.')});
+$('#gp').onclick=()=>run('#gp','#si',async()=>{const fs=need('#fi','#si');if(!fs.length)return;$('#ri').innerHTML='';const d=await PDFLib.PDFDocument.create();
+for(const f of fs){const jp=$('#fm').value=='image/jpeg';const b=await imgBlob(f,jp?'image/jpeg':'image/png');const im=jp?await d.embedJpg(await b.arrayBuffer()):await d.embedPng(await b.arrayBuffer());d.addPage([im.width,im.height]).drawImage(im,{x:0,y:0,width:im.width,height:im.height})}
+out('#ri',new Blob([await d.save()],{type:'application/pdf'}),'images-merged.pdf');msg('#si','Done.')});
+
+/* AUDIO */
+function wav(b){const n=b.length,c=b.numberOfChannels,d=new DataView(new ArrayBuffer(44+n*c*2));const w=(o,s)=>[...s].forEach((k,i)=>d.setUint8(o+i,k.charCodeAt(0)));
+w(0,'RIFF');d.setUint32(4,36+n*c*2,true);w(8,'WAVEfmt ');d.setUint32(16,16,true);d.setUint16(20,1,true);d.setUint16(22,c,true);d.setUint32(24,b.sampleRate,true);d.setUint32(28,b.sampleRate*c*2,true);d.setUint16(32,c*2,true);d.setUint16(34,16,true);w(36,'data');d.setUint32(40,n*c*2,true);
+const ch=[...Array(c).keys()].map(i=>b.getChannelData(i));let o=44;for(let i=0;i<n;i++)for(let k=0;k<c;k++){const v=Math.max(-1,Math.min(1,ch[k][i]));d.setInt16(o,v<0?v*32768:v*32767,true);o+=2}
+return new Blob([d],{type:'audio/wav'})}
+async function render(bs){const s=+$('#as').value,e=+$('#ae').value,sr=+$('#ar').value;
+const rg=bs.map(b=>{const st=Math.min(s,b.duration),en=e>0?Math.min(e,b.duration):b.duration;return[b,st,Math.max(en-st,0.01)]});
+const tot=rg.reduce((a,r)=>a+r[2],0),ch=$('#am').value=='1'?1:Math.min(2,Math.max(...bs.map(b=>b.numberOfChannels)));
+const oc=new OfflineAudioContext(ch,Math.ceil(tot*sr),sr);let t=0;for(const[b,st,du]of rg){const src=oc.createBufferSource();src.buffer=b;src.connect(oc.destination);src.start(t,st,du);t+=du}
+return wav(await oc.startRendering())}
+const dec=async fs=>{const ac=new AudioContext(),r=[];for(const f of fs)r.push(await ac.decodeAudioData(await f.arrayBuffer()));return r};
+$('#ga').onclick=()=>run('#ga','#sa',async()=>{const fs=need('#fa','#sa');if(!fs.length)return;$('#ra').innerHTML='';
+for(const f of fs){msg('#sa','Processing '+f.name+'...');out('#ra',await render(await dec([f])),base(f)+'.wav')}msg('#sa','Done.')});
+$('#gm').onclick=()=>run('#gm','#sa',async()=>{const fs=need('#fa','#sa');if(!fs.length)return;$('#ra').innerHTML='';msg('#sa','Merging...');
+out('#ra',await render(await dec(fs)),'audio-merged.wav');msg('#sa','Done.')});
+
+/* VIDEO */
+$('#gv').onclick=()=>run('#gv','#sv',async()=>{const fs=need('#fv','#sv');if(!fs.length)return;$('#rv').innerHTML='';
+if(!window.MediaRecorder){throw new Error('this browser does not support MediaRecorder')}
+const vs=await Promise.all(fs.map(f=>new Promise((r,j)=>{const v=document.createElement('video');v.preload='auto';v.playsInline=true;v.src=URL.createObjectURL(f);v.onloadedmetadata=()=>r(v);v.onerror=()=>j(new Error('video could not be read'))})));
+const v0=vs[0],cw=Math.min(+$('#vw').value,v0.videoWidth)&~1,hh=Math.round(cw*v0.videoHeight/v0.videoWidth)&~1;
+const c=document.createElement('canvas');c.width=cw;c.height=hh;const x=c.getContext('2d');
+const ac=new AudioContext(),dest=ac.createMediaStreamDestination(),st=c.captureStream(30);dest.stream.getAudioTracks().forEach(t=>st.addTrack(t));
+const mt=['video/webm;codecs=vp9,opus','video/webm'].find(m=>MediaRecorder.isTypeSupported(m));
+const rec=new MediaRecorder(st,{mimeType:mt,videoBitsPerSecond:+$('#vb').value*1000,audioBitsPerSecond:96000});
+const ck=[];rec.ondataavailable=e=>e.data.size&&ck.push(e.data);const done=new Promise(r=>rec.onstop=r);rec.start(500);
+const draw=v=>{x.fillStyle='#000';x.fillRect(0,0,cw,hh);const s=Math.min(cw/v.videoWidth,hh/v.videoHeight),w=v.videoWidth*s,h=v.videoHeight*s;x.drawImage(v,(cw-w)/2,(hh-h)/2,w,h)};
+let n=0;await ac.resume();
+for(const v of vs){n++;const one=vs.length==1,s=one?+$('#vs').value:0,ve=+$('#ve').value,e=one&&ve>0?Math.min(ve,v.duration):v.duration;
+if(s>0)await new Promise(r=>{v.onseeked=r;v.currentTime=s});
+ac.createMediaElementSource(v).connect(dest);await v.play();
+await new Promise(r=>{const tick=()=>{draw(v);msg('#sv','Recording video '+n+'/'+vs.length+': '+Math.round(v.currentTime)+' / '+Math.round(e)+' sec');if(v.ended||v.currentTime>=e){v.pause();r()}else requestAnimationFrame(tick)};tick()})}
+rec.stop();await done;out('#rv',new Blob(ck,{type:'video/webm'}),'video-output.webm');msg('#sv','Done.')});
+
+/* PDF */
+const PD=()=>PDFLib.PDFDocument;
+$('#gj').onclick=()=>run('#gj','#sp',async()=>{const fs=need('#fp','#sp');if(!fs.length)return;$('#rp').innerHTML='';const d=await PD().create();
+for(const f of fs){const s=await PD().load(await f.arrayBuffer(),{ignoreEncryption:true});(await d.copyPages(s,s.getPageIndices())).forEach(p=>d.addPage(p))}
+out('#rp',new Blob([await d.save()],{type:'application/pdf'}),'merged.pdf');msg('#sp','Done.')});
+$('#gx').onclick=()=>run('#gx','#sp',async()=>{const fs=need('#fp','#sp');if(!fs.length)return;$('#rp').innerHTML='';const s=await PD().load(await fs[0].arrayBuffer(),{ignoreEncryption:true}),tot=s.getPageCount(),ix=[];
+($('#pr').value||'1-'+tot).split(',').forEach(p=>{const[a,b]=p.split('-').map(v=>parseInt(v));if(!a)return;for(let i=a;i<=(b||a);i++)if(i>=1&&i<=tot)ix.push(i-1)});
+if(!ix.length)throw new Error('invalid page range');const d=await PD().create();(await d.copyPages(s,ix)).forEach(p=>d.addPage(p));
+out('#rp',new Blob([await d.save()],{type:'application/pdf'}),'selected-pages.pdf');msg('#sp','Done.')});
+</script></body></html>
