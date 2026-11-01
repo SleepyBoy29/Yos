@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Blob Volley</title>
+<style>
+:root{--bg:#f4f1ea;--fg:#222;--btn:#fff;--bd:#c9c4b8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#16181d;--fg:#eee;--btn:#262a33;--bd:#444}}
+:root[data-theme="dark"]{--bg:#16181d;--fg:#eee;--btn:#262a33;--bd:#444}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,sans-serif}
+body{display:flex;flex-direction:column;align-items:center;padding:10px;gap:10px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#wrap{width:100%;max-width:800px;display:flex;flex-direction:column;gap:10px}
+canvas{width:100%;height:auto;border-radius:12px;display:block;touch-action:none}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px}
+button{font:inherit;color:var(--fg);background:var(--btn);border:1px solid var(--bd);border-radius:12px;padding:8px 12px;touch-action:none}
+#pads{display:flex;justify-content:space-between;gap:12px}
+.grp{display:flex;gap:8px}
+.k{width:64px;height:64px;font-size:26px;border-radius:18px;padding:0}
+.k:active,.k.on{filter:brightness(.85)}
+.hint{font-size:12px;opacity:.7;text-align:center}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div class="bar"><strong>🏐 Blob Volley</strong><button id="mode">Menu</button></div>
+  <canvas id="c" width="800" height="450"></canvas>
+  <div id="pads"></div>
+  <div class="hint" id="hint"></div>
+</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+const W=800,H=450,G=400,R=38,BR=16,NX=400,NW=8,NT=250,TARGET=10;
+let mode=1,menu=true;
+const keys={};
+const touch={p1:{l:0,r:0,j:0},p2:{l:0,r:0,j:0}};
+const mk=(x,c)=>({x,y:G-R,vx:0,vy:0,c,sp:5});
+const p=[mk(200,'#ff5a5f'),mk(600,'#3b82f6')];
+p[1].sp=4.3;
+const ball={x:200,y:140,vx:0,vy:0,rot:0};
+let score=[0,0],server=0,wait=90,over=-1;
+
+addEventListener('keydown',e=>{keys[e.code]=1;if(/Arrow|Space/.test(e.code))e.preventDefault();if(menu){if(e.code==='Digit1')startGame(1);if(e.code==='Digit2')startGame(2);return;}if(over>=0&&(e.code==='Enter'||e.code==='Space'))restart();});
+addEventListener('keyup',e=>{keys[e.code]=0;});
+cv.addEventListener('pointerdown',e=>{
+  if(menu){const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width,y=(e.clientY-r.top)*H/r.height;
+    if(y>200&&y<300){if(x>110&&x<380)startGame(1);else if(x>420&&x<690)startGame(2);}return;}
+  if(over>=0)restart();});
+
+function resetRound(s){
+  server=s;ball.x=s?600:200;ball.y=140;ball.vx=ball.vy=0;wait=80;
+  p[0].x=200;p[1].x=600;p.forEach(b=>{b.y=G-R;b.vx=b.vy=0;});
+}
+function restart(){score=[0,0];over=-1;resetRound(0);}
+
+function inputs(){
+  const a=mode===1;
+  const p1={
+    l:keys.KeyA||touch.p1.l||(a&&keys.ArrowLeft),
+    r:keys.KeyD||touch.p1.r||(a&&keys.ArrowRight),
+    j:keys.KeyW||touch.p1.j||(a&&(keys.ArrowUp||keys.Space))
+  };
+  const p2=a?ai():{l:keys.ArrowLeft||touch.p2.l,r:keys.ArrowRight||touch.p2.r,j:keys.ArrowUp||touch.p2.j};
+  return [p1,p2];
+}
+function ai(){
+  const b=p[1],o={l:0,r:0,j:0};
+  let tx=600;
+  if(ball.x>NX-20||ball.vx>1){
+    let x=ball.x,y=ball.y,vx=ball.vx,vy=ball.vy;
+    for(let i=0;i<220&&y<G-BR;i++){vy+=.4;x+=vx;y+=vy;if(x<BR||x>W-BR){vx=-vx;x=Math.max(BR,Math.min(W-BR,x));}}
+    tx=x>NX?x+18:600;
+  }
+  const dx=tx-b.x;
+  if(dx>6)o.r=1;else if(dx<-6)o.l=1;
+  if(wait<=0&&ball.x>NX&&Math.abs(ball.x-b.x)<55&&ball.y<b.y-40&&ball.y>b.y-150&&ball.vy>0)o.j=1;
+  return o;
+}
+function moveBlob(b,i,inp,lo,hi){
+  b.vx=((inp.r?1:0)-(inp.l?1:0))*b.sp;
+  if(inp.j&&b.y>=G-R)b.vy=-13.5;
+  b.vy+=.55;b.x+=b.vx;b.y+=b.vy;
+  if(b.y>=G-R){b.y=G-R;b.vy=0;}
+  b.x=Math.max(lo+R,Math.min(hi-R,b.x));
+}
+function hitCircle(cx,cy,r,vx,vy,bounce){
+  const dx=ball.x-cx,dy=ball.y-cy,d=Math.hypot(dx,dy);
+  if(d>=r+BR||d===0)return;
+  const nx=dx/d,ny=dy/d;
+  ball.x=cx+nx*(r+BR);ball.y=cy+ny*(r+BR);
+  const rvx=ball.vx-vx,rvy=ball.vy-vy,vn=rvx*nx+rvy*ny;
+  if(vn<0){
+    ball.vx=vx+(rvx-2*vn*nx)*bounce;
+    ball.vy=vy+(rvy-2*vn*ny)*bounce;
+    const s=Math.hypot(ball.vx,ball.vy),m=16;
+    if(s>m){ball.vx*=m/s;ball.vy*=m/s;}
+  }
+}
+function step(){
+  if(menu)return;
+  if(over>=0)return;
+  const [i1,i2]=inputs();
+  moveBlob(p[0],0,i1,0,NX-NW/2);
+  moveBlob(p[1],1,i2,NX+NW/2,W);
+  if(wait>0){wait--;return;}
+  ball.vy+=.4;ball.x+=ball.vx;ball.y+=ball.vy;ball.rot+=ball.vx*.03;
+  if(ball.x<BR){ball.x=BR;ball.vx=Math.abs(ball.vx);}
+  if(ball.x>W-BR){ball.x=W-BR;ball.vx=-Math.abs(ball.vx);}
+  if(ball.y<BR){ball.y=BR;ball.vy=Math.abs(ball.vy);}
+  // net
+  const cx=Math.max(NX-NW/2,Math.min(NX+NW/2,ball.x)),cy=Math.max(NT,Math.min(G,ball.y));
+  const dx=ball.x-cx,dy=ball.y-cy,d=Math.hypot(dx,dy);
+  if(d<BR){
+    let nx,ny;
+    if(d===0){nx=ball.x<NX?-1:1;ny=0;}else{nx=dx/d;ny=dy/d;}
+    ball.x=cx+nx*BR;ball.y=cy+ny*BR;
+    const vn=ball.vx*nx+ball.vy*ny;
+    if(vn<0){ball.vx-=1.8*vn*nx;ball.vy-=1.8*vn*ny;}
+  }
+  p.forEach(b=>hitCircle(b.x,b.y,R,b.vx,b.vy,1.12));
+  if(ball.y>=G-BR){
+    const w=ball.x<NX?1:0;
+    score[w]++;
+    if(score[w]>=TARGET){over=w;}else resetRound(w);
+  }
+}
+function draw(){
+  const g=ctx.createLinearGradient(0,0,0,G);g.addColorStop(0,'#7ec8ff');g.addColorStop(1,'#d9f0ff');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#f2d28b';ctx.fillRect(0,G,W,H-G);
+  ctx.fillStyle='#e0bd70';ctx.fillRect(0,G,W,6);
+  // net
+  ctx.fillStyle='#f5f5f5';ctx.fillRect(NX-NW/2,NT,NW,G-NT);
+  ctx.fillStyle='#d33';ctx.fillRect(NX-NW/2-2,NT,NW+4,6);
+  // shadows
+  ctx.fillStyle='rgba(0,0,0,.18)';
+  const sh=(x,w)=>{ctx.beginPath();ctx.ellipse(x,G+4,w,5,0,0,7);ctx.fill();};
+  p.forEach(b=>sh(b.x,R*(1-(G-R-b.y)/500)));
+  sh(ball.x,BR*(1-(G-ball.y)/600));
+  // blobs
+  p.forEach(b=>{
+    ctx.fillStyle=b.c;ctx.beginPath();ctx.arc(b.x,b.y,R,0,7);ctx.fill();
+    const ex=b.x+(b.x<NX?10:-10),ey=b.y-12;
+    const a=Math.atan2(ball.y-ey,ball.x-ex);
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(ex,ey,9,0,7);ctx.fill();
+    ctx.fillStyle='#111';ctx.beginPath();ctx.arc(ex+Math.cos(a)*4,ey+Math.sin(a)*4,4,0,7);ctx.fill();
+  });
+  // ball
+  ctx.save();ctx.translate(ball.x,ball.y);ctx.rotate(ball.rot);
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(0,0,BR,0,7);ctx.fill();
+  ctx.strokeStyle='#e8a317';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,BR-1.5,0,7);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-BR,0);ctx.lineTo(BR,0);ctx.stroke();
+  ctx.restore();
+  // score
+  ctx.font='bold 34px system-ui,sans-serif';ctx.textAlign='center';
+  ctx.fillStyle=p[0].c;ctx.fillText(score[0],NX-70,50);
+  ctx.fillStyle=p[1].c;ctx.fillText(score[1],NX+70,50);
+  ctx.fillStyle='#345';ctx.fillText(':',NX,48);
+  if(wait>0&&over<0){ctx.font='16px system-ui,sans-serif';ctx.fillStyle='#345';ctx.fillText('Get ready...',NX,80);}
+  if(over>=0){
+    ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(0,150,W,130);
+    ctx.fillStyle='#fff';ctx.font='bold 36px system-ui,sans-serif';
+    const name=over===0?(mode===1?'You':'Red'):(mode===1?'Computer':'Blue');
+    ctx.fillText(name+(name==='You'?' win!':' wins!'),NX,205);
+    ctx.font='18px system-ui,sans-serif';ctx.fillText('Tap the screen to play again',NX,245);
+  }
+}
+function drawMenu(){
+  ctx.fillStyle='rgba(10,20,40,.72)';ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center';ctx.fillStyle='#fff';
+  ctx.font='bold 54px system-ui,sans-serif';ctx.fillText('Blob Volley',NX,130);
+  ctx.font='18px system-ui,sans-serif';ctx.fillText('Choose a game mode',NX,170);
+  [[110,'1 Player','vs Computer','#ff5a5f'],[420,'2 Players','Local versus','#3b82f6']].forEach(([x,t,s,c])=>{
+    ctx.fillStyle=c;ctx.beginPath();ctx.roundRect(x,200,270,100,18);ctx.fill();
+    ctx.fillStyle='#fff';ctx.font='bold 30px system-ui,sans-serif';ctx.fillText(t,x+135,243);
+    ctx.font='16px system-ui,sans-serif';ctx.fillText(s,x+135,274);
+  });
+  ctx.font='14px system-ui,sans-serif';ctx.fillText('First to '+TARGET+' points wins',NX,350);
+}
+let last=0,acc=0;
+function loop(t){
+  acc+=Math.min(100,t-last);last=t;
+  while(acc>=1000/60){step();acc-=1000/60;}
+  draw();if(menu)drawMenu();requestAnimationFrame(loop);
+}
+// touch pads
+function btn(label,who,key,parent){
+  const b=document.createElement('button');b.className='k';b.textContent=label;
+  const on=e=>{e.preventDefault();touch[who][key]=1;b.classList.add('on');};
+  const off=e=>{touch[who][key]=0;b.classList.remove('on');};
+  b.addEventListener('pointerdown',on);
+  ['pointerup','pointercancel','pointerleave'].forEach(n=>b.addEventListener(n,off));
+  b.addEventListener('contextmenu',e=>e.preventDefault());
+  parent.appendChild(b);
+}
+function build(){
+  const el=document.getElementById('pads');el.innerHTML='';
+  touch.p1={l:0,r:0,j:0};touch.p2={l:0,r:0,j:0};
+  const a=document.createElement('div'),b=document.createElement('div');a.className=b.className='grp';
+  btn('◀','p1','l',a);btn('▶','p1','r',a);
+  if(mode===1){btn('⤒','p1','j',b);}
+  else{btn('⤒','p1','j',a);btn('◀','p2','l',b);btn('▶','p2','r',b);btn('⤒','p2','j',b);}
+  el.appendChild(a);el.appendChild(b);
+  document.getElementById('hint').textContent=mode===1
+    ?'Keyboard: A/D or ◀ ▶ to move, W or ▲ to jump. First to '+TARGET+' wins.'
+    :'Red: A/D/W. Blue: ◀ ▶ ▲. First to '+TARGET+' wins.';
+}
+function startGame(m){mode=m;menu=false;build();restart();}
+document.getElementById('mode').addEventListener('click',()=>{menu=true;});
+build();restart();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

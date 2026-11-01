@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8"><title>Ice Hockey Rage</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#dcecf8;--fg:#0b2a44;--card:#ffffff;--acc:#1e7bd8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a1722;--fg:#e6f2fb;--card:#14283a;--acc:#4da3ff}}
+:root[data-theme="dark"]{--bg:#0a1722;--fg:#e6f2fb;--card:#14283a;--acc:#4da3ff}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+#box{position:relative;height:100%;display:flex;align-items:center;justify-content:center;min-height:0}
+canvas{touch-action:none;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.3)}
+#menu{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:color-mix(in srgb,var(--bg) 88%,transparent);text-align:center;padding:16px}
+#menu h1{margin:0;font-size:30px}
+#menu button{width:min(280px,80vw);padding:13px;border:0;border-radius:12px;background:var(--acc);color:#fff;font-size:16px;font-weight:600}
+#menu button.alt{background:var(--card);color:var(--fg);border:2px solid var(--acc)}
+#menu small{opacity:.7;max-width:280px}
+#mb{position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);right:8px;border:0;border-radius:10px;padding:6px 12px;background:var(--card);color:var(--fg);font-size:16px;opacity:.85}
+</style></head><body>
+<div id="box"><canvas id="c"></canvas><button id="mb">☰</button>
+<div id="menu"><h1>🏒 Ice Hockey Rage</h1><p id="msg">Pukul puck ke gawang lawan. Pertama sampai 5 gol menang!</p>
+<button data-m="bot" data-l="0">Lawan Bot: Mudah</button>
+<button data-m="bot" data-l="1">Lawan Bot: Normal</button>
+<button data-m="bot" data-l="2">Lawan Bot: Sulit</button>
+<button class="alt" data-m="2p">2 Pemain (1 layar, berhadapan)</button>
+<small>Geser jari/mouse untuk menggerakkan mallet. Mode 2 pemain: pemain atas dan bawah memakai setengah layar masing-masing.</small></div></div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d'),menu=document.getElementById('menu');
+const W=400,H=700,GW=150,PR=17,MR=34;
+let S=1,mode='bot',lvl=1,run=false,pause=0,score=[0,0],ptr={},tg=[null,null],acc=0,last=0;
+const puck={x:W/2,y:H/2,vx:0,vy:0};
+const m=[{x:W/2,y:H-110,vx:0,vy:0,c:'#e5383b'},{x:W/2,y:110,vx:0,vy:0,c:'#1e7bd8'}];
+function rs(){const r=document.getElementById('box').getBoundingClientRect(),d=devicePixelRatio||1;S=Math.min(r.width/W,r.height/H);cv.width=W*S*d;cv.height=H*S*d;cv.style.width=W*S+'px';cv.style.height=H*S+'px';ctx.setTransform(S*d,0,0,S*d,0,0)}
+addEventListener('resize',rs);rs();
+const pos=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)/S,(e.clientY-r.top)/S]};
+const who=y=>mode==='bot'?0:(y<H/2?1:0);
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);const p=pos(e),i=who(p[1]);ptr[e.pointerId]=i;tg[i]=p});
+cv.addEventListener('pointermove',e=>{let i=ptr[e.pointerId];if(i===undefined&&e.pointerType==='mouse')i=0;if(i!==undefined)tg[i]=pos(e)});
+cv.addEventListener('pointerup',e=>{delete ptr[e.pointerId]});
+cv.addEventListener('pointercancel',e=>{delete ptr[e.pointerId]});
+function mv(i,sp){const a=m[i],t=tg[i];if(!t)return;let dx=t[0]-a.x,dy=t[1]-a.y,d=Math.hypot(dx,dy)||1,s=Math.min(d,sp);let nx=a.x+dx/d*s,ny=a.y+dy/d*s;
+nx=Math.max(MR,Math.min(W-MR,nx));ny=i===0?Math.max(H/2+MR,Math.min(H-MR,ny)):Math.max(MR,Math.min(H/2-MR,ny));a.vx=nx-a.x;a.vy=ny-a.y;a.x=nx;a.y=ny}
+function bot(){const a=m[1],sp=[3.5,6.5,10][lvl];let tx,ty;
+if(puck.y<H/2+40){if(a.y<puck.y-10){tx=puck.x;ty=puck.y}else{tx=puck.x+(puck.x>W/2?-70:70);ty=puck.y-50}}
+else{tx=W/2+(puck.x-W/2)*.35;ty=90}
+tg[1]=[tx,ty];mv(1,sp)}
+function hit(a){const dx=puck.x-a.x,dy=puck.y-a.y,d=Math.hypot(dx,dy),R=PR+MR;if(d<R&&d>0){const nx=dx/d,ny=dy/d;puck.x=a.x+nx*R;puck.y=a.y+ny*R;let rx=puck.vx-a.vx,ry=puck.vy-a.vy;const dot=rx*nx+ry*ny;if(dot<0){rx-=2*dot*nx;ry-=2*dot*ny}puck.vx=a.vx+rx;puck.vy=a.vy+ry;const sp=Math.hypot(puck.vx,puck.vy);if(sp>22){puck.vx*=22/sp;puck.vy*=22/sp}}}
+function goal(i){score[i]++;puck.x=W/2;puck.y=H/2;puck.vx=puck.vy=0;pause=70;
+if(score[i]>=5){run=false;document.getElementById('msg').textContent=mode==='bot'?(i===0?'🎉 Kamu menang!':'😅 Bot menang, coba lagi!'):(i===0?'🔴 Pemain bawah menang!':'🔵 Pemain atas menang!');menu.style.display='flex'}}
+function up(){if(pause>0){pause--;return}
+mv(0,26);if(mode==='bot')bot();else mv(1,26);
+puck.x+=puck.vx;puck.y+=puck.vy;puck.vx*=.993;puck.vy*=.993;
+if(puck.x<PR){puck.x=PR;puck.vx=Math.abs(puck.vx)*.9}
+if(puck.x>W-PR){puck.x=W-PR;puck.vx=-Math.abs(puck.vx)*.9}
+const inG=Math.abs(puck.x-W/2)<GW/2-PR*.3;
+if(!inG){if(puck.y<PR){puck.y=PR;puck.vy=Math.abs(puck.vy)*.9}if(puck.y>H-PR){puck.y=H-PR;puck.vy=-Math.abs(puck.vy)*.9}}
+else{if(puck.y<-PR)return goal(0);if(puck.y>H+PR)return goal(1)}
+m.forEach(hit)}
+function ring(x,y,r,c,w){ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.strokeStyle=c;ctx.lineWidth=w;ctx.stroke()}
+function draw(){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#e8f6ff');g.addColorStop(1,'#cfe8f7');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ctx.globalAlpha=.55;ctx.fillStyle='#d33';ctx.fillRect(0,H/2-2,W,4);ring(W/2,H/2,60,'#d33',3);ring(W/2,0,GW/2,'#38f',3);ring(W/2,H,GW/2,'#38f',3);ctx.globalAlpha=1;
+ctx.fillStyle='#3a7bd5';ctx.fillRect(W/2-GW/2,0,GW,7);ctx.fillStyle='#e5383b';ctx.fillRect(W/2-GW/2,H-7,GW,7);
+ctx.fillStyle='rgba(20,40,70,.28)';ctx.font='bold 64px system-ui';ctx.textAlign='left';ctx.fillText(score[1],18,H/2-18);ctx.fillText(score[0],18,H/2+68);
+ctx.strokeStyle='#7fa8c9';ctx.lineWidth=6;ctx.strokeRect(0,0,W,H);
+m.forEach(a=>{ctx.beginPath();ctx.arc(a.x,a.y+4,MR,0,7);ctx.fillStyle='rgba(0,0,0,.2)';ctx.fill();ctx.beginPath();ctx.arc(a.x,a.y,MR,0,7);ctx.fillStyle=a.c;ctx.fill();ring(a.x,a.y,MR*.55,'rgba(255,255,255,.65)',5)});
+ctx.beginPath();ctx.arc(puck.x,puck.y+3,PR,0,7);ctx.fillStyle='rgba(0,0,0,.25)';ctx.fill();ctx.beginPath();ctx.arc(puck.x,puck.y,PR,0,7);ctx.fillStyle='#16202b';ctx.fill();ring(puck.x,puck.y,PR-4,'#6b7d8f',2)}
+function loop(t){acc+=Math.min(t-last,100);last=t;while(acc>=1000/60){if(run)up();acc-=1000/60}draw();requestAnimationFrame(loop)}
+function start(md,l){mode=md;lvl=l;score=[0,0];tg=[null,null];ptr={};puck.x=W/2;puck.y=H/2;puck.vx=puck.vy=0;m[0].x=W/2;m[0].y=H-110;m[1].x=W/2;m[1].y=110;pause=40;run=true;menu.style.display='none'}
+menu.querySelectorAll('button').forEach(b=>b.onclick=()=>start(b.dataset.m,+b.dataset.l||0));
+document.getElementById('mb').onclick=()=>{run=false;document.getElementById('msg').textContent='Jeda. Pilih mode untuk mulai ulang.';menu.style.display='flex'};
+requestAnimationFrame(t=>{last=t;loop(t)});
+</script></body></html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Guess Who? Party</title>
+<style>
+:root{--bg:#fff8ec;--card:#ffffff;--ink:#2b2140;--mute:#6f6585;--pri:#5b3df5;--acc:#ff5d8f;--ok:#12a36b;--line:#e4d9c6;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17122b;--card:#241d42;--ink:#f4efff;--mute:#b3a9d1;--pri:#8f7bff;--acc:#ff7aa5;--ok:#3dd598;--line:#3a3160}}
+:root[data-theme="dark"]{--bg:#17122b;--card:#241d42;--ink:#f4efff;--mute:#b3a9d1;--pri:#8f7bff;--acc:#ff7aa5;--ok:#3dd598;--line:#3a3160}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 "Baloo 2","Trebuchet MS",system-ui,sans-serif;min-height:100vh}
+.w{max-width:520px;margin:0 auto;padding:14px}
+h1{font-size:34px;line-height:1.05;margin:8px 0 4px;letter-spacing:-.5px}
+p{margin:6px 0;color:var(--mute)}
+label{font-weight:700;display:block;margin:14px 0 6px}
+input[type=text]{width:100%;padding:12px;border:2px solid var(--line);border-radius:12px;font:inherit;background:var(--card);color:var(--ink);text-transform:uppercase;letter-spacing:3px;font-weight:800}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;cursor:pointer;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:10px 12px;font-weight:700}
+button:focus-visible{outline:3px solid var(--pri);outline-offset:2px}
+button.on{border-color:var(--pri);background:var(--pri);color:#fff}
+button.go{background:var(--acc);border-color:var(--acc);color:#fff;width:100%;font-size:19px;padding:14px;margin-top:18px}
+.cats button{flex:1 1 45%;text-align:left;font-size:17px}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.c{padding:6px 2px;border-radius:12px;text-align:center;background:var(--card);position:relative}
+.c b{display:block;font-size:30px;line-height:1.15}
+.c span{display:block;font-size:11px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c.d{opacity:.22;filter:grayscale(1)}
+.c.s{border-color:var(--ok);box-shadow:0 0 0 2px var(--ok)}
+.sec{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:10px 12px;margin:8px 0}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:4px 0}
+.chips button{white-space:nowrap;font-size:13px;padding:7px 10px}
+.msg{font-weight:700}
+.cover{position:fixed;inset:0;background:var(--pri);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;z-index:9}
+.cover p{color:#fff}
+.tag{font-size:13px;color:var(--mute)}
+</style>
+</head>
+<body>
+<div class="w" id="app"></div>
+<script>
+const P=s=>s.split(";").map(x=>{const a=x.split(",");return{e:a[0],n:a[1],t:+a[2]}});
+const CATS={
+Animals:{i:"🐾",t:["Land mammal","Bird","Reptile","Sea animal"],d:P("🐶,Dog,0;🐱,Cat,0;🐘,Elephant,0;🦁,Lion,0;🐯,Tiger,0;🐻,Bear,0;🐵,Monkey,0;🐼,Panda,0;🦒,Giraffe,0;🐴,Horse,0;🐮,Cow,0;🐷,Pig,0;🐰,Rabbit,0;🦊,Fox,0;🦓,Zebra,0;🐔,Chicken,1;🦆,Duck,1;🦉,Owl,1;🦅,Eagle,1;🐧,Penguin,1;🦜,Parrot,1;🐍,Snake,2;🐊,Crocodile,2;🐢,Turtle,2;🦎,Lizard,2;🐬,Dolphin,3;🦈,Shark,3;🐙,Octopus,3;🐳,Whale,3;🦀,Crab,3")},
+Food:{i:"🍕",t:["Fruit","Vegetable","Main dish","Sweet treat"],d:P("🍎,Apple,0;🍌,Banana,0;🍇,Grapes,0;🍉,Watermelon,0;🍓,Strawberry,0;🍍,Pineapple,0;🥭,Mango,0;🍊,Orange,0;🥕,Carrot,1;🌽,Corn,1;🍅,Tomato,1;🥔,Potato,1;🥦,Broccoli,1;🍆,Eggplant,1;🍕,Pizza,2;🍔,Burger,2;🌭,Hot Dog,2;🍟,Fries,2;🍜,Noodles,2;🍣,Sushi,2;🌮,Taco,2;🍚,Rice,2;🍩,Donut,3;🍪,Cookie,3;🍫,Chocolate,3;🍦,Ice Cream,3;🎂,Cake,3;🥞,Pancakes,3;🧁,Cupcake,3;🍿,Popcorn,3")},
+Countries:{i:"🌍",t:["Asia","Europe","Americas","Africa & Oceania"],d:P("🇮🇩,Indonesia,0;🇯🇵,Japan,0;🇰🇷,South Korea,0;🇨🇳,China,0;🇮🇳,India,0;🇹🇭,Thailand,0;🇻🇳,Vietnam,0;🇸🇬,Singapore,0;🇲🇾,Malaysia,0;🇵🇭,Philippines,0;🇫🇷,France,1;🇩🇪,Germany,1;🇮🇹,Italy,1;🇪🇸,Spain,1;🇬🇧,UK,1;🇳🇱,Netherlands,1;🇸🇪,Sweden,1;🇬🇷,Greece,1;🇺🇸,USA,2;🇨🇦,Canada,2;🇧🇷,Brazil,2;🇦🇷,Argentina,2;🇲🇽,Mexico,2;🇪🇬,Egypt,3;🇿🇦,South Africa,3;🇳🇬,Nigeria,3;🇰🇪,Kenya,3;🇦🇺,Australia,3;🇳🇿,New Zealand,3;🇲🇦,Morocco,3")},
+Jobs:{i:"🧑‍🍳",t:["Public service","Creative","Tech & science","Food & farming","Transport & business"],d:P("🧑‍⚕️,Doctor,0;🧑‍🚒,Firefighter,0;👮,Police,0;🧑‍🏫,Teacher,0;🧑‍⚖️,Judge,0;🪖,Soldier,0;🧑‍🎨,Artist,1;🎤,Singer,1;🎬,Filmmaker,1;📸,Photographer,1;✍️,Writer,1;💃,Dancer,1;🧑‍💻,Programmer,2;🧑‍🔧,Mechanic,2;👷,Builder,2;🧑‍🔬,Scientist,2;🧑‍🚀,Astronaut,2;⚙️,Engineer,2;🧑‍🍳,Chef,3;🧑‍🌾,Farmer,3;🎣,Fisher,3;🥖,Baker,3;☕,Barista,3;✈️,Pilot,4;🚕,Taxi Driver,4;🚚,Truck Driver,4;🧑‍💼,Manager,4;🛒,Cashier,4;💈,Barber,4;⚓,Sailor,4")},
+Things:{i:"🔑",t:["Gadget","Tool","School & office","Home"],d:P("📱,Phone,0;💻,Laptop,0;⌚,Watch,0;🎧,Headphones,0;📷,Camera,0;🎮,Controller,0;📺,TV,0;🔋,Battery,0;🔨,Hammer,1;🔧,Wrench,1;✂️,Scissors,1;🪚,Saw,1;🧲,Magnet,1;🔦,Flashlight,1;🪜,Ladder,1;✏️,Pencil,2;📚,Books,2;📎,Paperclip,2;🖊️,Pen,2;📏,Ruler,2;🎒,Backpack,2;🛏️,Bed,3;🪑,Chair,3;🛋️,Sofa,3;🚪,Door,3;🔑,Key,3;💡,Light Bulb,3;🧹,Broom,3;⏰,Clock,3;🪞,Mirror,3")}
+};
+const A=document.getElementById("app");
+let S={screen:"setup",code:rc(),cat:"Animals",two:false};
+function rc(){return Math.random().toString(36).slice(2,6).toUpperCase()}
+function rng(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19}return()=>{h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);h^=h>>>16;return(h>>>0)/4294967296}}
+function board(code,cat){const r=rng(code.toUpperCase()+"|"+cat),a=CATS[cat].d.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a.slice(0,24)}
+function start(){const names=S.two?["Player 1","Player 2"]:["You"];
+S={...S,screen:"game",board:board(S.code,S.cat),pl:names.map(n=>({n,sec:null,down:new Set()})),cur:0,peek:false,guess:false,q:null,g:null,cover:false}}
+function Qs(){const c=CATS[S.cat];return c.t.map((t,i)=>({q:"Is it in the group “"+t+"”?",f:x=>x.t==i})).concat([{q:"Is the name longer than 5 letters?",f:x=>x.n.length>5},{q:"Does the name start with A–M?",f:x=>x.n[0]<="M"}])}
+function setup(){
+A.innerHTML=`<h1>Guess Who? Party</h1><p>Pick a secret card, ask yes/no questions, and flip down the cards that don’t fit.</p>
+<label for="code">Game code</label><div class="row"><input type="text" id="code" maxlength="8" value="${S.code}" style="flex:1"><button id="rnd">New code</button></div>
+<p class="tag">Players on different phones type the same code and category to get the same board. Ask your questions in chat or by voice.</p>
+<label>Category</label><div class="row cats">${Object.keys(CATS).map(k=>`<button data-c="${k}" class="${k==S.cat?"on":""}">${CATS[k].i} ${k}</button>`).join("")}</div>
+<label>Play mode</label><div class="row"><button data-m="0" class="${S.two?"":"on"}">One phone each</button><button data-m="1" class="${S.two?"on":""}">Pass &amp; play</button></div>
+<button class="go" id="go">Start game</button>`;
+const ci=document.getElementById("code");ci.oninput=()=>S.code=ci.value.toUpperCase();
+document.getElementById("rnd").onclick=()=>{S.code=rc();setup()};
+A.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{S.cat=b.dataset.c;setup()});
+A.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{S.two=b.dataset.m=="1";setup()});
+document.getElementById("go").onclick=()=>{S.code=(S.code.trim()||rc()).toUpperCase();start();game()}}
+function game(){
+const p=S.pl[S.cur],c=CATS[S.cat],sec=p.sec;
+let h=`<div class="bar"><div><b>${c.i} ${S.cat}</b> <span class="tag">code ${S.code}</span></div><button id="back">Menu</button></div>`;
+if(S.two)h+=`<p class="msg">${p.n}’s turn</p>`;
+h+=`<div class="sec">${sec?`<div class="row" style="justify-content:space-between;align-items:center"><span>Your secret: <b>${S.peek?sec.e+" "+sec.n:"hidden"}</b></span><button id="pk">${S.peek?"Hide":"Show"}</button></div>`:`<span class="msg">Tap a card to choose your secret.</span>`}</div>`;
+h+=`<div class="grid">${S.board.map((x,i)=>`<button class="c ${p.down.has(i)?"d":""} ${sec===x?"s":""}" data-i="${i}"><b>${x.e}</b><span>${x.n}</span></button>`).join("")}</div>`;
+h+=`<div class="sec"><span class="msg">${S.guess?"Final guess: tap the card you think it is.":"Tap a card to flip it down or up."}</span><div class="row" style="margin-top:8px"><button id="gs" class="${S.guess?"on":""}">Make a final guess</button><button id="rs">Reset flips</button>${S.two?'<button id="sw">Pass phone</button>':""}</div></div>`;
+h+=`<div class="sec"><span class="msg">Question ideas</span><div class="chips">${Qs().map((x,i)=>`<button data-q="${i}">${x.q}</button>`).join("")}</div>`;
+if(S.q!=null){const q=Qs()[S.q];h+=`<p><b>${q.q}</b> What did your opponent answer?</p><div class="row"><button id="qy">Yes, keep matches</button><button id="qn">No, flip matches down</button></div>`}
+h+=`</div>`;
+if(S.g){const o=S.pl[1-S.cur];h+=`<div class="sec"><p class="msg">You guessed ${S.g.e} ${S.g.n}.</p>`+(S.two?(o.sec?(o.sec===S.g?`<p style="color:var(--ok);font-weight:800">Correct! ${p.n} wins! 🎉</p>`:`<p style="color:var(--acc);font-weight:800">Not it. Keep playing!</p>`):`<p>${o.n} has not picked a secret yet.</p>`):`<p>Ask your opponent: “Is your character ${S.g.n}?” If yes, you win!</p>`)+`<button id="gx">OK</button></div>`}
+if(S.cover)h+=`<div class="cover"><h1>Pass the phone</h1><p>Hand it to ${S.pl[1-S.cur].n}, then tap below.</p><button id="cv" style="margin-top:16px">I’m ready</button></div>`;
+A.innerHTML=h;
+const $=id=>document.getElementById(id);
+$("back").onclick=()=>{S.screen="setup";setup()};
+if($("pk"))$("pk").onclick=()=>{S.peek=!S.peek;game()};
+A.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{const i=+b.dataset.i,x=S.board[i];
+if(S.guess){S.g=x;S.guess=false}else if(!p.sec){p.sec=x}else{p.down.has(i)?p.down.delete(i):p.down.add(i)}game()});
+$("gs").onclick=()=>{S.guess=!S.guess;S.g=null;game()};
+$("rs").onclick=()=>{p.down.clear();game()};
+if($("sw"))$("sw").onclick=()=>{S.cover=true;S.peek=false;game()};
+if($("cv"))$("cv").onclick=()=>{S.cur=1-S.cur;S.cover=false;S.g=null;game()};
+if($("gx"))$("gx").onclick=()=>{S.g=null;game()};
+A.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{S.q=+b.dataset.q;game()});
+const ans=y=>{const q=Qs()[S.q];S.board.forEach((x,i)=>{if(y?!q.f(x):q.f(x))p.down.add(i)});S.q=null;game()};
+if($("qy"))$("qy").onclick=()=>ans(true);if($("qn"))$("qn").onclick=()=>ans(false)}
+setup();
+</script>
+</body>
+</html>

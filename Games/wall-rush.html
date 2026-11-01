@@ -169,6 +169,18 @@
     color:var(--gold);
     opacity:.85;
   }
+  .cell.finish{
+    box-shadow:inset 0 0 0 2px var(--gold);
+    background:#2a2438;
+  }
+  .cell.finish::before{
+    content:'';
+    width:24%;height:24%;
+    background:var(--gold);
+    border-radius:2px;
+    transform:rotate(45deg);
+    opacity:.85;
+  }
   .cell.reachable{background:#33314a;cursor:pointer;}
   .cell.reachable:hover{background:#3c3a57;}
   .token{
@@ -230,6 +242,16 @@
 <div class="card" id="setup">
   <div class="row">
     <div>
+      <label data-i18n="gameMode">Game mode</label>
+      <span class="hint" data-i18n="gameModeHint">Race to one spot, or race the same way</span>
+    </div>
+    <select id="modeSel">
+      <option value="target" data-i18n="modeTarget">Target Point</option>
+      <option value="race" data-i18n="modeRace">Same-Direction Race</option>
+    </select>
+  </div>
+  <div class="row">
+    <div>
       <label data-i18n="boardSize">Ukuran papan</label>
       <span class="hint" data-i18n="boardSizeHint">Papan lebih besar = permainan lebih lama</span>
     </div>
@@ -272,7 +294,7 @@
       <button id="inc">+</button>
     </div>
   </div>
-  <div class="row">
+  <div class="row" id="targetRow">
     <div>
       <label data-i18n="targetLabel">Target</label>
       <span class="hint" id="targetCurrentLabel">Target: tengah papan (bawaan)</span>
@@ -305,6 +327,17 @@
     <div class="turn-badge"><span class="dot" id="turnDot"></span><span id="turnName">—</span></div>
     <button class="menu-btn" id="menuBtn" data-i18n="menuBtn">Menu</button>
   </div>
+  <div id="specBar" class="topbar" style="display:none;">
+    <span style="font-size:12.5px;color:var(--ink-dim);font-weight:600;" data-i18n="spectating">Spectating</span>
+    <div style="display:flex;gap:8px;">
+      <select id="speedSel" style="padding:6px 8px;font-size:13px;">
+        <option value="1200" data-i18n="speedSlow">Slow</option>
+        <option value="550" selected data-i18n="speedNormal">Normal</option>
+        <option value="150" data-i18n="speedFast">Fast</option>
+      </select>
+      <button class="menu-btn" id="pauseBtn">Pause</button>
+    </div>
+  </div>
   <div id="board"></div>
   <div class="msg" id="msg"></div>
   <div class="panel-below">
@@ -321,12 +354,14 @@
 <script>
 // ---------- TEXT (English only) ----------
 const I18N = {
-    tagline:'Race to the gold marker on the board. Each turn: step one square, or place one wall to block an opponent.',
+    tagline:'Reach the gold finish first. Each turn: step one square, or place one wall to slow an opponent.',
+    gameMode:'Game mode', gameModeHint:'Race to one spot, or race the same way',
+    modeTarget:'Target Point', modeRace:'Same-Direction Race',
     boardSize:'Board size', boardSizeHint:'A bigger board means a longer game',
     wallBudget:'Wall budget', wallBudgetHint:'Per player, for the whole game',
     difficulty:'Bot difficulty', difficultyHint:'Affects how smart the bots play',
     diffEasy:'Easy', diffNormal:'Normal', diffHard:'Hard',
-    slotCount:'Player slots', slotCountHint:'1–4 players on the board',
+    slotCount:'Player slots', slotCountHint:'1–4 players. Set all to BOT to just watch.',
     playerLabel:'Player', human:'HUMAN', bot:'BOT',
     targetLabel:'Target',
     targetBtn:'Set Custom Target',
@@ -335,7 +370,10 @@ const I18N = {
     startBtn:'Start Game',
     targetMenuTitle:'Set Target Point', targetMenuHint:'Click a square to make it the target.',
     resetCenter:'Center Target', backBtn:'Save & Back', cancelBtn:'Cancel',
-    turnSuffix:'— your turn', botSuffix:'(Bot)',
+    turnSuffix:'— your turn', turnSuffixBot:'— turn', botSuffix:'(Bot)',
+    spectating:'Spectating', pause:'Pause', resume:'Resume',
+    speedSlow:'Slow', speedNormal:'Normal', speedFast:'Fast',
+    drawText:'Draw!', drawSub:'Nobody could reach the finish.',
     menuBtn:'Menu',
     wallsLabel:'walls', activeSuffix:'turn', botTag:'bot',
     msgNoWalls:'You have no walls left.',
@@ -368,6 +406,7 @@ function applyI18N(){
     el.textContent = t(el.dataset.i18n);
   });
   updateTargetLabel();
+  updatePauseBtn();
   renderSlots();
   if(state) render();
 }
@@ -377,11 +416,22 @@ const COLORS = ['--p1','--p2','--p3','--p4'];
 const COLOR_HEX = {'--p1':'#ef4757','--p2':'#3aa6ff','--p3':'#3ddc84','--p4':'#f2c14e'};
 const DIFF_PARAMS = { easy:{block:0.15, random:0.3}, normal:{block:0.55, random:0}, hard:{block:0.85, random:0} };
 
-let N = 7, WALL_LIMIT = 5, numSlots = 2, DIFFICULTY = 'normal';
+let N = 7, WALL_LIMIT = 5, numSlots = 2, DIFFICULTY = 'normal', MODE = 'target';
 let slotIsBot = [false,true,true,true];
 let customGoal = null;       // {r,c} or null (= board center)
 let customGoalSize = null;   // N this customGoal was chosen for
 let tempTargetSel = null;
+let paused = false, botDelay = 550, botTimer = null;
+function updatePauseBtn(){
+  document.getElementById('pauseBtn').textContent = paused ? t('resume') : t('pause');
+}
+document.getElementById('speedSel').addEventListener('change', e=>{ botDelay = +e.target.value; });
+document.getElementById('pauseBtn').onclick = ()=>{
+  paused = !paused;
+  updatePauseBtn();
+  if(paused){ clearTimeout(botTimer); setMsg(''); }
+  else maybeBotTurn();
+};
 
 let state = null;
 
@@ -389,6 +439,10 @@ let state = null;
 const sizeSel = document.getElementById('sizeSel');
 const wallSel = document.getElementById('wallSel');
 const diffSel = document.getElementById('diffSel');
+const modeSel = document.getElementById('modeSel');
+modeSel.addEventListener('change', ()=>{
+  document.getElementById('targetRow').style.display = modeSel.value==='race' ? 'none' : 'flex';
+});
 const countVal = document.getElementById('countVal');
 const slotsEl = document.getElementById('slots');
 
@@ -398,12 +452,11 @@ function renderSlots(){
   for(let i=0;i<numSlots;i++){
     const div = document.createElement('div');
     div.className = 'slot';
-    const isBot = i===0 ? false : slotIsBot[i];
+    const isBot = slotIsBot[i];
     div.innerHTML = `
       <span class="dot" style="background:${COLOR_HEX[COLORS[i]]}"></span>
       <span class="name">${t('playerLabel')} ${i+1} (${colorNames[i]})</span>
-      ${ i===0 ? `<span class="toggle on" style="pointer-events:none;">${t('human')}</span>`
-                : `<span class="toggle ${isBot?'on':''}" data-i="${i}">${isBot?t('bot'):t('human')}</span>` }
+      <span class="toggle ${isBot?'on':''}" data-i="${i}">${isBot?t('bot'):t('human')}</span>
     `;
     slotsEl.appendChild(div);
   }
@@ -431,6 +484,7 @@ document.getElementById('startBtn').onclick = ()=>{
   N = +sizeSel.value;
   WALL_LIMIT = +wallSel.value;
   DIFFICULTY = diffSel.value;
+  MODE = modeSel.value;
   startGame();
 };
 
@@ -499,13 +553,17 @@ function canMove(walls,r,c,r2,c2){
   return false;
 }
 
-function bfsPath(walls, sr, sc, gr, gc){
+function isGoalCell(goal, r, c){
+  return goal.type==='row' ? r===goal.r : (r===goal.r && c===goal.c);
+}
+
+function bfsPath(walls, sr, sc, goal){
   const visited = new Set([sr+','+sc]);
   const q = [[sr,sc,[]]];
   let qi=0;
   while(qi<q.length){
     const [r,c,path] = q[qi++];
-    if(r===gr && c===gc) return path;
+    if(isGoalCell(goal,r,c)) return path;
     const dirs = [[r+1,c],[r-1,c],[r,c+1],[r,c-1]];
     for(const [nr,nc] of dirs){
       const k = nr+','+nc;
@@ -521,8 +579,8 @@ function bfsPath(walls, sr, sc, gr, gc){
 function allReachable(walls, players, goal){
   for(const p of players){
     if(p.eliminated) continue;
-    if(p.r===goal.r && p.c===goal.c) continue;
-    if(!bfsPath(walls,p.r,p.c,goal.r,goal.c)) return false;
+    if(isGoalCell(goal,p.r,p.c)) continue;
+    if(!bfsPath(walls,p.r,p.c,goal)) return false;
   }
   return true;
 }
@@ -531,21 +589,33 @@ const CORNERS = (n)=>[ {r:0,c:0}, {r:n-1,c:n-1}, {r:0,c:n-1}, {r:n-1,c:0} ];
 
 function startGame(){
   const corners = CORNERS(N);
+  const race = MODE==='race';
   const players = [];
   for(let i=0;i<numSlots;i++){
+    const pos = race
+      ? {r:N-1, c:Math.round((i+0.5)*N/numSlots - 0.5)}
+      : corners[i];
     players.push({
-      id:i, color:COLORS[i], isBot: i===0?false:slotIsBot[i],
-      r:corners[i].r, c:corners[i].c, wallsLeft:WALL_LIMIT, eliminated:false
+      id:i, color:COLORS[i], isBot: slotIsBot[i],
+      r:pos.r, c:pos.c, wallsLeft:WALL_LIMIT, eliminated:false
     });
   }
-  const goal = (customGoal && customGoalSize===N) ? {...customGoal} : {r:Math.floor(N/2), c:Math.floor(N/2)};
+  const goal = race
+    ? {type:'row', r:0}
+    : (customGoal && customGoalSize===N)
+      ? {type:'cell', ...customGoal}
+      : {type:'cell', r:Math.floor(N/2), c:Math.floor(N/2)};
   state = {
     walls:{h:new Set(), v:new Set()},
     goal,
-    players, turn:0, winner:null
+    players, turn:0, winner:null, turnCount:0
   };
   document.getElementById('setup').style.display='none';
   document.getElementById('targetMenu').style.display='none';
+  clearTimeout(botTimer);
+  paused = false;
+  updatePauseBtn();
+  document.getElementById('specBar').style.display = players.every(p=>p.isBot) ? 'flex' : 'none';
   document.getElementById('game').style.display='flex';
   buildBoardDOM();
   render();
@@ -555,6 +625,7 @@ function startGame(){
 function currentPlayer(){ return state.players[state.turn]; }
 
 function nextTurn(){
+  state.turnCount++;
   state.turn = (state.turn+1) % state.players.length;
 }
 
@@ -626,7 +697,7 @@ function render(){
     const el = cellEls[r+','+c];
     el.className = 'cell';
     el.innerHTML='';
-    if(r===state.goal.r && c===state.goal.c) el.classList.add('goal');
+    if(isGoalCell(state.goal,r,c)) el.classList.add(state.goal.type==='row' ? 'finish' : 'goal');
     const occ = state.players.find(p=>!p.eliminated && p.r===r && p.c===c);
     if(occ){
       const tok = document.createElement('div');
@@ -658,7 +729,7 @@ function render(){
   }
 
   document.getElementById('turnDot').style.background = cp ? `var(${cp.color})` : '#666';
-  document.getElementById('turnName').textContent = cp ? `${displayName(cp)}${cp.isBot?' '+t('botSuffix'):''} ${t('turnSuffix')}` : '';
+  document.getElementById('turnName').textContent = cp ? `${displayName(cp)}${cp.isBot?' '+t('botSuffix'):''} ${cp.isBot ? t('turnSuffixBot') : t('turnSuffix')}` : '';
 
   const plist = document.getElementById('plist');
   plist.innerHTML='';
@@ -681,7 +752,7 @@ function onCellClick(r,c){
   const cp = currentPlayer();
   if(cp.isBot) return;
   if(!canMove(state.walls,cp.r,cp.c,r,c)){
-    if(r===state.goal.r && c===state.goal.c){
+    if(state.goal.type==='cell' && r===state.goal.r && c===state.goal.c){
       setMsg(t('msgGoalFar'), true);
     } else {
       setMsg(t('msgNoStep'), true);
@@ -716,7 +787,7 @@ function onWallClick(orient, r,c){
 
 function afterAction(){
   const cp = currentPlayer();
-  if(cp.r===state.goal.r && cp.c===state.goal.c){
+  if(isGoalCell(state.goal, cp.r, cp.c)){
     state.winner = cp;
     render();
     showWin(cp);
@@ -735,11 +806,20 @@ function showWin(p){
   document.getElementById('winOverlay').style.display='flex';
 }
 
+function showDraw(){
+  document.getElementById('winText').textContent = t('drawText');
+  document.getElementById('winText').style.color = 'var(--ink)';
+  document.getElementById('winSub').textContent = t('drawSub');
+  document.getElementById('playAgain').textContent = t('playAgain');
+  document.getElementById('winOverlay').style.display='flex';
+}
+
 document.getElementById('playAgain').onclick = ()=>{
   document.getElementById('winOverlay').style.display='none';
   startGame();
 };
 document.getElementById('menuBtn').onclick = ()=>{
+  clearTimeout(botTimer);
   document.getElementById('winOverlay').style.display='none';
   document.getElementById('game').style.display='none';
   document.getElementById('setup').style.display='block';
@@ -748,23 +828,25 @@ document.getElementById('menuBtn').onclick = ()=>{
 
 // ---------- BOT AI ----------
 function maybeBotTurn(){
-  if(!state || state.winner) return;
+  if(!state || state.winner || paused) return;
+  if(state.turnCount>=600){ state.winner={draw:true}; render(); showDraw(); return; }
   const cp = currentPlayer();
   if(!cp.isBot) return;
   setMsg(`${displayName(cp)} ${t('msgThinking')}`);
-  setTimeout(()=>botMove(cp), 550);
+  clearTimeout(botTimer);
+  botTimer = setTimeout(()=>botMove(cp), botDelay);
 }
 
 function botMove(cp){
-  if(state.winner) return;
+  if(!state || state.winner || paused) return;
   const params = DIFF_PARAMS[DIFFICULTY] || DIFF_PARAMS.normal;
-  const myPath = bfsPath(state.walls, cp.r, cp.c, state.goal.r, state.goal.c);
+  const myPath = bfsPath(state.walls, cp.r, cp.c, state.goal);
   if(!myPath || myPath.length===0){ nextTurn(); render(); maybeBotTurn(); return; }
 
   let leader=null, leaderPath=null;
   for(const p of state.players){
     if(p.id===cp.id || p.eliminated) continue;
-    const path = bfsPath(state.walls, p.r, p.c, state.goal.r, state.goal.c);
+    const path = bfsPath(state.walls, p.r, p.c, state.goal);
     if(path && (!leaderPath || path.length<leaderPath.length)){ leader=p; leaderPath=path; }
   }
 
@@ -805,12 +887,22 @@ function botMove(cp){
     } else {
       [nr,nc] = myPath[0];
     }
-    const occupied = state.players.some(p=>!p.eliminated && p.id!==cp.id && p.r===nr && p.c===nc);
-    if(!occupied){ cp.r=nr; cp.c=nc; }
+    const isOcc = (r,c)=>state.players.some(p=>!p.eliminated && p.id!==cp.id && p.r===r && p.c===c);
+    if(isOcc(nr,nc)){
+      let best=null, bestLen=Infinity;
+      for(const [r2,c2] of [[cp.r+1,cp.c],[cp.r-1,cp.c],[cp.r,cp.c+1],[cp.r,cp.c-1]]){
+        if(r2<0||r2>=N||c2<0||c2>=N) continue;
+        if(!canMove(state.walls,cp.r,cp.c,r2,c2) || isOcc(r2,c2)) continue;
+        const pth = bfsPath(state.walls,r2,c2,state.goal);
+        if(pth && pth.length<bestLen){ bestLen=pth.length; best=[r2,c2]; }
+      }
+      if(best){ nr=best[0]; nc=best[1]; } else { nr=cp.r; nc=cp.c; }
+    }
+    cp.r=nr; cp.c=nc;
   }
 
   setMsg('');
-  if(cp.r===state.goal.r && cp.c===state.goal.c){
+  if(isGoalCell(state.goal, cp.r, cp.c)){
     state.winner=cp; render(); showWin(cp); return;
   }
   nextTurn();

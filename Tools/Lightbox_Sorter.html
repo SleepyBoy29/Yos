@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lightbox Sorter – Bulk photo quality filter</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{--bg:#f3f5f4;--surface:#fff;--text:#16201c;--muted:#5d6b65;--border:#d5dcd8;--accent:#0f766e;--accent-t:#fff;--good:#15803d;--avg:#b45309;--poor:#b91c1c;--shadow:0 1px 2px rgba(0,0,0,.06);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1513;--surface:#18201d;--text:#e6ede9;--muted:#98a8a0;--border:#2c3732;--accent:#2dd4bf;--accent-t:#06201c;--good:#4ade80;--avg:#fbbf24;--poor:#f87171;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1513;--surface:#18201d;--text:#e6ede9;--muted:#98a8a0;--border:#2c3732;--accent:#2dd4bf;--accent-t:#06201c;--good:#4ade80;--avg:#fbbf24;--poor:#f87171;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:20px 16px 60px}
+h1{font:700 26px/1.2 Georgia,"Times New Roman",serif;margin:0 0 4px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0 0 18px;max-width:62ch}
+.drop{border:2px dashed var(--border);border-radius:14px;background:var(--surface);padding:28px 16px;text-align:center}
+.drop.over{border-color:var(--accent)}
+.drop p{margin:0 0 12px;color:var(--muted)}
+.btn{display:inline-block;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:8px 14px;border-radius:8px;font:inherit;cursor:pointer;margin:2px}
+.btn.pri{background:var(--accent);color:var(--accent-t);border-color:var(--accent);font-weight:600}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:focus-visible,.chip:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=file]{display:none}
+.priv{font-size:13px;color:var(--muted);margin:10px 0 0}
+.prog{margin-top:14px;display:none}
+.bar{height:8px;background:var(--border);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+#ptxt{font-size:13px;color:var(--muted);margin-top:6px}
+#app{display:none;margin-top:22px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:16px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.stat b{display:block;font-size:22px}
+.stat span{font-size:13px;color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.row:last-child{margin-bottom:0}
+.lbl{font-size:13px;color:var(--muted);min-width:70px}
+.chip{border:1px solid var(--border);background:transparent;color:var(--text);padding:4px 11px;border-radius:99px;font:inherit;font-size:13px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--accent);color:var(--accent-t);border-color:var(--accent)}
+select,input[type=range]{font:inherit;color:var(--text)}
+select{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;position:relative;content-visibility:auto;contain-intrinsic-size:220px}
+.card.sel{outline:3px solid var(--accent)}
+.card img{display:block;width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in;background:var(--border)}
+.q{position:absolute;left:6px;top:6px;font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--surface);border:1px solid currentColor}
+.q.Good{color:var(--good)}.q.Average{color:var(--avg)}.q.Poor{color:var(--poor)}
+.card input{position:absolute;right:8px;top:8px;width:20px;height:20px;accent-color:var(--accent)}
+.meta{padding:7px 9px 9px;font-size:12px;color:var(--muted)}
+.meta .n{color:var(--text);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tg{margin-top:3px;line-height:1.35}
+.empty{padding:40px;text-align:center;color:var(--muted)}
+#lb{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+#lb img{max-width:100%;max-height:100%;border-radius:6px}
+.note{font-size:13px;color:var(--muted);margin:0 0 12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Lightbox Sorter</h1>
+<p class="sub">Sort hundreds of photos in one pass. Each photo is scored for sharpness, exposure, contrast and resolution, then grouped into Good, Average and Poor, with extra categories to filter by.</p>
+
+<div class="drop" id="drop">
+<p>Drag photos here, or choose them from your device.</p>
+<label class="btn pri" tabindex="0">Choose photos<input id="f1" type="file" accept="image/*" multiple></label>
+<label class="btn" tabindex="0">Choose a folder<input id="f2" type="file" webkitdirectory multiple></label>
+<p class="priv">Everything runs in your browser. Your photos are never uploaded.</p>
+<div class="prog" id="prog"><div class="bar"><i id="pbar"></i></div><div id="ptxt"></div></div>
+</div>
+
+<div id="app">
+<div class="stats" id="stats"></div>
+<div class="panel">
+<div class="row"><span class="lbl">Quality</span><span id="qchips"></span></div>
+<div class="row"><span class="lbl">Categories</span><span id="tchips"></span></div>
+<div class="row"><span class="lbl">Sort by</span>
+<select id="sort" aria-label="Sort by">
+<option value="name">File name</option><option value="best">Best quality first</option><option value="worst">Worst quality first</option><option value="sharp">Sharpest first</option><option value="new">Newest first</option><option value="big">Largest file first</option></select>
+<label class="lbl" for="thr" style="margin-left:12px">Blur strictness</label>
+<input id="thr" type="range" min="20" max="300" value="80"><span id="thrv" class="lbl" style="min-width:30px">80</span></div>
+<div class="row">
+<button class="btn" id="selAll">Select all shown</button>
+<button class="btn" id="selNone">Clear selection</button>
+<button class="btn pri" id="zip">Download ZIP</button>
+<button class="btn" id="csv">Export CSV report</button>
+<button class="btn" id="reset">Start over</button>
+</div>
+</div>
+<p class="note" id="note"></p>
+<div class="grid" id="grid"></div>
+</div>
+</div>
+<div id="lb" role="dialog" aria-label="Photo preview"><img alt=""></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const QS=["All","Good","Average","Poor"];
+let items=[],sel=new Set(),F={q:"All",tags:new Set()},thr=80,lbUrl=null;
+
+/* ---------- analysis ---------- */
+async function analyze(f){
+  const bmp=await createImageBitmap(f);
+  const W=bmp.width,H=bmp.height,s=Math.min(1,512/Math.max(W,H));
+  const w=Math.max(8,Math.round(W*s)),h=Math.max(8,Math.round(H*s));
+  const c=document.createElement("canvas");c.width=w;c.height=h;
+  const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(bmp,0,0,w,h);
+  const d=x.getImageData(0,0,w,h).data,n=w*h,g=new Float32Array(n);
+  let sm=0,sq=0,sat=0;
+  for(let i=0,p=0;i<n;i++,p+=4){
+    const r=d[p],gr=d[p+1],b=d[p+2],l=.299*r+.587*gr+.114*b;
+    g[i]=l;sm+=l;sq+=l*l;
+    const mx=Math.max(r,gr,b);sat+=mx?(mx-Math.min(r,gr,b))/mx:0;
+  }
+  const mean=sm/n,std=Math.sqrt(Math.max(0,sq/n-mean*mean));
+  let ls=0,l2=0,m=0;
+  for(let y=1;y<h-1;y++)for(let xx=1;xx<w-1;xx++){
+    const i=y*w+xx,v=4*g[i]-g[i-1]-g[i+1]-g[i-w]-g[i+w];ls+=v;l2+=v*v;m++;
+  }
+  const lap=l2/m-(ls/m)*(ls/m);
+  const hc=document.createElement("canvas");hc.width=9;hc.height=8;
+  const hx=hc.getContext("2d",{willReadFrequently:true});hx.drawImage(bmp,0,0,9,8);
+  const hd=hx.getImageData(0,0,9,8).data,bits=[];
+  for(let y=0;y<8;y++)for(let xx=0;xx<8;xx++){
+    const a=(y*9+xx)*4,b=a+4;
+    bits.push(hd[a]+hd[a+1]+hd[a+2]>hd[b]+hd[b+1]+hd[b+2]?1:0);
+  }
+  const ts=Math.min(1,240/Math.max(W,H)),tc=document.createElement("canvas");
+  tc.width=Math.max(1,Math.round(W*ts));tc.height=Math.max(1,Math.round(H*ts));
+  tc.getContext("2d").drawImage(bmp,0,0,tc.width,tc.height);
+  bmp.close();
+  return{file:f,name:f.name,size:f.size,w:W,h:H,mp:W*H/1e6,lap,mean,std,sat:sat/n,bits,
+    year:new Date(f.lastModified).getFullYear(),date:f.lastModified,thumb:tc.toDataURL("image/jpeg",.7),dup:false};
+}
+function markDuplicates(){
+  const n=items.length,p=items.map((_,i)=>i);
+  const find=a=>{while(p[a]!==a){p[a]=p[p[a]];a=p[a]}return a};
+  for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){
+    let d=0;const a=items[i].bits,b=items[j].bits;
+    for(let k=0;k<64&&d<=5;k++)if(a[k]!==b[k])d++;
+    if(d<=5)p[find(i)]=find(j);
+  }
+  const groups={};
+  items.forEach((it,i)=>{it.dup=false;(groups[find(i)]=groups[find(i)]||[]).push(it)});
+  Object.values(groups).forEach(g=>{
+    if(g.length<2)return;
+    g.sort((a,b)=>b.lap-a.lap);g.slice(1).forEach(it=>it.dup=true);
+  });
+}
+function classify(it){
+  const t=[];
+  t.push(it.lap>=thr?"Sharp":"Blurry");
+  if(it.mean<60)t.push("Dark");
+  if(it.mean>200)t.push("Overexposed");
+  if(it.std<35)t.push("Low contrast");
+  if(it.mp<.8)t.push("Low resolution");
+  if(it.sat<.06)t.push("Black & white");
+  if(it.dup)t.push("Duplicate");
+  const r=it.w/it.h;t.push(r>1.05?"Landscape":r<.95?"Portrait":"Square");
+  if(/screenshot|screen shot|scr_/i.test(it.name))t.push("Screenshot");
+  t.push(String(it.year));
+  it.tags=t;
+  const poor=it.lap<thr*.5||it.mean<35||it.mean>225||it.mp<.3;
+  const good=it.lap>=thr&&it.mean>=60&&it.mean<=200&&it.std>=35&&it.mp>=.8;
+  it.q=poor?"Poor":good?"Good":"Average";
+  it.score=Math.round(Math.min(it.lap/(thr*2),1)*50+(1-Math.min(1,Math.abs(it.mean-128)/128))*30+Math.min(it.std/60,1)*10+Math.min(it.mp/2,1)*10);
+}
+
+/* ---------- rendering ---------- */
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function shown(){
+  let a=items.filter(it=>(F.q==="All"||it.q===F.q)&&(!F.tags.size||[...F.tags].some(t=>it.tags.includes(t))));
+  const s=$("#sort").value;
+  const cmp={name:(x,y)=>x.name.localeCompare(y.name,undefined,{numeric:true}),best:(x,y)=>y.score-x.score,worst:(x,y)=>x.score-y.score,
+    sharp:(x,y)=>y.lap-x.lap,new:(x,y)=>y.date-x.date,big:(x,y)=>y.size-x.size}[s];
+  return a.sort(cmp);
+}
+function chips(){
+  const cnt=k=>items.filter(it=>k==="All"?true:it.q===k).length;
+  $("#qchips").innerHTML=QS.map(k=>`<button class="chip" data-q="${k}" aria-pressed="${F.q===k}">${k} (${cnt(k)})</button>`).join(" ");
+  const order=["Sharp","Blurry","Dark","Overexposed","Low contrast","Low resolution","Black & white","Duplicate","Portrait","Landscape","Square","Screenshot"];
+  const years=[...new Set(items.map(i=>String(i.year)))].sort().reverse();
+  const all=[...order,...years].filter(t=>items.some(i=>i.tags.includes(t)));
+  $("#tchips").innerHTML=all.map(t=>`<button class="chip" data-t="${esc(t)}" aria-pressed="${F.tags.has(t)}">${esc(t)} (${items.filter(i=>i.tags.includes(t)).length})</button>`).join(" ");
+}
+function stats(){
+  const c=k=>items.filter(i=>i.q===k).length;
+  $("#stats").innerHTML=[["Total",items.length],["Good",c("Good")],["Average",c("Average")],["Poor",c("Poor")],["Duplicates",items.filter(i=>i.dup).length],["Selected",sel.size]]
+    .map(([a,b])=>`<div class="stat"><b>${b}</b><span>${a}</span></div>`).join("");
+}
+function grid(){
+  const a=shown();
+  $("#note").textContent=`Showing ${a.length} of ${items.length} photos. Tap a thumbnail to preview, tick the box to select.`;
+  $("#grid").innerHTML=a.length?a.map(it=>{
+    const i=items.indexOf(it);
+    return `<div class="card${sel.has(i)?" sel":""}"><img src="${it.thumb}" alt="${esc(it.name)}" data-i="${i}">
+<span class="q ${it.q}">${it.q} · ${it.score}</span>
+<input type="checkbox" data-s="${i}" ${sel.has(i)?"checked":""} aria-label="Select ${esc(it.name)}">
+<div class="meta"><div class="n" title="${esc(it.name)}">${esc(it.name)}</div>${it.w}×${it.h} · ${(it.size/1048576).toFixed(1)} MB
+<div class="tg">${it.tags.filter(t=>t!=="Sharp"&&!/^\d{4}$/.test(t)).join(", ")}</div></div></div>`}).join(""):`<div class="empty">No photos match these filters. Clear a category to see more.</div>`;
+}
+function refresh(){items.forEach(classify);chips();stats();grid();$("#zip").disabled=false}
+
+/* ---------- loading ---------- */
+async function run(files){
+  files=[...files].filter(f=>f.type.startsWith("image/")||/\.(jpe?g|png|webp|gif|bmp|avif)$/i.test(f.name));
+  if(!files.length){alert("No image files found. Choose JPG, PNG, WebP or similar photos.");return}
+  items=[];sel.clear();F={q:"All",tags:new Set()};
+  $("#prog").style.display="block";$("#app").style.display="none";
+  let done=0,failed=0;const q=[...files];
+  const worker=async()=>{
+    while(q.length){
+      const f=q.shift();
+      try{items.push(await analyze(f))}catch(e){failed++}
+      done++;$("#pbar").style.width=(done/files.length*100)+"%";
+      $("#ptxt").textContent=`Analyzing ${done} of ${files.length}`;
+      await new Promise(r=>setTimeout(r));
+    }
+  };
+  await Promise.all([worker(),worker(),worker()]);
+  $("#ptxt").textContent=failed?`Done. ${failed} file(s) could not be read (for example HEIC). Convert them to JPG and add them again.`:"Done.";
+  if(!items.length)return;
+  markDuplicates();refresh();$("#app").style.display="block";
+}
+
+/* ---------- events ---------- */
+$("#f1").onchange=e=>run(e.target.files);
+$("#f2").onchange=e=>run(e.target.files);
+document.querySelectorAll("label.btn").forEach(l=>l.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();l.querySelector("input").click()}});
+const dz=$("#drop");
+["dragover","dragenter"].forEach(v=>dz.addEventListener(v,e=>{e.preventDefault();dz.classList.add("over")}));
+["dragleave","drop"].forEach(v=>dz.addEventListener(v,e=>{e.preventDefault();dz.classList.remove("over")}));
+dz.addEventListener("drop",e=>run(e.dataTransfer.files));
+$("#qchips").onclick=e=>{const k=e.target.dataset.q;if(k){F.q=k;chips();grid()}};
+$("#tchips").onclick=e=>{const t=e.target.dataset.t;if(t){F.tags.has(t)?F.tags.delete(t):F.tags.add(t);chips();grid()}};
+$("#sort").onchange=grid;
+$("#thr").oninput=e=>{thr=+e.target.value;$("#thrv").textContent=thr;refresh()};
+$("#grid").onclick=e=>{
+  if(e.target.dataset.i!==undefined)openLb(+e.target.dataset.i);
+  if(e.target.dataset.s!==undefined){const i=+e.target.dataset.s;sel.has(i)?sel.delete(i):sel.add(i);e.target.closest(".card").classList.toggle("sel",sel.has(i));stats()}
+};
+$("#selAll").onclick=()=>{shown().forEach(it=>sel.add(items.indexOf(it)));stats();grid()};
+$("#selNone").onclick=()=>{sel.clear();stats();grid()};
+$("#reset").onclick=()=>{items=[];sel.clear();$("#app").style.display="none";$("#prog").style.display="none";$("#f1").value="";$("#f2").value=""};
+function openLb(i){
+  if(lbUrl)URL.revokeObjectURL(lbUrl);
+  lbUrl=URL.createObjectURL(items[i].file);$("#lb img").src=lbUrl;$("#lb").style.display="flex";
+}
+$("#lb").onclick=()=>{$("#lb").style.display="none";$("#lb img").removeAttribute("src");if(lbUrl){URL.revokeObjectURL(lbUrl);lbUrl=null}};
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#lb").click()});
+function save(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+$("#csv").onclick=()=>{
+  const rows=[["file","quality","score","width","height","megapixels","sharpness","brightness","contrast","size_bytes","tags"]];
+  items.forEach(it=>rows.push([it.name,it.q,it.score,it.w,it.h,it.mp.toFixed(2),it.lap.toFixed(1),it.mean.toFixed(0),it.std.toFixed(0),it.size,it.tags.join("|")]));
+  save(new Blob([rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n")],{type:"text/csv"}),"photo-report.csv");
+};
+$("#zip").onclick=async()=>{
+  const list=sel.size?[...sel].map(i=>items[i]):shown();
+  if(!list.length)return;
+  const btn=$("#zip");btn.disabled=true;
+  const z=new JSZip(),used=new Set();let k=0;
+  for(const it of list){
+    let nm=it.name;if(used.has(it.q+nm)){nm=(++k)+"_"+nm}used.add(it.q+nm);
+    z.file(`${it.q}/${nm}`,it.file);
+  }
+  try{
+    const blob=await z.generateAsync({type:"blob",compression:"STORE"},m=>{btn.textContent=`Zipping ${Math.round(m.percent)}%`});
+    save(blob,"sorted-photos.zip");
+  }catch(e){alert("The ZIP is too large for this browser. Select fewer photos and try again.")}
+  btn.textContent="Download ZIP";btn.disabled=false;
+};
+</script>
+</body>
+</html>
