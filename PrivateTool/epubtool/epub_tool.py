@@ -1,20 +1,45 @@
 """
-EPUB Tool - batch rename + remove specific words inside EPUB content.
+EPUB Tool - batch rename, remove words inside EPUB content, and extract covers.
+
+Folder layout (created automatically next to the app):
+    raw/      -> put your original EPUB files here
+    results/  -> cleaned + renamed EPUB files
+    cover/    -> cover images (jpg/png) named the same as the files in results/
+
 Uses only the Python standard library (no pip install needed).
 """
 import os
 import re
+import sys
 import shutil
 import threading
 import queue
 import zipfile
+import posixpath
+import subprocess
+import xml.etree.ElementTree as ET
+from urllib.parse import unquote
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, scrolledtext
 
 TEXT_EXT = (".xhtml", ".html", ".htm", ".xml", ".ncx", ".opf")
+SUBFOLDERS = ("raw", "results", "cover")
+IMG_EXT = {"image/jpeg": ".jpg", "image/jpg": ".jpg", "image/png": ".png",
+           "image/gif": ".gif", "image/webp": ".webp", "image/svg+xml": ".svg"}
 
 
-# ---------------------------------------------------------------- logic
+# ---------------------------------------------------------------- helpers
+def app_dir():
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(os.path.abspath(__file__))
+
+
+def ensure_folders(base):
+    for name in SUBFOLDERS:
+        os.makedirs(os.path.join(base, name), exist_ok=True)
+
+
 def clean_filename(name, prefix, use_regex, words, apply_words):
     base, ext = os.path.splitext(name)
     if prefix:
@@ -27,16 +52,17 @@ def clean_filename(name, prefix, use_regex, words, apply_words):
     return (base or "untitled") + ext
 
 
-def unique_path(path):
-    if not os.path.exists(path):
-        return path
-    base, ext = os.path.splitext(path)
-    i = 1
-    while os.path.exists(f"{base} ({i}){ext}"):
+def unique_name(folder, name):
+    """Return a filename that does not exist yet in folder."""
+    base, ext = os.path.splitext(name)
+    candidate, i = name, 1
+    while os.path.exists(os.path.join(folder, candidate)):
+        candidate = f"{base} ({i}){ext}"
         i += 1
-    return f"{base} ({i}){ext}"
+    return candidate
 
 
+# ---------------------------------------------------------------- content cleaning
 def clean_text(text, words, remove_para):
     """Remove words only in text nodes (not inside tags/attributes) so links stay intact."""
     total = 0
@@ -79,43 +105,104 @@ def clean_epub(src, dst, words, remove_para):
     return total
 
 
-def process_folder(folder, prefix, use_regex, words, remove_para,
-                   apply_words_name, use_subfolder, log):
-    files = sorted(f for f in os.listdir(folder) if f.lower().endswith(".epub"))
+# ---------------------------------------------------------------- cover extraction
+def _local(tag):
+    return tag.rsplit("}", 1)[-1]
+
+
+def find_cover(z):
+    """Return (path_inside_zip, extension) of the cover image, or None."""
+    container = ET.fromstring(z.read("META-INF/container.xml"))
+    opf_path = None
+    for el in container.iter():
+        if _local(el.tag) == "rootfile":
+            opf_path = el.get("full-path")
+            break
+    if not opf_path:
+        return None
+    opf = ET.fromstring(z.read(opf_path))
+
+    items, cover_id = [], None
+    for el in opf.iter():
+        name = _local(el.tag)
+        if name == "item":
+            items.append({"id": el.get("id", ""), "href": el.get("href", ""),
+                          "media": el.get("media-type", ""),
+                          "props": el.get("properties", "")})
+        elif name == "meta" and el.get("name") == "cover":
+            cover_id = el.get("content")
+
+    images = [i for i in items if i["media"].startswith("image/")]
+    chosen = None
+    for i in images:                                   # EPUB3
+        if "cover-image" in i["props"].split():
+            chosen = i
+            break
+    if not chosen and cover_id:                        # EPUB2
+        chosen = next((i for i in images if i["id"] == cover_id), None)
+    if not chosen:                                     # fallback by name
+        chosen = next((i for i in images
+                       if "cover" in i["id"].lower() or "cover" in i["href"].lower()), None)
+    if not chosen:
+        return None
+
+    path = posixpath.normpath(posixpath.join(posixpath.dirname(opf_path), unquote(chosen["href"])))
+    ext = IMG_EXT.get(chosen["media"].lower()) or os.path.splitext(path)[1].lower() or ".jpg"
+    return path, ext
+
+
+def extract_cover(epub_path, cover_dir, base_name):
+    with zipfile.ZipFile(epub_path) as z:
+        found = find_cover(z)
+        if not found:
+            return None
+        path, ext = found
+        out = os.path.join(cover_dir, unique_name(cover_dir, base_name + ext))
+        with open(out, "wb") as f:
+            f.write(z.read(path))
+        return os.path.basename(out)
+
+
+# ---------------------------------------------------------------- main process
+def process(base, prefix, use_regex, words, remove_para,
+            apply_words_name, do_covers, delete_raw, log):
+    ensure_folders(base)
+    raw, res, cov = (os.path.join(base, n) for n in SUBFOLDERS)
+    files = sorted(f for f in os.listdir(raw) if f.lower().endswith(".epub"))
     if not files:
-        log("No .epub files found in this folder.")
+        log(f"No .epub files found in:\n{raw}")
         return
-    out_dir = os.path.join(folder, "output") if use_subfolder else folder
-    os.makedirs(out_dir, exist_ok=True)
     log(f"Found {len(files)} EPUB file(s).\n")
 
+    ok = 0
     for f in files:
-        src = os.path.join(folder, f)
-        new_name = clean_filename(f, prefix, use_regex, words, apply_words_name)
-        dst = os.path.join(out_dir, new_name)
-        in_place = os.path.abspath(dst) == os.path.abspath(src)
-        if not in_place:
-            dst = unique_path(dst)
+        src = os.path.join(raw, f)
+        new_name = unique_name(res, clean_filename(f, prefix, use_regex, words, apply_words_name))
+        dst = os.path.join(res, new_name)
         try:
+            removed = 0
             if words:
-                tmp = dst + ".tmp"
-                n = clean_epub(src, tmp, words, remove_para)
-                if not use_subfolder:
-                    os.remove(src)
-                os.replace(tmp, dst)
-                log(f"OK  {f}\n    -> {os.path.basename(dst)}  ({n} removed)")
+                removed = clean_epub(src, dst, words, remove_para)
             else:
-                if in_place:
-                    log(f"--  {f} (unchanged)")
-                elif use_subfolder:
-                    shutil.copy2(src, dst)
-                    log(f"OK  {f}\n    -> {os.path.basename(dst)}")
-                else:
-                    os.rename(src, dst)
-                    log(f"OK  {f}\n    -> {os.path.basename(dst)}")
+                shutil.copy2(src, dst)
+            msg = f"OK  {f}\n    -> {new_name}  ({removed} removed)"
+
+            if do_covers:
+                try:
+                    c = extract_cover(dst, cov, os.path.splitext(new_name)[0])
+                    msg += f"\n    cover: {c}" if c else "\n    cover: not found"
+                except Exception as e:
+                    msg += f"\n    cover failed: {e}"
+
+            if delete_raw:
+                os.remove(src)
+            log(msg)
+            ok += 1
         except Exception as e:
+            if os.path.exists(dst):
+                os.remove(dst)
             log(f"FAILED {f}: {e}")
-    log("\nDone.")
+    log(f"\nDone. {ok}/{len(files)} processed.")
 
 
 # ---------------------------------------------------------------- GUI
@@ -123,22 +210,26 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("EPUB Tool")
-        self.geometry("720x640")
+        self.geometry("720x700")
         self.q = queue.Queue()
 
         pad = {"padx": 10, "pady": 4}
-        self.folder = tk.StringVar()
+        self.base = tk.StringVar(value=app_dir())
         self.prefix = tk.StringVar()
         self.use_regex = tk.BooleanVar(value=False)
         self.remove_para = tk.BooleanVar(value=False)
         self.apply_name = tk.BooleanVar(value=True)
-        self.subfolder = tk.BooleanVar(value=True)
+        self.do_covers = tk.BooleanVar(value=True)
+        self.delete_raw = tk.BooleanVar(value=False)
 
-        ttk.Label(self, text="Folder containing EPUBs:").pack(anchor="w", **pad)
+        ttk.Label(self, text="Working folder (contains raw / results / cover):").pack(anchor="w", **pad)
         row = ttk.Frame(self)
         row.pack(fill="x", **pad)
-        ttk.Entry(row, textvariable=self.folder).pack(side="left", fill="x", expand=True)
+        ttk.Entry(row, textvariable=self.base).pack(side="left", fill="x", expand=True)
         ttk.Button(row, text="Browse...", command=self.pick).pack(side="left", padx=(6, 0))
+        ttk.Button(row, text="Open raw", command=lambda: self.open_sub("raw")).pack(side="left", padx=(6, 0))
+        ttk.Button(row, text="Open results", command=lambda: self.open_sub("results")).pack(side="left", padx=(6, 0))
+        ttk.Button(row, text="Open cover", command=lambda: self.open_sub("cover")).pack(side="left", padx=(6, 0))
 
         ttk.Label(self, text="Text at the start of the filename to remove (e.g. [Novel] ):").pack(anchor="w", **pad)
         ttk.Entry(self, textvariable=self.prefix).pack(fill="x", **pad)
@@ -154,8 +245,10 @@ class App(tk.Tk):
                         variable=self.remove_para).pack(anchor="w", **pad)
         ttk.Checkbutton(self, text="Also remove these words from the filename",
                         variable=self.apply_name).pack(anchor="w", **pad)
-        ttk.Checkbutton(self, text="Save results to 'output' subfolder (originals stay safe). Off = overwrite originals",
-                        variable=self.subfolder).pack(anchor="w", **pad)
+        ttk.Checkbutton(self, text="Extract cover image to cover/ (same name as the result EPUB)",
+                        variable=self.do_covers).pack(anchor="w", **pad)
+        ttk.Checkbutton(self, text="Delete the original from raw/ after it is processed",
+                        variable=self.delete_raw).pack(anchor="w", **pad)
 
         row2 = ttk.Frame(self)
         row2.pack(fill="x", **pad)
@@ -165,12 +258,30 @@ class App(tk.Tk):
 
         self.log_box = scrolledtext.ScrolledText(self, state="disabled", height=14)
         self.log_box.pack(fill="both", expand=True, **pad)
+
+        try:
+            ensure_folders(self.base.get())
+        except OSError:
+            pass
         self.after(100, self.drain)
 
+    # --- helpers
     def pick(self):
         d = filedialog.askdirectory()
         if d:
-            self.folder.set(d)
+            self.base.set(d)
+            ensure_folders(d)
+
+    def open_sub(self, name):
+        base = self.base.get()
+        ensure_folders(base)
+        path = os.path.join(base, name)
+        if sys.platform.startswith("win"):
+            os.startfile(path)
+        elif sys.platform == "darwin":
+            subprocess.Popen(["open", path])
+        else:
+            subprocess.Popen(["xdg-open", path])
 
     def get_words(self):
         return [w.strip() for w in self.words.get("1.0", "end").splitlines() if w.strip()]
@@ -190,20 +301,25 @@ class App(tk.Tk):
             pass
         self.after(100, self.drain)
 
-    def check_folder(self):
-        f = self.folder.get()
-        if not os.path.isdir(f):
-            messagebox.showwarning("EPUB Tool", "Please choose a folder first.")
+    def check_base(self):
+        b = self.base.get()
+        if not os.path.isdir(b):
+            messagebox.showwarning("EPUB Tool", "Please choose a valid working folder first.")
             return None
-        return f
+        ensure_folders(b)
+        return b
 
     def preview(self):
-        f = self.check_folder()
-        if not f:
+        b = self.check_base()
+        if not b:
             return
         try:
             words = self.get_words()
-            for name in sorted(x for x in os.listdir(f) if x.lower().endswith(".epub")):
+            raw = os.path.join(b, "raw")
+            names = sorted(x for x in os.listdir(raw) if x.lower().endswith(".epub"))
+            if not names:
+                self.log(f"No .epub files found in:\n{raw}")
+            for name in names:
                 new = clean_filename(name, self.prefix.get(), self.use_regex.get(),
                                      words, self.apply_name.get())
                 self.log(f"{name}\n  -> {new}")
@@ -211,21 +327,25 @@ class App(tk.Tk):
             messagebox.showerror("Invalid regex", str(e))
 
     def run(self):
-        f = self.check_folder()
-        if not f:
+        b = self.check_base()
+        if not b:
             return
-        if not self.subfolder.get() and not messagebox.askyesno(
-                "Confirm", "Original files will be OVERWRITTEN. Continue?"):
+        if self.delete_raw.get() and not messagebox.askyesno(
+                "Confirm", "Originals in raw/ will be DELETED after processing. Continue?"):
             return
-        words = self.get_words()
-        args = (f, self.prefix.get(), self.use_regex.get(), words,
+        try:
+            re.compile(self.prefix.get() if self.use_regex.get() else "")
+        except re.error as e:
+            messagebox.showerror("Invalid regex", str(e))
+            return
+        args = (b, self.prefix.get(), self.use_regex.get(), self.get_words(),
                 self.remove_para.get(), self.apply_name.get(),
-                self.subfolder.get(), self.log)
+                self.do_covers.get(), self.delete_raw.get(), self.log)
         self.run_btn.config(state="disabled")
 
         def work():
             try:
-                process_folder(*args)
+                process(*args)
             except Exception as e:
                 self.log(f"ERROR: {e}")
             finally:
