@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Conversation Cards</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#E8ECF8;--ink:#1B2340;--muted:#59627F;--chip:#D5DCF2;--on:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141a30;--ink:#EEF1FF;--muted:#a3abc9;--chip:#252d4d}}
+:root[data-theme="dark"]{--bg:#141a30;--ink:#EEF1FF;--muted:#a3abc9;--chip:#252d4d}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;justify-content:center}
+main{width:100%;max-width:520px;padding:20px 18px 28px;display:flex;flex-direction:column;gap:18px;min-height:100vh}
+h1{font-size:1.5rem;margin:6px 0 0;letter-spacing:-.02em}
+p.sub{margin:0;color:var(--muted);font-size:.95rem}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.tabs button{flex:none;border:0;border-radius:999px;padding:10px 16px;background:var(--chip);color:var(--ink);font:inherit;font-weight:500;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--c);color:var(--on);font-weight:700}
+.stage{position:relative;flex:1;display:flex;align-items:stretch;min-height:340px;margin:10px 8px 6px}
+.stage::before,.stage::after{content:"";position:absolute;inset:0;border-radius:28px;background:var(--c);opacity:.35}
+.stage::before{transform:rotate(-3deg)}
+.stage::after{transform:rotate(2.5deg);opacity:.6}
+.card{position:relative;z-index:1;flex:1;border-radius:28px;background:var(--c);color:var(--on);padding:28px 26px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;user-select:none}
+.card.flip{animation:flip .28s ease}
+@keyframes flip{from{transform:translateX(16px) rotate(2deg);opacity:.2}to{transform:none;opacity:1}}
+.cat{font-weight:500;opacity:.85;font-size:.95rem}
+.q{font-size:clamp(1.5rem,6.2vw,2rem);line-height:1.22;font-weight:700;letter-spacing:-.015em;margin:12px 0}
+.count{font-size:.9rem;opacity:.85}
+.ctl{display:flex;gap:10px}
+.ctl button{font:inherit;font-weight:700;border:0;border-radius:16px;padding:15px;cursor:pointer}
+#prev{flex:1;background:var(--chip);color:var(--ink)}
+#next{flex:3;background:var(--ink);color:var(--bg)}
+button:focus-visible{outline:3px solid var(--c);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){.card.flip{animation:none}}
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>Conversation Cards</h1>
+    <p class="sub">Out of things to say? Pick a category or draw a random mix.</p>
+  </div>
+  <div class="tabs" id="tabs" role="group" aria-label="Categories"></div>
+  <div class="stage">
+    <div class="card" id="card" tabindex="0" aria-live="polite">
+      <div class="cat" id="cat"></div>
+      <div class="q" id="q"></div>
+      <div class="count" id="count"></div>
+    </div>
+  </div>
+  <div class="ctl">
+    <button id="prev">Previous</button>
+    <button id="next">Next card</button>
+  </div>
+</main>
+<script>
+const DATA=[
+{n:"Light",c:"#2F6FED",q:["What food could you eat every day and never get bored of?","What song have you had on repeat lately?","Morning person or night owl?","What’s the last show or movie you watched, and was it any good?","If you had tomorrow off, what would you do?","What’s your favorite place to eat in your city?","Coffee, tea, or something else?","What’s a weird little habit you have?","Which app do you open the most?","Pineapple on pizza: yes or no?","What animal would you love to have as a pet?","What childhood snack do you still love?","Mountains or beach?","What made you laugh recently?","What game has made you lose track of time?","Do you prefer cooking or ordering in?","What’s your favorite color, and why?","Rainy day: out in it or cozy inside?","Who’s your favorite comedian or creator?","What’s a silly skill you’re proud of?","What do you order most often for delivery?","What podcast or YouTube channel are you following?","What’s the last book you read?","Are you always early or always late?","What’s the best trip you’ve ever taken?","What’s always in your bag?","Sweet breakfast or savory breakfast?","What sport did you try and give up on?","What do you do when you’re bored?","What’s the cheapest thing you own that’s the most useful?","If you could master one instrument, which would it be?","What hobby do you want to start but haven’t yet?","What’s your ideal kind of weather?","Where did you get hopelessly lost?","What ice cream flavor never lets you down?","What do you rewatch over and over?","Do you prefer talking in person or texting?","What food is overrated, in your opinion?","How spicy is too spicy for you?","What does your ideal hangout spot look like?","What small thing makes your day better?","Tell me about an awkward moment that’s funny now.","High pillow or low pillow?","What’s your favorite day of the week?","What slang word are you using a lot lately?","If you were a dish on a menu, which one would you be?","What’s your favorite way to get around?","What’s the last thing you bought that made you happy?","Which place in your country would you love to visit again?","If you had three free hours right now, where would you go?"]},
+{n:"Memories",c:"#D98A00",q:["What’s your clearest childhood memory?","Who was your first friend that you still remember?","What was your favorite toy or game as a kid?","Which school subject did you love, and which did you dread?","Which teacher left the biggest mark on you?","What was your first day at work like?","What was your very first job?","When did you last laugh until your stomach hurt?","What was your most embarrassing moment at school?","What song instantly takes you back in time?","What was your favorite cartoon or show growing up?","What was the home you grew up in like?","Whose cooking do you miss the most?","What’s your most memorable family vacation?","What’s the best advice you’ve ever received?","What did you want to be when you grew up?","When did you first feel like an adult?","What old thing do you still keep?","What was your first time on a plane or a long train ride like?","What do you miss most about high school or college?","Who did you look up to and copy when you were younger?","Which old friend would you like to reconnect with?","What youthful mistake can you laugh about now?","What’s the best gift you’ve ever received?","Which place holds special meaning for you?","What family tradition do you still keep alive?","What’s your favorite holiday, and why?","What was the first gadget you owned?","When did you feel most proud of yourself?","What used to scare you that doesn’t bother you now?","What was the best moment of the past year?","What did your biggest failure teach you?","Who changed the way you see things?","What contest or competition have you entered?","What was it like when you first moved away from home?","What school snack do you miss the most?","What’s changed most about you in five years?","What old habit did you manage to leave behind?","How did you meet the people closest to you?","What’s the best decision you’ve ever made?","What did you once think was important that isn’t anymore?","What’s your funniest family memory?","What was the first movie you saw in a theater?","What did you do during school breaks?","Who was your role model growing up?","What opportunity are you glad you took?","What would you like to relive from the past?","Is there a story behind your name?","What life lesson did you learn from a parent or grandparent?","When did you last feel nostalgic?"]},
+{n:"What if",c:"#12907B",q:["If you could have one superpower, what would it be?","If you won a billion dollars, what would you do first?","If you could live abroad for a year, where would you go?","If you could have dinner with anyone, who would it be?","If you could go back to any year, which one?","If you could take only three things to a deserted island, what would they be?","If you could instantly master a language, which one?","If you were president for a day, what’s your first move?","If you could swap lives with someone for a week, who?","If you never needed sleep, what would you do with the time?","Would you want to read minds?","If you could teleport, where would you go first?","If you could see the future, what would you want to know?","Would you rather live in the past or the future?","If you opened your own shop, what would it sell?","If you opened a café, what would its theme be?","If every job paid the same, what would you do?","If you had a pause button for time, when would you use it?","If you could talk to animals, which would you talk to first?","If your life were a movie, what genre and title would it have?","If the internet vanished for a week, what would you do?","If you could erase one thing from the world, what would it be?","If the week had an eighth day, how would you spend it?","If you could be an expert at anything, what would it be?","If you could invite three people to a party, who?","If you could live in a fictional city, which one?","If you had a one-use time machine, where would you go?","If you had to eat one food forever, what would it be?","If you could rename yourself, what would you pick?","If you could have a home anywhere, where and what kind?","What advice would you give yourself ten years ago?","If you had a robot assistant, what would you ask it first?","If you could vanish for a day, where would you go?","Would you rather never hit traffic or never wait in line?","If you could instantly be great at a sport, which one?","If you could change one past decision, which would it be?","If you were a tour guide, where would you take visitors?","If you could fly, where would your first flight go?","If you could make one new rule at work, what would it be?","If you had a year with no responsibilities, what would you do?","If you could build any app, what would it be?","If you could invent a national holiday, what would it be called?","Would you move to another planet?","If you could live in any era of history, which one?","If you found a wallet full of cash, what would you do?","If you could master any cuisine, which first?","If you could control the weather for a day, what would you choose?","If you were a video game character, what class would you be?","If you could make a film, what would it be about?","If you could keep only one app on your phone, which?"]},
+{n:"Deeper",c:"#8A4FC7",q:["What are you most grateful for today?","What does success mean to you?","What makes you feel alive?","What’s your biggest fear, and how do you face it?","When do you feel most accepted as you are?","Which value won’t you compromise on?","What do you look for in a friendship?","What do you wish people knew about you?","What burden would you like to put down?","How do you calm yourself when things get heavy?","What are you proud of but rarely talk about?","What would you like to forgive, in yourself or someone else?","What have you learned about yourself this year?","What does home mean to you?","When did you last step outside your comfort zone?","What do you hope is different in your life five years from now?","What makes you feel valued?","Who has influenced your life the most?","What important thing are you putting off?","How do you define courage?","What regret taught you something?","What do you need more of in your life?","What makes you feel at peace?","How do you show people you care?","What mark do you want to leave behind?","What criticism actually helped you grow?","What do you want but feel shy about admitting?","What makes you feel lonely?","What makes you feel like enough?","When did you last cry, and why?","What do you admire in other people?","How do you handle big changes?","What do you remember when you’re unsure?","What’s the hardest thing you’ve made it through?","What keeps you going?","How do you look after relationships that matter?","What do you expect from yourself?","What dream have you never told anyone?","What has your work taught you?","When do you feel most like yourself?","Who would you like to thank, and why?","What makes you angry, and why?","What does happiness mean to you today?","How do you deal with fear of failure?","What do you wish you had the courage to do?","What hard decision are you proud of?","What do people often misunderstand about you?","What does quality time look like for you?","What do you need from the people around you when things are hard?","What’s one thing you want to do more often?"]}
+];
+const TABS=[{n:"Random mix",c:"#D6457A"}].concat(DATA);
+const $=id=>document.getElementById(id);
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const items=DATA.map((d,ci)=>d.q.map(t=>[ci,t]));
+const decks=[shuffle([].concat(...items))].concat(items.map(shuffle)).map(o=>({order:o,i:0}));
+let cur=0;
+function render(anim){
+  const k=decks[cur],it=k.order[k.i],d=DATA[it[0]];
+  document.documentElement.style.setProperty("--c",d.c);
+  $("cat").textContent=cur===0?"Random · "+d.n:d.n;
+  $("q").textContent=it[1];
+  $("count").textContent="Card "+(k.i+1)+" of "+k.order.length;
+  document.querySelectorAll(".tabs button").forEach((b,i)=>b.setAttribute("aria-pressed",i===cur));
+  if(anim){const c=$("card");c.classList.remove("flip");void c.offsetWidth;c.classList.add("flip")}
+}
+function step(n){
+  const k=decks[cur];k.i+=n;
+  if(k.i>=k.order.length){k.order=shuffle(k.order);k.i=0}
+  if(k.i<0)k.i=k.order.length-1;
+  render(true);
+}
+TABS.forEach((d,i)=>{
+  const b=document.createElement("button");
+  b.textContent=d.n;b.style.setProperty("--c",d.c);
+  b.onclick=()=>{cur=i;render(true)};
+  $("tabs").appendChild(b);
+});
+$("next").onclick=()=>step(1);
+$("prev").onclick=()=>step(-1);
+$("card").onclick=()=>step(1);
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowRight"||e.key===" "){e.preventDefault();step(1)}
+  if(e.key==="ArrowLeft")step(-1);
+});
+let sx=null;
+$("card").addEventListener("touchstart",e=>{sx=e.touches[0].clientX},{passive:true});
+$("card").addEventListener("touchend",e=>{
+  if(sx===null)return;const dx=e.changedTouches[0].clientX-sx;sx=null;
+  if(Math.abs(dx)>50){e.preventDefault();step(dx<0?1:-1)}
+});
+render(false);
+</script>
+</body>
+</html>
