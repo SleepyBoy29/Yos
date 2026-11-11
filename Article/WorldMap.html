@@ -51,6 +51,14 @@ svg.zoomed{cursor:grab}svg.drag{cursor:grabbing}
 #gcv.drag{cursor:grabbing}
 #gcv:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:50%}
 .zoom button svg{display:block;margin:auto}
+.lm{display:flex;align-items:center;justify-content:center;gap:12px;min-height:64px;margin-top:4px;color:var(--gold)}
+.lm svg{width:56px;height:56px;flex:none}
+.lm small{display:block;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--mute)}
+.lm b{font:600 20px/1.2 "Cormorant Garamond",Georgia,serif;color:var(--ink)}
+.tip .ti{display:flex;align-items:center;gap:9px}
+.tip .ti svg{width:36px;height:36px;flex:none}
+.tip .ti small{display:block;font-size:11px;opacity:.75;font-weight:400}
+.lm{min-height:78px}.lm img{width:112px;height:74px;object-fit:cover;border-radius:4px;border:1px solid var(--line);flex:none}.lm .cr{font-size:10.5px;letter-spacing:.04em;text-transform:none;margin-top:2px}.tip .ti img{width:68px;height:46px;object-fit:cover;border-radius:3px;flex:none}
 </style>
 </head>
 <body>
@@ -350,6 +358,65 @@ var dm=mq&&mq("(prefers-color-scheme: dark)");if(dm){if(dm.addEventListener)dm.a
 new MutationObserver(colors).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
 document.addEventListener("visibilitychange",kick);
 colors();resize();setAuto(st.auto);
+})();
+</script>
+<script>var LMDATA="Afghanistan=Minaret of Jam|T;Albania=Berat Castle|C;Algeria=Martyrs' Memorial|T;American Samoa=Pola Island|W;Andorra=Pyrenees Peaks|M;Angola=Kalandula Falls|N;Anguilla=Shoal Bay Beach|W;Antigua and Barbuda=Shirley Heights|L;Argentina=Perito Moreno Glacier|M;Armenia=Mount Ararat|M;Aruba=Eagle Beach|W;Ashmore and Cartier Islands=Ashmore Reef|W;Australia=Sydney Opera House|O;Australian Indian Ocean Territories=Flying Fish Cove|W;Austria=Schönbrunn Palace|C;Azerbaijan=Flame Towers|K;Bahamas=Exuma Beaches|W;Bahrain=Bahrain World Trade Center|K;Bangladesh=Sixty Dome Mosque|D;Barbados=Sam Lord's Castle|C;Belarus=Mir Castle|C;Belgium=Brussels Town Hall|T;Belize=Great Blue Hole|W;Benin=Royal Palaces of Abomey|C;Bermuda=Gibbs Hill Lighthouse|L;Bhutan=Tiger's Nest Monastery|G;Bolivia=Uyuni Salt Flats|M;Bosnia and Herzegovina=Stari Most|B;Botswana=Okavango Delta|W;Brazil=Christ the Redeemer|S;British Indian Ocean Territory=Diego Garcia Atoll|W;British Virgin Islands=The Baths of Virgin Gorda|W;Brunei=Omar Ali Saifuddien Mosque|D;Bulgaria=Alexander Nevsky Cathedral|D;Burkina Faso=Ruins of Loropéni|C;Burundi=Karera Falls|N;Cabo Verde=Pico do Fogo|V;Cambodia=Angkor Wat|U;Cameroon=Mount Cameroon|V;Canada=CN Tower|T;Cayman Islands=Seven Mile Beach|W;Central African Republic=Boali Falls|N;Chad=Ennedi Plateau|M;Chile=Easter Island Moai|S;China=Great Wall|C;Colombia=Cartagena City Walls|C;Comoros=Mount Karthala|V;Cook Islands=Aitutaki Lagoon|W;Costa Rica=Arenal Volcano|V;Croatia=Dubrovnik Old Town|C;Cuba=El Capitolio|D;Curaçao=Queen Emma Bridge|B;Cyprus=Kolossi Castle|C;Czechia=Prague Castle|H;Côte d'Ivoire=Basilica of Our Lady of Peace|D;Democratic Republic of the Congo=Virunga Volcanoes|V;Denmark=The Little Mermaid|S;Djibouti=Lake Assal|M;Dominica=Boiling Lake|V;Dominican Republic=Columbus Lighthouse|L;Ecuador=Chimborazo|V;Egypt=Pyramids of Giza|P;El Salvador=Izalco Volcano|V;Equatorial Guinea=Malabo Cathedral|H;Eritrea=Fiat Tagliero Building|A;Estonia=Tallinn Old Town|H;Eswatini=Mantenga Falls|N;Ethiopia=Rock Churches of Lalibela|H;Falkland Islands=Whalebone Arch|A;Faroe Islands=Múlafossur Waterfall|N;Federated States of Micronesia=Nan Madol|R;Fiji=Mamanuca Islands|W;Finland=Helsinki Cathedral|D;France=Eiffel Tower|T;French Polynesia=Mount Otemanu|V;French Southern and Antarctic Lands=Mont Ross|V;Gabon=Kongou Falls|N;Gambia=Arch 22|A;Georgia=Gergeti Trinity Church|H;Germany=Brandenburg Gate|A;Ghana=Cape Coast Castle|C;Greece=Parthenon|R;Greenland=Ilulissat Icefjord|M;Grenada=Grand Anse Beach|W;Guam=Two Lovers Point|M;Guatemala=Tikal Temple|P;Guernsey=Castle Cornet|C;Guinea=Mount Nimba|M;Guinea-Bissau=Bijagós Islands|W;Guyana=Kaieteur Falls|N;Haiti=Citadelle Laferrière|C;Heard Island and McDonald Islands=Big Ben Volcano|V;Honduras=Copán Ruins|P;Hong Kong=Victoria Harbour Skyline|K;Hungary=Hungarian Parliament|H;Iceland=Hallgrímskirkja|H;India=Taj Mahal|D;Indonesia=Borobudur|U;Iran=Azadi Tower|A;Iraq=Malwiya Minaret|T;Ireland=Cliffs of Moher|M;Isle of Man=Laxey Wheel|F;Israel=Dome of the Rock|D;Italy=Colosseum|A;Jamaica=Dunn's River Falls|N;Japan=Mount Fuji|V;Jersey=Mont Orgueil Castle|C;Jordan=Petra Treasury|R;Kazakhstan=Bayterek Tower|T;Kenya=Mount Kenya|M;Kiribati=Tarawa Atoll|W;Kosovo=Gračanica Monastery|D;Kuwait=Kuwait Towers|T;Kyrgyzstan=Burana Tower|T;Laos=Pha That Luang|U;Latvia=Freedom Monument|S;Lebanon=Baalbek Temple of Jupiter|R;Lesotho=Maletsunyane Falls|N;Liberia=Mount Wuteve|M;Libya=Leptis Magna|R;Liechtenstein=Vaduz Castle|C;Lithuania=Trakai Island Castle|C;Luxembourg=Bock Casemates|C;Macao=Ruins of St. Paul's|H;Madagascar=Avenue of the Baobabs|W;Malawi=Lake Malawi|W;Malaysia=Petronas Towers|K;Maldives=Malé Atoll|W;Mali=Great Mosque of Djenné|D;Malta=Valletta Grand Harbour|C;Marshall Islands=Bikini Atoll|W;Mauritania=Chinguetti Mosque|T;Mauritius=Le Morne Brabant|M;Mexico=Chichén Itzá|P;Moldova=Soroca Fortress|C;Monaco=Monte Carlo Casino|D;Mongolia=Genghis Khan Statue|S;Montenegro=Bay of Kotor|M;Montserrat=Soufrière Hills Volcano|V;Morocco=Hassan II Mosque|D;Mozambique=Fort of Mozambique Island|C;Myanmar=Shwedagon Pagoda|U;Namibia=Sossusvlei Dunes|M;Nauru=Anibare Bay|W;Nepal=Mount Everest|M;Netherlands=Kinderdijk Windmills|F;New Caledonia=Isle of Pines|W;New Zealand=Milford Sound|M;Nicaragua=Masaya Volcano|V;Niger=Agadez Mosque|T;Nigeria=Zuma Rock|M;Niue=Togo Chasm|W;Norfolk Island=Kingston Convict Ruins|R;North Korea=Juche Tower|T;North Macedonia=Church of St. John at Kaneo|H;Northern Cyprus=St. Hilarion Castle|C;Northern Mariana Islands=Banzai Cliff|M;Norway=Geirangerfjord|M;Oman=Sultan Qaboos Grand Mosque|D;Pakistan=Badshahi Mosque|D;Palau=Rock Islands|W;Palestine=Church of the Nativity|H;Panama=Panama Canal|B;Papua New Guinea=Kokoda Track|M;Paraguay=Jesuit Missions of Trinidad|R;Peru=Machu Picchu|M;Philippines=Chocolate Hills|M;Pitcairn Islands=Bounty Bay|W;Poland=Wawel Castle|C;Portugal=Belém Tower|T;Puerto Rico=Castillo San Felipe del Morro|C;Qatar=Museum of Islamic Art|D;Republic of the Congo=Sainte-Anne Basilica|H;Romania=Bran Castle|C;Russia=Saint Basil's Cathedral|H;Rwanda=Volcanoes National Park|V;Saint Barthélemy=Gustavia Harbour|W;Saint Helena=Jacob's Ladder|M;Saint Kitts and Nevis=Brimstone Hill Fortress|C;Saint Lucia=The Pitons|M;Saint Martin=Fort Louis|C;Saint Pierre and Miquelon=Cap à l'Aigle Lighthouse|L;Saint Vincent and the Grenadines=La Soufrière|V;Samoa=To Sua Ocean Trench|W;San Marino=Guaita Tower|C;Saudi Arabia=Kingdom Centre|K;Senegal=African Renaissance Monument|S;Serbia=Temple of Saint Sava|D;Seychelles=Anse Source d'Argent|W;Siachen Glacier=Siachen Glacier|M;Sierra Leone=Bunce Island|C;Singapore=Marina Bay Sands|K;Sint Maarten=Maho Beach|W;Slovakia=Bratislava Castle|C;Slovenia=Lake Bled Church|H;Solomon Islands=Marovo Lagoon|W;Somalia=Mogadishu Lighthouse|L;Somaliland=Laas Geel Cave Art|M;South Africa=Table Mountain|M;South Georgia and the South Sandwich Islands=Grytviken Church|H;South Korea=N Seoul Tower|T;South Sudan=The Sudd Wetlands|W;Spain=Sagrada Família|H;Sri Lanka=Sigiriya Rock|M;Sudan=Meroë Pyramids|P;Suriname=Fort Zeelandia|C;Sweden=Stockholm City Hall|T;Switzerland=Matterhorn|M;Syria=Palmyra|R;São Tomé and Principe=Pico Cão Grande|V;Taiwan=Taipei 101|K;Tajikistan=Fann Mountains|M;Tanzania=Mount Kilimanjaro|M;Thailand=Wat Arun|U;Timor-Leste=Cristo Rei of Dili|S;Togo=Lomé Cathedral|H;Tonga=Ha'amonga 'a Maui|A;Trinidad and Tobago=Pitch Lake|W;Tunisia=Amphitheatre of El Jem|A;Turkey=Hagia Sophia|D;Turkmenistan=Darvaza Gas Crater|V;Turks and Caicos Islands=Grace Bay Beach|W;U.S. Virgin Islands=Magens Bay|W;Uganda=Rwenzori Mountains|M;Ukraine=Kyiv Pechersk Lavra|D;United Arab Emirates=Burj Khalifa|K;United Kingdom=Big Ben|T;United States of America=Statue of Liberty|S;Uruguay=Palacio Salvo|T;Uzbekistan=Registan, Samarkand|D;Vanuatu=Mount Yasur|V;Vatican City=St. Peter's Basilica|D;Venezuela=Angel Falls|N;Vietnam=Ha Long Bay|M;Wallis and Futuna=Lake Lalolalo|W;Western Sahara=Dakhla Lagoon|W;Yemen=Shibam Skyscrapers|K;Zambia=Victoria Falls|N;Zimbabwe=Great Zimbabwe|C;Åland Islands=Kastelholm Castle|C";</script>
+<script>
+(function(){
+var I={T:"M32 6v6M26 58L32 12l6 46M28.5 44h7M30 30h4M24 58h16M27 50h10",
+P:"M6 54L32 12l26 42zM19 33h26M13 44h38",
+D:"M12 54V34a20 20 0 0 1 40 0v20zM32 8v6M6 54h52M24 54V42a8 8 0 0 1 16 0v12",
+G:"M32 6v6M20 18h24l-4-6H24zM16 30h32l-5-8H21zM12 44h40l-6-10H18zM18 54h28M22 44v10M42 44v10",
+C:"M8 56V20h8v6h6v-6h20v6h6v-6h8v36zM26 56V42a6 6 0 0 1 12 0v14",
+O:"M8 52h48M10 52C10 34 18 22 28 16c0 14-2 26-4 36M26 52C26 38 34 28 46 24c0 10-3 20-6 28M40 52C42 44 48 38 54 36c0 6-1 12-3 16",
+S:"M32 8l-4 6 4 4 4-4zM32 18v14M32 22l-12-10M32 24l12 4M26 32h12l4 22H22zM18 58h28",
+B:"M4 44h56M12 44V18M52 44V18M12 18Q32 40 52 18M20 44v-12M32 44v-6M44 44v-12M4 52h56",
+M:"M4 54L24 18l10 16 8-10 18 30zM18 30l6 6 6-6",
+V:"M6 54l18-28h16l18 28zM28 26l-3-8M34 24V10M40 26l4-10",
+W:"M32 56V26M32 26C24 22 16 24 10 32M32 26C26 16 38 12 54 18M32 26c8-2 16 2 20 10M32 26c-6-8-4-16 4-20M6 56h52",
+F:"M32 26v32M26 58h12M26 58l2-26h8l2 26M32 26l-16-8M32 26l8-16M32 26l16 8M32 26l-8 16",
+H:"M8 56V28l7-16 7 16v28M42 56V28l7-16 7 16v28M22 56V36h20v20M6 56h52",
+K:"M22 58V20l10-12 10 12v38M32 8V4M28 28h8M28 38h8M28 48h8M10 58V38h12M42 58V32h12v26M6 58h52",
+L:"M26 58l3-34h6l3 34zM28 24l1-8h6l1 8M32 16V8M24 10l-8-4M40 10l8-4M22 58h20M28 36h8M27 46h10",
+A:"M10 56V28a22 22 0 0 1 44 0v28M20 56V30a12 12 0 0 1 24 0v26M6 56h52",
+R:"M6 22l26-12 26 12zM12 26v26M24 26v26M40 26v26M52 26v26M6 56h52",
+U:"M32 6c-5 6-7 12-6 20h12c1-8-1-14-6-20zM20 28c-4 4-5 8-4 14h10c0-6-1-10-6-14zM44 28c-4 4-5 8-4 14h10c0-6-1-10-6-14zM12 56V42h40v14M6 56h52",
+N:"M6 20h26v4M32 20h26M32 24v30M38 24v30M44 24v30M6 56h52M26 56c4-4 8-4 12 0"},L={};
+LMDATA.split(";").forEach(function(r){var a=r.trim().split("="),b=a[1].split("|");L[a[0]]=[b[0],b[1]]});
+function ico(c){return '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+(I[c]||I.M)+'"/></svg>'}
+/* Wikipedia photo: used when online; the icon stays as the offline / not-found fallback */
+var P={};
+function photo(name,cb){
+  if(name in P){if(P[name])cb(P[name]);return}
+  var v=L[name];if(!v||!window.fetch)return;
+  fetch("https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrlimit=4&prop=pageimages&piprop=thumbnail&pithumbsize=480&gsrsearch="+encodeURIComponent(v[0]+" "+name))
+  .then(function(r){return r.json()}).then(function(j){
+    var pg=j&&j.query&&j.query.pages?Object.keys(j.query.pages).map(function(k){return j.query.pages[k]}):[],best=null;
+    pg.forEach(function(p){if(p.thumbnail&&(!best||p.index<best.index))best=p});
+    if(!best){P[name]=null;return}
+    var u=best.thumbnail.source,im=new Image();
+    im.onload=function(){P[name]=u;cb(u)};im.onerror=function(){};im.src=u
+  }).catch(function(){})
+}
+function swap(root,u,alt){var s=root.querySelector("svg");if(!s)return;var im=new Image();im.src=u;im.alt=alt;s.parentNode.replaceChild(im,s);return im}
+["name","gname"].forEach(function(id){
+  var el=document.getElementById(id),box=document.createElement("div"),tm=0;box.className="lm";el.parentNode.appendChild(box);
+  function up(){clearTimeout(tm);var n=el.textContent,v=el.classList.contains("idle")?null:L[n];
+    box.innerHTML=v?ico(v[1])+'<div><small>Landmark</small><b></b><small class="cr"></small></div>':"";
+    if(!v)return;box.querySelector("b").textContent=v[0];
+    var ok=function(u){if(el.textContent===n&&!el.classList.contains("idle")&&box.querySelector("svg")){swap(box,u,v[0]);box.querySelector(".cr").textContent="Photo: Wikipedia"}};
+    if(n in P)photo(n,ok);else tm=setTimeout(function(){photo(n,ok)},150)}
+  new MutationObserver(up).observe(el,{childList:true,characterData:true,subtree:true,attributes:true,attributeFilter:["class"]});up()});
+["tip","gtip"].forEach(function(id){
+  var t=document.getElementById(id),busy=false,tm=0;
+  new MutationObserver(function(){
+    if(busy||t.childNodes.length!==1||t.firstChild.nodeType!==3)return;
+    var n=t.textContent,v=L[n];if(!v)return;busy=true;clearTimeout(tm);
+    t.innerHTML='<div class="ti">'+ico(v[1])+'<div><span></span><small></small></div></div>';
+    t.querySelector("span").textContent=n;t.querySelector("small").textContent=v[0];
+    setTimeout(function(){busy=false},0);
+    var ok=function(u){var sp=t.querySelector("span");if(sp&&sp.textContent===n)swap(t,u,v[0])};
+    if(n in P)photo(n,ok);else tm=setTimeout(function(){photo(n,ok)},150)}).observe(t,{childList:true})});
 })();
 </script>
 </body>
