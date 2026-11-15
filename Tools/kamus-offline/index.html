@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kamus Inggris–Indonesia</title>
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--tx:#1b2130;--mu:#667086;--ac:#2f6fed;--bd:#e1e4eb;--chip:#eaf0fe}
+@media(prefers-color-scheme:dark){:root{--bg:#13161d;--card:#1c212b;--tx:#e8ebf2;--mu:#9099ad;--ac:#7aa5ff;--bd:#2a3140;--chip:#24304a}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--tx);line-height:1.5}
+.wrap{max-width:800px;margin:0 auto;padding:20px 16px 50px}
+h1{font-size:1.45rem;margin:6px 0 14px}
+.bar{display:flex;gap:8px}
+input{flex:1;min-width:0;padding:13px 15px;font-size:1.05rem;border:1px solid var(--bd);border-radius:12px;background:var(--card);color:var(--tx)}
+button{border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:12px;padding:10px 14px;cursor:pointer;font-size:.9rem}
+button:hover{border-color:var(--ac);color:var(--ac)}
+.info{color:var(--mu);font-size:.85rem;margin:10px 2px}
+.sug{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.chip{background:var(--chip);color:var(--ac);border:none;border-radius:999px;padding:4px 11px;font-size:.88rem;cursor:pointer}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px 18px;margin:12px 0}
+.w{font-size:1.6rem;font-weight:700}
+.ipa{color:var(--ac);margin-left:10px;font-size:1.05rem}
+.spk{border:none;background:none;font-size:1.1rem;padding:0 6px;cursor:pointer}
+.pos{margin:16px 0 4px;font-weight:600;color:var(--mu);text-transform:uppercase;font-size:.78rem;letter-spacing:.05em}
+.sense{padding:8px 0 8px 12px;border-left:3px solid var(--bd);margin:8px 0}
+.id{margin-top:4px}.id b{font-weight:600}
+.di{color:var(--mu);font-size:.92rem}
+.ex{font-style:italic;color:var(--mu);margin-top:3px}
+.syn{margin-top:4px;font-size:.88rem;color:var(--mu)}
+.syn span{color:var(--ac);cursor:pointer;margin-right:8px}
+footer{margin-top:30px;color:var(--mu);font-size:.78rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📖 Kamus Inggris–Indonesia</h1>
+  <div class="bar">
+    <input id="q" type="search" autocomplete="off" autofocus placeholder="Ketik kata Inggris… (mis. house)">
+    <button id="dir">EN → ID</button>
+  </div>
+  <div class="info" id="info">Ketik kata untuk mulai mencari.</div>
+  <div class="sug" id="sug"></div>
+  <div id="res"></div>
+  <footer>
+    Sumber data: Princeton WordNet 3.0 (definisi &amp; contoh Inggris), CMU Pronouncing Dictionary (pelafalan, Inggris Amerika, dikonversi ke IPA),
+    Wordnet Bahasa (padanan Indonesia, lisensi MIT). Terjemahan Indonesia belum tersedia untuk semua kata dan bisa memuat istilah Melayu.
+  </footer>
+</div>
+<script>
+var store={en:{},id:{}}, keys={en:{},id:{}}, pending={}, lang='en', token=0, timer;
+var POS={n:'Kata benda (noun)',v:'Kata kerja (verb)',adj:'Kata sifat (adjective)',adv:'Kata keterangan (adverb)'};
+var $=function(i){return document.getElementById(i)};
+window.__load=function(l,L,d){
+  store[l][L]=d; keys[l][L]=Object.keys(d).sort();
+  var cbs=pending[l+L]||[]; delete pending[l+L]; cbs.forEach(function(f){f()});
+};
+function L1(w){var c=w.charAt(0); return c>='a'&&c<='z'?c:'_'}
+function ensure(l,L){
+  return new Promise(function(res){
+    if(store[l][L]) return res();
+    if(pending[l+L]){pending[l+L].push(res);return}
+    pending[l+L]=[res];
+    var s=document.createElement('script'); s.src='data/'+l+'-'+L+'.js';
+    s.onerror=function(){var cbs=pending[l+L]||[];delete pending[l+L];store[l][L]={};keys[l][L]=[];cbs.forEach(function(f){f()})};
+    document.head.appendChild(s);
+  });
+}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function cands(t){
+  var c=[t],n=t.length;
+  if(/ies$/.test(t)) c.push(t.slice(0,-3)+'y');
+  if(/es$/.test(t)) c.push(t.slice(0,-2));
+  if(/s$/.test(t)) c.push(t.slice(0,-1));
+  if(/ing$/.test(t)){c.push(t.slice(0,-3));c.push(t.slice(0,-3)+'e');if(/(.)\1ing$/.test(t))c.push(t.slice(0,-4))}
+  if(/ed$/.test(t)){c.push(t.slice(0,-2));c.push(t.slice(0,-1));if(/(.)\1ed$/.test(t))c.push(t.slice(0,-3));if(/ied$/.test(t))c.push(t.slice(0,-3)+'y')}
+  if(/er$/.test(t)){c.push(t.slice(0,-2));c.push(t.slice(0,-1))}
+  if(/est$/.test(t)){c.push(t.slice(0,-3));c.push(t.slice(0,-2))}
+  if(/ly$/.test(t)) c.push(t.slice(0,-2));
+  return c;
+}
+function entryHtml(e){
+  var h='<div class="card"><span class="w">'+esc(e.w)+'</span>'+(e.a?'<span class="ipa">/'+esc(e.a)+'/</span>':'')+
+    '<button class="spk" data-s="'+esc(e.w)+'" title="Dengarkan">🔊</button>';
+  var order=[],g={};
+  e.m.forEach(function(s){if(!g[s.p]){g[s.p]=[];order.push(s.p)}g[s.p].push(s)});
+  order.forEach(function(p){
+    h+='<div class="pos">'+esc(POS[p]||p)+'</div>';
+    g[p].forEach(function(s,i){
+      h+='<div class="sense"><div>'+(i+1)+'. '+esc(s.d)+'</div>';
+      if(s.i) h+='<div class="id">🇮🇩 <b>'+s.i.map(esc).join(', ')+'</b></div>';
+      if(s.di) h+='<div class="di">'+esc(s.di)+'</div>';
+      if(s.x) h+='<div class="ex">“'+esc(s.x)+'”</div>';
+      if(s.s) h+='<div class="syn">Sinonim: '+s.s.map(function(x){return '<span data-w="'+esc(x)+'">'+esc(x)+'</span>'}).join('')+'</div>';
+      h+='</div>';
+    });
+  });
+  return h+'</div>';
+}
+function chips(arr){return '<div class="sug">'+arr.map(function(w){return '<button class="chip" data-w="'+esc(w)+'">'+esc(w)+'</button>'}).join('')+'</div>'}
+
+async function openEn(w){
+  lang='en'; setDirUi(); q.value=w; $('sug').innerHTML='';
+  var Lx=L1(w); await ensure('en',Lx);
+  var e=store.en[Lx][w];
+  $('res').innerHTML=e?entryHtml(e):'<div class="card">Tidak ditemukan.</div>';
+  $('info').textContent=''; window.scrollTo(0,0);
+}
+async function search(){
+  var t=q.value.trim().toLowerCase(), seq=++token;
+  if(!t){$('res').innerHTML='';$('sug').innerHTML='';$('info').textContent='Ketik kata untuk mulai mencari.';return}
+  var Lx=L1(t); await ensure(lang,Lx); if(seq!==token) return;
+  var ks=keys[lang][Lx], d=store[lang][Lx];
+  var pre=ks.filter(function(k){return k.indexOf(t)===0});
+  if(lang==='en'){
+    var hit=null, cs=cands(t);
+    for(var i=0;i<cs.length;i++){ if(L1(cs[i])===Lx && d[cs[i]]){hit=cs[i];break} }
+    $('res').innerHTML=hit?entryHtml(d[hit]):'';
+    var more=pre.filter(function(k){return k!==hit}).slice(0,24);
+    $('sug').innerHTML=chips(more);
+    $('info').textContent=hit?(hit!==t?'Menampilkan bentuk dasar: '+hit+'. ':'')+(more.length?'Kata lain berawalan “'+t+'”:':''):(more.length?'Tidak ada yang persis. Mungkin maksud Anda:':'Kata tidak ditemukan.');
+  }else{
+    var ex=d[t], out='';
+    if(ex){
+      out='<div class="card"><span class="w">'+esc(t)+'</span><div class="pos">Padanan Inggris</div>'+chips(ex)+'</div>';
+    }
+    $('res').innerHTML=out;
+    $('sug').innerHTML=chips(pre.filter(function(k){return k!==t}).slice(0,24)).replace(/data-w=/g,'data-iw=');
+    $('info').textContent=ex?'Klik kata Inggris untuk melihat definisi dan pelafalan.':(pre.length?'Mungkin maksud Anda:':'Kata tidak ditemukan (data Indonesia terbatas).');
+  }
+}
+function setDirUi(){
+  $('dir').textContent=lang==='en'?'EN → ID':'ID → EN';
+  q.placeholder=lang==='en'?'Ketik kata Inggris… (mis. house)':'Ketik kata Indonesia… (mis. rumah)';
+}
+var q=$('q');
+q.addEventListener('input',function(){clearTimeout(timer);timer=setTimeout(search,120)});
+$('dir').onclick=function(){lang=lang==='en'?'id':'en';setDirUi();$('res').innerHTML='';search()};
+document.addEventListener('click',function(e){
+  var s=e.target.closest('.spk'); 
+  if(s){ if(window.speechSynthesis){var u=new SpeechSynthesisUtterance(s.dataset.s);u.lang='en-US';speechSynthesis.cancel();speechSynthesis.speak(u)} return }
+  var t=e.target.closest('[data-w]'); if(t){openEn(t.dataset.w);return}
+  var iw=e.target.closest('[data-iw]'); if(iw){q.value=iw.dataset.iw;search()}
+});
+</script>
+</body>
+</html>

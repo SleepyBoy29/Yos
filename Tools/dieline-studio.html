@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dieline — Sticker &amp; Pin Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -152,6 +152,9 @@
   .empty-state .drop-icon{font-size:26px;display:block;margin-bottom:10px;}
   .zoom-hint{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-dim);margin-top:10px;text-align:center;}
 
+  .bulk-bar{height:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:99px;overflow:hidden;}
+  .bulk-bar > div{height:100%;width:0;background:var(--yellow);transition:width .1s;}
+
   @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important;} }
 </style>
 </head>
@@ -168,6 +171,8 @@
       <button class="tab" data-mode="round">Round Pin</button>
       <button class="tab" data-mode="sheet">Print Sheet</button>
       <button class="tab" data-mode="cutout">Cutout &amp; Convert</button>
+      <button class="tab" data-mode="textsticker">Text Sticker</button>
+      <button class="tab" data-mode="bulk">Bulk Folder</button>
     </nav>
   </header>
 
@@ -490,6 +495,109 @@
         </div>
       </div>
 
+      <!-- TEXT STICKER -->
+      <div id="textStickerControls" class="mode-controls hidden">
+        <div>
+          <label class="field-label" for="textStickerContent">Your word(s)</label>
+          <textarea id="textStickerContent" class="text-input" rows="2" maxlength="120" placeholder="e.g. BALI TRIP" style="resize:vertical;"></textarea>
+        </div>
+
+        <div>
+          <label class="field-label" for="textStickerFont">Font <span class="mono" style="color:var(--text-dim);font-weight:400;">(200+ available)</span></label>
+          <select id="textStickerFont"></select>
+          <p class="field-note hidden" id="textStickerFontLoading">Loading font…</p>
+        </div>
+
+        <div>
+          <label class="field-label" for="textStickerAlign">Alignment (multi-line)</label>
+          <select id="textStickerAlign">
+            <option value="center" selected>Center</option>
+            <option value="left">Left</option>
+            <option value="right">Right</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="field-label" for="textStickerSize">Text size</label>
+          <div class="range-row"><input type="range" id="textStickerSize" min="24" max="220" value="72"><span class="range-val mono" id="textStickerSizeVal">72px</span></div>
+        </div>
+
+        <div>
+          <label class="field-label" for="textStickerColor">Text color</label>
+          <div class="color-row">
+            <input type="color" id="textStickerColor" value="#1e2230">
+            <input type="text" id="textStickerColorHex" class="hex-input" value="#1E2230" maxlength="7" aria-label="Text color hex code">
+          </div>
+          <div class="swatches" id="textStickerColorSwatches"></div>
+        </div>
+
+        <div class="sub-control">
+          <label class="field-label checkbox"><input type="checkbox" id="textStickerOutlineCheck" checked> White edge (kiss-cut style)</label>
+          <div id="textStickerOutlineRow" style="margin-top:9px;">
+            <div class="range-row"><input type="range" id="textStickerOutlineWidth" min="2" max="40" value="14"><span class="range-val mono" id="textStickerOutlineWidthVal">14px</span></div>
+            <div class="color-row" style="margin-top:8px;">
+              <input type="color" id="textStickerOutlineColor" value="#ffffff">
+              <input type="text" id="textStickerOutlineColorHex" class="hex-input" value="#FFFFFF" maxlength="7" aria-label="Outline color hex code">
+            </div>
+            <div class="swatches" id="textStickerOutlineSwatches"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BULK FOLDER -->
+      <div id="bulkControls" class="mode-controls hidden">
+        <div>
+          <label class="field-label">Input photos</label>
+          <div class="btn-row" style="flex-direction:row;flex-wrap:wrap;">
+            <button type="button" class="btn-secondary" id="bulkPickFolderBtn" style="flex:1 1 40%;">📁 Choose folder…</button>
+            <button type="button" class="btn-secondary" id="bulkPickFilesBtn" style="flex:1 1 40%;">🖼 Choose files…</button>
+          </div>
+          <input type="file" id="bulkFolderInput" webkitdirectory multiple hidden>
+          <input type="file" id="bulkFilesInput" accept="image/*" multiple hidden>
+          <p class="field-note" id="bulkFolderInfo">No photos selected yet. Sub-folders are included.</p>
+        </div>
+
+        <div>
+          <label class="field-label" for="bulkOutType">Process into</label>
+          <select id="bulkOutType">
+            <option value="card">Card sticker / phone wallpaper</option>
+            <option value="round">Round pin</option>
+            <option value="convert">Convert / resize only</option>
+          </select>
+          <p class="field-note" id="bulkOutNote"></p>
+        </div>
+
+        <div id="bulkConvertRow" class="hidden">
+          <label class="field-label" for="bulkResizeMax">Resize longest side to (px)</label>
+          <input type="number" id="bulkResizeMax" class="text-input" min="0" max="8000" step="50" value="0">
+          <p class="field-note">0 = keep each photo's original size.</p>
+        </div>
+
+        <div>
+          <label class="field-label" for="bulkFormat">Output format</label>
+          <select id="bulkFormat">
+            <option value="png">PNG</option>
+            <option value="jpg">JPG (smaller files)</option>
+          </select>
+          <div id="bulkQualityRow" class="hidden" style="margin-top:9px;">
+            <div class="range-row"><input type="range" id="bulkQuality" min="50" max="100" value="92"><span class="range-val mono" id="bulkQualityVal">92%</span></div>
+          </div>
+        </div>
+
+        <label class="field-label checkbox"><input type="checkbox" id="bulkCopyAdjust" checked> Copy adjustments from the selected photo</label>
+        <p class="field-note" style="margin-top:-8px;">Filters, caption text &amp; drop shadow of the photo you last edited in the Card/Round tab are applied to every photo.</p>
+        <label class="field-label checkbox"><input type="checkbox" id="bulkNameCaption"> Use each file name as its caption</label>
+
+        <button type="button" class="btn-secondary" id="bulkPreviewNextBtn">🎲 Preview another photo</button>
+
+        <div id="bulkProgressWrap" class="hidden">
+          <div class="bulk-bar"><div id="bulkBarFill"></div></div>
+          <p class="field-note" id="bulkProgressText"></p>
+          <button type="button" class="btn-secondary" id="bulkCancelBtn">✕ Cancel</button>
+        </div>
+        <p class="field-note" id="bulkResult"></p>
+      </div>
+
       <div class="btn-row" id="downloadArea">
         <button id="downloadSingleBtn" class="download-btn hidden">⬇ Download PNG</button>
         <button id="downloadZipBtn" class="btn-secondary hidden">⬇ Download All (.zip)</button>
@@ -497,6 +605,9 @@
         <button id="downloadSheetPdfBtn" class="btn-secondary hidden">⬇ Download Sheet PDF</button>
         <button id="cutoutDownloadBtn" class="download-btn hidden">⬇ Download PNG</button>
         <button id="cutoutZipBtn" class="btn-secondary hidden">⬇ Download All (.zip)</button>
+        <button id="textStickerDownloadBtn" class="download-btn hidden">⬇ Download PNG</button>
+        <button id="bulkZipBtn" class="download-btn hidden">⬇ Process all → ZIP</button>
+        <button id="bulkFolderBtn" class="btn-secondary hidden">💾 Process all → save to a folder</button>
       </div>
     </section>
 
@@ -552,8 +663,32 @@
     card: "Upload a photo to start your card sticker.",
     round: "Upload a photo to start your round pin.",
     sheet: "Upload photos to build a print sheet.",
-    cutout: "Upload a photo to erase its background or convert its format."
+    cutout: "Upload a photo to erase its background or convert its format.",
+    textsticker: "Type a word or phrase to turn it into a sticker.",
+    bulk: "Choose a folder of photos to process them all at once."
   };
+
+  const FONT_CATALOG = {
+    "Sans Serif": ["Inter","Roboto","Open Sans","Lato","Montserrat","Poppins","Raleway","Nunito","Nunito Sans","Work Sans","Rubik","Karla","Mulish","DM Sans","Manrope","Outfit","Plus Jakarta Sans","Sora","Urbanist","Lexend","Space Grotesk","Barlow","Heebo","Jost","Figtree","Epilogue","Hanken Grotesk","Public Sans","IBM Plex Sans","Red Hat Display","Red Hat Text","Quicksand","Comfortaa","Josefin Sans","Archivo","Overpass","Cabin","Prompt","Be Vietnam Pro","Noto Sans","PT Sans","Source Sans 3","Oxygen","Dosis","Exo 2","Varela Round","Signika","Catamaran","Asap","Saira","Chivo","Maven Pro","Titillium Web","Yanone Kaffeesatz","Didact Gothic","Khand","Rajdhani","League Spartan","Alegreya Sans","Fira Sans","Libre Franklin","Hind","Assistant","Varta","Mukta","Sarabun","Encode Sans","Readex Pro","Barlow Condensed","Jaldi","Blinker"],
+    "Serif": ["Playfair Display","Merriweather","Lora","PT Serif","Cormorant Garamond","Cormorant","Libre Baskerville","Crimson Text","Crimson Pro","EB Garamond","Bitter","Noto Serif","Source Serif 4","Spectral","Vollkorn","Domine","Alegreya","Zilla Slab","Frank Ruhl Libre","IBM Plex Serif","Cardo","Neuton","Arvo","Rokkitt","Bree Serif","Josefin Slab","Abril Fatface","Gelasio","Literata","Newsreader","Petrona","Faustina","Mate","Yeseva One","Old Standard TT","Cinzel","Marcellus","Prata","Fraunces","Besley"],
+    "Display": ["Bebas Neue","Archivo Black","Anton","Oswald","Fjalla One","Righteous","Bungee","Bungee Shade","Passion One","Alfa Slab One","Bowlby One","Luckiest Guy","Fredoka","Baloo 2","Titan One","Bangers","Russo One","Staatliches","Monoton","Lobster","Lobster Two","Shrikhand","Carter One","Chewy","Fredericka the Great","Changa One","Coda","Paytone One","Sigmar One","Berkshire Swash","Squada One","Secular One","Black Han Sans","Big Shoulders Display","Unbounded","Syne","Boogaloo","Patua One","Kanit","Concert One"],
+    "Handwriting": ["Pacifico","Permanent Marker","Caveat","Dancing Script","Satisfy","Shadows Into Light","Kalam","Indie Flower","Patrick Hand","Amatic SC","Gochi Hand","Sacramento","Great Vibes","Courgette","Handlee","Kaushan Script","Yellowtail","Alex Brush","Allura","Cookie","Tangerine","Marck Script","Homemade Apple","Rock Salt","Covered By Your Grace","Architects Daughter","Neucha","Caveat Brush","Grand Hotel","Mr Dafoe","Parisienne","Qwigley","Walter Turncoat","Zeyada","La Belle Aurore","Gaegu","Nanum Pen Script","Gloria Hallelujah","Schoolbell","Short Stack"],
+    "Monospace": ["IBM Plex Mono","Roboto Mono","Space Mono","JetBrains Mono","Source Code Pro","Fira Code","Courier Prime","Inconsolata","Ubuntu Mono","PT Mono","Overpass Mono","Red Hat Mono","DM Mono","Spline Sans Mono","Azeret Mono"]
+  };
+  const CATEGORY_FALLBACK = {"Sans Serif":"sans-serif","Serif":"serif","Display":"sans-serif","Handwriting":"cursive","Monospace":"monospace"};
+  const CATEGORY_WEIGHT = {"Sans Serif":700,"Serif":700,"Display":400,"Handwriting":400,"Monospace":400};
+  const FONT_OPTIONS = [];
+  Object.keys(FONT_CATALOG).forEach(group=>{
+    FONT_CATALOG[group].forEach(name=>{
+      FONT_OPTIONS.push({
+        label: name,
+        gfamily: name,
+        family: "'"+name+"', "+CATEGORY_FALLBACK[group],
+        weight: CATEGORY_WEIGHT[group],
+        group: "— "+group.toUpperCase()+" —"
+      });
+    });
+  });
 
   let cardPresetList = CARD_PRESETS.slice();
   let roundPresetList = ROUND_PRESETS.slice();
@@ -574,6 +709,8 @@
     cutout: {tool:"erase", brushSize:35, tolerance:30, invert:false},
     convert: {format:"png", jpgBg:"#ffffff", jpgQuality:0.92},
     cutoutLastPt: null, cutoutLassoPoints: [],
+    textSticker: {content:"", fontIdx:0, align:"center", size:72, color:"#1e2230", outline:{enabled:true, width:14, color:"#ffffff"}, resultCanvas:null},
+    bulk: {entries:[], outType:"card", format:"png", quality:0.92, resizeMax:0, copyAdjust:true, nameCaption:false, running:false, cancel:false, sample:null, sampleIdx:0, previewToken:0, totalBytes:0, previewInfo:""},
     dragging:false, dragStart:null, dragStartOffset:null
   };
 
@@ -591,6 +728,8 @@
   const roundControls = $("roundControls");
   const sheetControls = $("sheetControls");
   const cutoutControls = $("cutoutControls");
+  const textStickerControls = $("textStickerControls");
+  const bulkControls = $("bulkControls");
 
   const thumbSection = $("thumbSection");
   const thumbStrip = $("thumbStrip");
@@ -740,7 +879,7 @@
     item.canvas = out;
     item.natW = out.width; item.natH = out.height;
     item.cutoutCanvas = null; item.cutoutUndo = null;
-    item.thumb = out.toDataURL("image/jpeg",0.72);
+    if(!item.noThumb) item.thumb = out.toDataURL("image/jpeg",0.72);
   }
 
   function rotateItem(item, deg){
@@ -817,6 +956,147 @@
     ctx.restore();
   }
 
+  /* ---------------- text sticker ---------------- */
+  const loadedFontLinks = new Map();
+  function ensureGoogleFont(familyName, weight){
+    const key = familyName+":"+weight;
+    if(loadedFontLinks.has(key)) return loadedFontLinks.get(key);
+    const urlName = familyName.replace(/ /g,"+");
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "https://fonts.googleapis.com/css2?family="+urlName+":wght@"+weight+"&display=swap";
+    const p = new Promise(resolve=>{
+      const done = ()=> setTimeout(resolve, 30);
+      link.onload = done;
+      link.onerror = done;
+      setTimeout(resolve, 4000);
+    });
+    document.head.appendChild(link);
+    loadedFontLinks.set(key, p);
+    return p;
+  }
+
+  function addOutlineToCanvas(sourceCanvas, borderPx, color){
+    const w = sourceCanvas.width, h = sourceCanvas.height;
+    if(borderPx<=0){
+      const out = document.createElement("canvas");
+      out.width=w; out.height=h; out.getContext("2d").drawImage(sourceCanvas,0,0);
+      return out;
+    }
+    const pad = borderPx+2;
+    const out = document.createElement("canvas");
+    out.width = w+pad*2; out.height = h+pad*2;
+    const octx = out.getContext("2d");
+    const sil = document.createElement("canvas");
+    sil.width = out.width; sil.height = out.height;
+    const sctx = sil.getContext("2d");
+    sctx.drawImage(sourceCanvas, pad, pad);
+    sctx.globalCompositeOperation = "source-in";
+    sctx.fillStyle = color;
+    sctx.fillRect(0,0,sil.width,sil.height);
+    sctx.globalCompositeOperation = "source-over";
+    const steps = Math.max(20, Math.round(borderPx*2.2));
+    for(let i=0;i<steps;i++){
+      const angle = (i/steps)*Math.PI*2;
+      octx.drawImage(sil, Math.cos(angle)*borderPx, Math.sin(angle)*borderPx);
+    }
+    octx.drawImage(sourceCanvas, pad, pad);
+    return out;
+  }
+
+  function trimCanvasToContent(canvas, padPx){
+    const w = canvas.width, h = canvas.height;
+    const cx = canvas.getContext("2d");
+    const data = cx.getImageData(0,0,w,h).data;
+    let minX=w,minY=h,maxX=0,maxY=0,found=false;
+    for(let y=0;y<h;y+=2){
+      for(let x=0;x<w;x+=2){
+        if(data[(y*w+x)*4+3] > 8){
+          found = true;
+          if(x<minX)minX=x; if(x>maxX)maxX=x;
+          if(y<minY)minY=y; if(y>maxY)maxY=y;
+        }
+      }
+    }
+    if(!found) return canvas;
+    minX=Math.max(0,minX-padPx); minY=Math.max(0,minY-padPx);
+    maxX=Math.min(w,maxX+padPx); maxY=Math.min(h,maxY+padPx);
+    const cw=maxX-minX, ch=maxY-minY;
+    const out = document.createElement("canvas");
+    out.width=cw; out.height=ch;
+    out.getContext("2d").drawImage(canvas,minX,minY,cw,ch,0,0,cw,ch);
+    return out;
+  }
+
+  let textStickerDebounce = null;
+  function scheduleTextStickerRender(){
+    clearTimeout(textStickerDebounce);
+    textStickerDebounce = setTimeout(renderTextStickerStage, 120);
+  }
+
+  async function renderTextStickerStage(){
+    const ts = state.textSticker;
+    const raw = (ts.content||"");
+    if(!raw.trim()){
+      ts.resultCanvas = null;
+      showEmpty();
+      updateSpecLine();
+      updateDownloadArea();
+      return;
+    }
+    const fontOpt = FONT_OPTIONS[ts.fontIdx];
+    const fontSizePx = ts.size;
+    const fontSpec = fontOpt.weight+" "+fontSizePx+"px "+fontOpt.family;
+    const loadSpec = fontOpt.weight+" "+fontSizePx+"px '"+fontOpt.gfamily+"'";
+    const loadingNote = $("textStickerFontLoading");
+    const alreadyLoaded = loadedFontLinks.has(fontOpt.gfamily+":"+fontOpt.weight);
+    if(!alreadyLoaded && loadingNote) loadingNote.classList.remove("hidden");
+    await ensureGoogleFont(fontOpt.gfamily, fontOpt.weight);
+    try{ await document.fonts.load(loadSpec); }catch(e){}
+    if(!document.fonts.check(loadSpec)){
+      await new Promise(r=>setTimeout(r,300));
+      try{ await document.fonts.load(loadSpec); }catch(e){}
+    }
+    if(loadingNote) loadingNote.classList.add("hidden");
+
+    const lines = raw.split("\n");
+    const measureCanvas = document.createElement("canvas");
+    const mctx = measureCanvas.getContext("2d");
+    mctx.font = fontSpec;
+    let maxW = 1;
+    lines.forEach(l=>{ const w = mctx.measureText(l || " ").width; if(w>maxW) maxW=w; });
+    const lineHeight = fontSizePx*1.25;
+    const textW = Math.ceil(maxW);
+    const textH = Math.ceil(lineHeight*lines.length);
+
+    const outlineOn = ts.outline.enabled && ts.outline.width>0;
+    const pad = Math.ceil(fontSizePx*0.35) + (outlineOn ? ts.outline.width+6 : 4);
+
+    const layer = document.createElement("canvas");
+    layer.width = textW + pad*2; layer.height = textH + pad*2;
+    const lctx = layer.getContext("2d");
+    lctx.font = fontSpec;
+    lctx.textAlign = ts.align;
+    lctx.fillStyle = ts.color;
+    const startX = ts.align==="left" ? pad : (ts.align==="right" ? layer.width-pad : layer.width/2);
+    lines.forEach((line,i)=>{
+      const y = pad + lineHeight*i + fontSizePx*0.85;
+      lctx.fillText(line, startX, y);
+    });
+
+    let finalCanvas = outlineOn ? addOutlineToCanvas(layer, ts.outline.width, ts.outline.color) : layer;
+    finalCanvas = trimCanvasToContent(finalCanvas, 6);
+    ts.resultCanvas = finalCanvas;
+
+    showStage();
+    stage.width = finalCanvas.width; stage.height = finalCanvas.height;
+    const sctx = stage.getContext("2d");
+    sctx.clearRect(0,0,finalCanvas.width,finalCanvas.height);
+    sctx.drawImage(finalCanvas,0,0);
+    updateSpecLine();
+    updateDownloadArea();
+  }
+
   function loadFileAsItem(file){
     return new Promise((resolve,reject)=>{
       if(!file || !file.type.startsWith("image/")){ reject(); return; }
@@ -873,8 +1153,8 @@
 
   function onItemsChanged(){
     thumbCount.textContent = state.items.length;
-    thumbSection.classList.toggle("hidden", state.items.length===0);
-    sharedControls.classList.toggle("hidden", state.mode==="sheet" || state.items.length===0);
+    thumbSection.classList.toggle("hidden", state.items.length===0 || state.mode==="textsticker" || state.mode==="bulk");
+    sharedControls.classList.toggle("hidden", state.mode==="sheet" || state.mode==="textsticker" || state.mode==="bulk" || state.items.length===0);
     dropTitle.textContent = state.items.length ? "Add more photos" : "Drop photos";
     if(state.items.length){
       imageInfo.classList.remove("hidden");
@@ -916,6 +1196,10 @@
   const tabs = document.querySelectorAll(".tab");
   tabs.forEach(btn=>{
     btn.addEventListener("click", ()=>{
+      if(state.bulk.running && btn.dataset.mode!=="bulk"){
+        $("bulkResult").textContent = "A batch is running — wait for it to finish or cancel it before switching tabs.";
+        return;
+      }
       tabs.forEach(b=>b.classList.remove("active"));
       btn.classList.add("active");
       state.mode = btn.dataset.mode;
@@ -924,9 +1208,14 @@
       roundControls.classList.toggle("hidden", state.mode!=="round");
       sheetControls.classList.toggle("hidden", state.mode!=="sheet");
       cutoutControls.classList.toggle("hidden", state.mode!=="cutout");
-      sharedControls.classList.toggle("hidden", state.mode==="sheet" || state.items.length===0);
+      textStickerControls.classList.toggle("hidden", state.mode!=="textsticker");
+      bulkControls.classList.toggle("hidden", state.mode!=="bulk");
+      const noPhotoMode = state.mode==="textsticker" || state.mode==="bulk";
+      sharedControls.classList.toggle("hidden", state.mode==="sheet" || noPhotoMode || state.items.length===0);
       textCaptionSection.classList.toggle("hidden", state.mode==="cutout");
-      stage.classList.toggle("nodrag", state.mode==="sheet");
+      uploadZone.classList.toggle("hidden", noPhotoMode);
+      thumbSection.classList.toggle("hidden", noPhotoMode || state.items.length===0);
+      stage.classList.toggle("nodrag", state.mode==="sheet" || noPhotoMode);
       stage.classList.toggle("crosshair", state.mode==="cutout");
       zoomHint.classList.toggle("hidden", state.mode!=="card" && state.mode!=="round" || !getActiveItem());
       render();
@@ -1517,6 +1806,357 @@
     render();
   }, {passive:false});
 
+  /* ---------------- text sticker wiring ---------------- */
+  fillSelect($("textStickerFont"), FONT_OPTIONS);
+  const textStickerContent = $("textStickerContent"), textStickerFont = $("textStickerFont"), textStickerAlign = $("textStickerAlign");
+  const textStickerSize = $("textStickerSize"), textStickerSizeVal = $("textStickerSizeVal");
+  const textStickerOutlineCheck = $("textStickerOutlineCheck"), textStickerOutlineRow = $("textStickerOutlineRow");
+  const textStickerOutlineWidth = $("textStickerOutlineWidth"), textStickerOutlineWidthVal = $("textStickerOutlineWidthVal");
+  const textStickerDownloadBtn = $("textStickerDownloadBtn");
+
+  textStickerContent.addEventListener("input", ()=>{ state.textSticker.content = textStickerContent.value; scheduleTextStickerRender(); });
+  textStickerFont.addEventListener("change", ()=>{ state.textSticker.fontIdx = +textStickerFont.value; scheduleTextStickerRender(); });
+  textStickerAlign.addEventListener("change", ()=>{ state.textSticker.align = textStickerAlign.value; scheduleTextStickerRender(); });
+  textStickerSize.addEventListener("input", ()=>{ state.textSticker.size = +textStickerSize.value; textStickerSizeVal.textContent = state.textSticker.size+"px"; scheduleTextStickerRender(); });
+  textStickerOutlineCheck.addEventListener("change", ()=>{
+    state.textSticker.outline.enabled = textStickerOutlineCheck.checked;
+    textStickerOutlineRow.classList.toggle("hidden", !state.textSticker.outline.enabled);
+    scheduleTextStickerRender();
+  });
+  textStickerOutlineWidth.addEventListener("input", ()=>{
+    state.textSticker.outline.width = +textStickerOutlineWidth.value;
+    textStickerOutlineWidthVal.textContent = state.textSticker.outline.width+"px";
+    scheduleTextStickerRender();
+  });
+  initColorPicker($("textStickerColor"), $("textStickerColorHex"), $("textStickerColorSwatches"), state.textSticker.color, c=>{ state.textSticker.color=c; scheduleTextStickerRender(); });
+  initColorPicker($("textStickerOutlineColor"), $("textStickerOutlineColorHex"), $("textStickerOutlineSwatches"), state.textSticker.outline.color, c=>{ state.textSticker.outline.color=c; scheduleTextStickerRender(); });
+
+  textStickerDownloadBtn.addEventListener("click", ()=>{
+    if(state.textSticker.resultCanvas) downloadCanvas(state.textSticker.resultCanvas, "text-sticker.png");
+  });
+
+  /* ---------------- bulk folder processing ---------------- */
+  const bulkFolderInput = $("bulkFolderInput"), bulkFilesInput = $("bulkFilesInput");
+  const bulkFolderInfo = $("bulkFolderInfo"), bulkOutType = $("bulkOutType"), bulkOutNote = $("bulkOutNote");
+  const bulkConvertRow = $("bulkConvertRow"), bulkResizeMax = $("bulkResizeMax");
+  const bulkFormat = $("bulkFormat"), bulkQualityRow = $("bulkQualityRow"), bulkQuality = $("bulkQuality"), bulkQualityVal = $("bulkQualityVal");
+  const bulkCopyAdjust = $("bulkCopyAdjust"), bulkNameCaption = $("bulkNameCaption");
+  const bulkZipBtn = $("bulkZipBtn"), bulkFolderBtn = $("bulkFolderBtn");
+  const IMG_EXT_RE = /\.(jpe?g|png|webp|gif|bmp|avif|heic|heif)$/i;
+
+  function formatBytes(n){
+    if(n < 1048576) return Math.max(1,Math.round(n/1024))+" KB";
+    if(n < 1073741824) return (n/1048576).toFixed(1)+" MB";
+    return (n/1073741824).toFixed(2)+" GB";
+  }
+
+  function bulkAddFiles(fileList){
+    const entries = Array.from(fileList||[])
+      .filter(f=> (f.type && f.type.startsWith("image/")) || IMG_EXT_RE.test(f.name))
+      .map(f=>({file:f, rel: f.webkitRelativePath || f.name}));
+    entries.sort((a,b)=> a.rel.localeCompare(b.rel, undefined, {numeric:true}));
+    const b = state.bulk;
+    b.entries = entries; b.sample = null; b.sampleIdx = 0; b.previewInfo = "";
+    b.totalBytes = entries.reduce((s,e)=>s+e.file.size,0);
+    $("bulkResult").textContent = "";
+    bulkFolderInfo.textContent = entries.length
+      ? entries.length+" photo"+(entries.length===1?"":"s")+" found ("+formatBytes(b.totalBytes)+")."
+      : "No photos found in that selection.";
+    render();
+  }
+
+  function updateBulkNote(){
+    const b = state.bulk;
+    if(b.outType==="card"){
+      const d = computeCardDims();
+      bulkOutNote.textContent = "Uses the Card Sticker tab settings — " + (d.pxW ? d.pxW+" × "+d.pxH+" px" : d.wCm.toFixed(1)+" × "+d.hCm.toFixed(1)+" cm @ "+state.dpi+" DPI") + ", plus its border and corner style.";
+    } else if(b.outType==="round"){
+      const d = computeRoundDims();
+      bulkOutNote.textContent = "Uses the Round Pin tab settings — ⌀ "+d.dCm.toFixed(1)+" cm @ "+state.dpi+" DPI, plus its edge and curved text.";
+    } else {
+      bulkOutNote.textContent = "Keeps each photo's own framing. Only the filters (from the selected photo) are applied.";
+    }
+  }
+
+  async function decodeFileToCanvas(file, maxDim){
+    let bmp = null, src = null, w = 0, h = 0;
+    try{ bmp = await createImageBitmap(file, {imageOrientation:"from-image"}); }catch(e){ bmp = null; }
+    if(bmp){ src = bmp; w = bmp.width; h = bmp.height; }
+    else {
+      const url = URL.createObjectURL(file);
+      try{
+        const img = await new Promise((res,rej)=>{ const i = new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=url; });
+        src = img; w = img.naturalWidth; h = img.naturalHeight;
+      } finally { URL.revokeObjectURL(url); }
+    }
+    const scale = Math.min(1, maxDim/Math.max(w,h));
+    const c = document.createElement("canvas");
+    c.width = Math.max(1,Math.round(w*scale)); c.height = Math.max(1,Math.round(h*scale));
+    const cx = c.getContext("2d");
+    cx.imageSmoothingQuality = "high";
+    cx.drawImage(src,0,0,c.width,c.height);
+    if(bmp && bmp.close) bmp.close();
+    return c;
+  }
+
+  function bulkDecodeCap(){
+    const b = state.bulk;
+    if(b.outType==="convert") return b.resizeMax>0 ? Math.max(64,b.resizeMax) : 6000;
+    let outMax;
+    if(b.outType==="card"){
+      const d = computeCardDims();
+      outMax = d.pxW ? Math.max(d.pxW,d.pxH) : cmToPx(Math.max(d.wCm,d.hCm), state.dpi);
+    } else {
+      outMax = cmToPx(computeRoundDims().dCm, state.dpi);
+    }
+    return Math.min(4096, Math.max(1200, Math.ceil(outMax*1.25)));
+  }
+
+  function makeBulkItem(canvas, baseName){
+    const t = state.bulk.copyAdjust ? getActiveItem() : null;
+    const item = {
+      id:"bulk", baseCanvas:canvas, canvas, natW:canvas.width, natH:canvas.height, name:baseName, noThumb:true,
+      filters: t ? {...t.filters} : {brightness:100, contrast:100, saturate:100},
+      text: t ? {...t.text} : {content:"", xPct:50, yPct:85, size:9, color:"#ffffff", outline:true},
+      shadow: t ? {...t.shadow} : {enabled:false, blur:18, offsetX:6, offsetY:10, opacity:0.35, color:"#000000"},
+      zoomCard:1, offsetCard:{x:0,y:0}, zoomRound:1, offsetRound:{x:0,y:0},
+      cutoutCanvas:null, cutoutUndo:null
+    };
+    if(state.bulk.nameCaption) item.text.content = baseName;
+    const f = item.filters;
+    if(f.brightness!==100 || f.contrast!==100 || f.saturate!==100) applyFiltersToItem(item);
+    return item;
+  }
+
+  function buildBulkOutputCanvas(srcCanvas, baseName){
+    const b = state.bulk;
+    const item = makeBulkItem(srcCanvas, baseName);
+    if(b.outType==="card"){
+      const dims = computeCardDims();
+      state.stageDims.card = stageCssSize(dims.aspect);
+      const off = document.createElement("canvas");
+      renderCard(off.getContext("2d"), dims, false, item);
+      return off;
+    }
+    if(b.outType==="round"){
+      const dims = computeRoundDims();
+      state.stageDims.round = stageCssSize(1);
+      const off = document.createElement("canvas");
+      renderRound(off.getContext("2d"), dims, false, item);
+      return off;
+    }
+    let out = item.canvas;
+    if(b.resizeMax>0){
+      const s = b.resizeMax/Math.max(out.width,out.height);
+      const c = document.createElement("canvas");
+      c.width = Math.max(1,Math.round(out.width*s)); c.height = Math.max(1,Math.round(out.height*s));
+      const cx = c.getContext("2d");
+      cx.imageSmoothingQuality = "high";
+      cx.drawImage(out,0,0,c.width,c.height);
+      out = c;
+    }
+    return out;
+  }
+
+  function bulkEncode(canvas){
+    const b = state.bulk;
+    return new Promise(resolve=>{
+      if(b.format==="png"){
+        canvas.toBlob(bl=>resolve({blob:bl, ext:"png"}), "image/png");
+      } else {
+        const flat = document.createElement("canvas");
+        flat.width = canvas.width; flat.height = canvas.height;
+        const fx = flat.getContext("2d");
+        fx.fillStyle = "#ffffff"; fx.fillRect(0,0,flat.width,flat.height);
+        fx.drawImage(canvas,0,0);
+        flat.toBlob(bl=>resolve({blob:bl, ext:"jpg"}), "image/jpeg", b.quality);
+      }
+    });
+  }
+
+  async function processBulkEntry(entry){
+    const baseName = entry.file.name.replace(/\.[^.]+$/,"");
+    const src = await decodeFileToCanvas(entry.file, bulkDecodeCap());
+    const out = buildBulkOutputCanvas(src, baseName);
+    const enc = await bulkEncode(out);
+    if(!enc.blob) throw new Error("encode failed");
+    return {blob:enc.blob, ext:enc.ext, baseName};
+  }
+
+  async function renderBulkPreview(){
+    const b = state.bulk;
+    if(!b.entries.length){ b.previewInfo = ""; showEmpty(); updateSpecLine(); updateDownloadArea(); return; }
+    const token = ++b.previewToken;
+    const entry = b.entries[b.sampleIdx % b.entries.length];
+    try{
+      const cap = bulkDecodeCap();
+      if(!b.sample || b.sample.entry!==entry || b.sample.cap!==cap){
+        b.sample = {entry, cap, canvas: await decodeFileToCanvas(entry.file, cap)};
+      }
+      if(token!==b.previewToken) return;
+      const baseName = entry.file.name.replace(/\.[^.]+$/,"");
+      const out = buildBulkOutputCanvas(b.sample.canvas, baseName);
+      showStage();
+      stage.width = out.width; stage.height = out.height;
+      const sctx = stage.getContext("2d");
+      sctx.clearRect(0,0,out.width,out.height);
+      sctx.drawImage(out,0,0);
+      b.previewInfo = out.width+" × "+out.height+" px";
+    }catch(e){
+      b.previewInfo = "";
+      showEmpty();
+      $("bulkResult").textContent = "Couldn't read “"+entry.file.name+"” — try another photo.";
+    }
+    updateSpecLine();
+    updateDownloadArea();
+  }
+
+  function bulkRelDir(entry){
+    const parts = entry.rel.split("/");
+    return parts.length>2 ? parts.slice(1,-1).join("/") : "";
+  }
+
+  function uniquePath(path, used){
+    if(!used.has(path)){ used.add(path); return path; }
+    const slash = path.lastIndexOf("/"), dot = path.lastIndexOf(".");
+    const hasExt = dot>slash;
+    const stem = hasExt ? path.slice(0,dot) : path, ext = hasExt ? path.slice(dot) : "";
+    let n = 2;
+    while(used.has(stem+"-"+n+ext)) n++;
+    const out = stem+"-"+n+ext;
+    used.add(out);
+    return out;
+  }
+
+  async function writeBlobToDir(root, path, blob){
+    const segs = path.split("/");
+    const fileName = segs.pop();
+    let dir = root;
+    for(const seg of segs) dir = await dir.getDirectoryHandle(seg, {create:true});
+    const fh = await dir.getFileHandle(fileName, {create:true});
+    const w = await fh.createWritable();
+    await w.write(blob);
+    await w.close();
+  }
+
+  function downloadBlobFile(blob, name){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 6000);
+  }
+
+  async function flushZip(zip, name){
+    const content = await zip.generateAsync({type:"blob", compression:"STORE"});
+    downloadBlobFile(content, name);
+    await new Promise(r=>setTimeout(r,500));
+  }
+
+  function setBulkLocked(locked){
+    bulkControls.querySelectorAll("select,input,button").forEach(el=>{
+      if(el.id!=="bulkCancelBtn") el.disabled = locked;
+    });
+  }
+
+  async function runBulk(dirHandle){
+    const b = state.bulk;
+    if(b.running || !b.entries.length) return;
+    const res = $("bulkResult");
+    if(!dirHandle && typeof JSZip==="undefined"){
+      res.textContent = "The ZIP library didn't load — check your connection, or save into a folder instead.";
+      return;
+    }
+    b.running = true; b.cancel = false;
+    setBulkLocked(true);
+    const wrap = $("bulkProgressWrap"), fill = $("bulkBarFill"), txt = $("bulkProgressText");
+    wrap.classList.remove("hidden"); res.textContent = ""; fill.style.width = "0%";
+    updateDownloadArea();
+
+    const total = b.entries.length, used = new Set(), failed = [];
+    const suffix = b.outType==="card" ? "-card" : (b.outType==="round" ? "-pin" : "-converted");
+    let ok = 0, zip = dirHandle ? null : new JSZip(), zipCount = 0, zipBytes = 0, part = 0;
+
+    for(let i=0;i<total;i++){
+      if(b.cancel) break;
+      const entry = b.entries[i];
+      txt.textContent = "Processing "+(i+1)+" / "+total+" — "+entry.file.name;
+      try{
+        const r = await processBulkEntry(entry);
+        const rel = bulkRelDir(entry);
+        const fname = r.baseName+suffix+"."+r.ext;
+        const path = uniquePath(rel ? rel+"/"+fname : fname, used);
+        if(dirHandle){
+          await writeBlobToDir(dirHandle, path, r.blob);
+        } else {
+          zip.file(path, r.blob, {compression:"STORE"});
+          zipCount++; zipBytes += r.blob.size;
+          if(zipCount>=150 || zipBytes>=200*1048576){
+            part++;
+            txt.textContent = "Packing ZIP part "+part+"…";
+            await flushZip(zip, "processed-photos-part-"+part+".zip");
+            zip = new JSZip(); zipCount = 0; zipBytes = 0;
+          }
+        }
+        ok++;
+      }catch(err){ failed.push(entry.file.name); }
+      fill.style.width = Math.round(((i+1)/total)*100)+"%";
+      await new Promise(r=>setTimeout(r,0));
+    }
+
+    if(zip && zipCount>0){
+      txt.textContent = "Packing ZIP…";
+      try{ await flushZip(zip, part===0 ? "processed-photos.zip" : "processed-photos-part-"+(part+1)+".zip"); }
+      catch(e){ res.textContent = "Couldn't build the ZIP: "+e.message; }
+    }
+    const wasCancelled = b.cancel;
+    b.running = false; b.cancel = false;
+    setBulkLocked(false);
+    wrap.classList.add("hidden");
+    res.textContent = (wasCancelled ? "Cancelled. " : "Done. ")+ok+" of "+total+" photos processed"
+      + (failed.length ? " · "+failed.length+" could not be read ("+failed.slice(0,4).join(", ")+(failed.length>4?", …":"")+")" : "")
+      + (dirHandle ? " and saved to your folder." : ".");
+    updateDownloadArea();
+  }
+
+  $("bulkPickFolderBtn").addEventListener("click", ()=> bulkFolderInput.click());
+  $("bulkPickFilesBtn").addEventListener("click", ()=> bulkFilesInput.click());
+  bulkFolderInput.addEventListener("change", e=>{ bulkAddFiles(e.target.files); bulkFolderInput.value = ""; });
+  bulkFilesInput.addEventListener("change", e=>{ bulkAddFiles(e.target.files); bulkFilesInput.value = ""; });
+
+  bulkOutType.addEventListener("change", ()=>{
+    state.bulk.outType = bulkOutType.value;
+    bulkConvertRow.classList.toggle("hidden", state.bulk.outType!=="convert");
+    state.bulk.sample = null;
+    render();
+  });
+  bulkResizeMax.addEventListener("change", ()=>{ state.bulk.resizeMax = Math.max(0, Math.min(8000, +bulkResizeMax.value||0)); bulkResizeMax.value = state.bulk.resizeMax; state.bulk.sample = null; render(); });
+  bulkFormat.addEventListener("change", ()=>{ state.bulk.format = bulkFormat.value; bulkQualityRow.classList.toggle("hidden", state.bulk.format!=="jpg"); });
+  bulkQuality.addEventListener("input", ()=>{ state.bulk.quality = (+bulkQuality.value)/100; bulkQualityVal.textContent = bulkQuality.value+"%"; });
+  bulkCopyAdjust.addEventListener("change", ()=>{ state.bulk.copyAdjust = bulkCopyAdjust.checked; render(); });
+  bulkNameCaption.addEventListener("change", ()=>{ state.bulk.nameCaption = bulkNameCaption.checked; render(); });
+  $("bulkPreviewNextBtn").addEventListener("click", ()=>{
+    const b = state.bulk;
+    if(b.entries.length>1){
+      let n; do{ n = Math.floor(Math.random()*b.entries.length); } while(n===b.sampleIdx % b.entries.length);
+      b.sampleIdx = n;
+    }
+    render();
+  });
+  $("bulkCancelBtn").addEventListener("click", ()=>{ state.bulk.cancel = true; $("bulkProgressText").textContent = "Cancelling…"; });
+
+  bulkZipBtn.addEventListener("click", ()=> runBulk(null));
+  bulkFolderBtn.addEventListener("click", async ()=>{
+    let handle;
+    try{ handle = await window.showDirectoryPicker({mode:"readwrite"}); }
+    catch(e){
+      if(e && e.name==="AbortError") return;
+      $("bulkResult").textContent = "Saving into a folder isn't allowed here — use “Process all → ZIP” instead.";
+      return;
+    }
+    runBulk(handle);
+  });
+
   /* ---------------- dims helpers ---------------- */
   function computeCardDims(){
     const preset = cardPresetList[state.cardPresetIdx];
@@ -1769,7 +2409,7 @@
 
   /* ---------------- empty/stage visibility ---------------- */
   function showEmpty(){ emptyState.classList.remove("hidden"); stage.classList.add("hidden"); zoomHint.classList.add("hidden"); }
-  function showStage(){ emptyState.classList.add("hidden"); stage.classList.remove("hidden"); zoomHint.classList.toggle("hidden", state.mode==="sheet"); }
+  function showStage(){ emptyState.classList.add("hidden"); stage.classList.remove("hidden"); zoomHint.classList.toggle("hidden", state.mode!=="card" && state.mode!=="round"); }
 
   /* ---------------- render dispatcher ---------------- */
   function render(){
@@ -1785,6 +2425,13 @@
     } else if(state.mode==="cutout"){
       const item = getActiveItem();
       if(!item){ showEmpty(); } else { showStage(); redrawCutoutStageFull(item); cutoutUndoBtn.disabled = !item.cutoutUndo; }
+    } else if(state.mode==="textsticker"){
+      scheduleTextStickerRender();
+      return;
+    } else if(state.mode==="bulk"){
+      updateBulkNote();
+      renderBulkPreview();
+      return;
     } else {
       renderSheetStage();
     }
@@ -1794,9 +2441,21 @@
 
   /* ---------------- spec line ---------------- */
   function updateSpecLine(){
-    if(!state.items.length){ imageInfo.classList.add("hidden"); return; }
+    if(!state.items.length && state.mode!=="textsticker" && state.mode!=="bulk"){ imageInfo.classList.add("hidden"); return; }
     imageInfo.classList.remove("hidden");
     let html = "";
+    if(state.mode==="bulk"){
+      const bb = state.bulk;
+      imageInfo.innerHTML = bb.entries.length
+        ? (bb.entries.length+" photo"+(bb.entries.length===1?"":"s")+" &nbsp;·&nbsp; "+formatBytes(bb.totalBytes)+(bb.previewInfo ? " &nbsp;·&nbsp; <b>sample → "+bb.previewInfo+"</b>" : ""))
+        : "Choose a folder to begin.";
+      return;
+    }
+    if(state.mode==="textsticker"){
+      const c = state.textSticker.resultCanvas;
+      imageInfo.innerHTML = c ? (fmt(c.width)+" × "+fmt(c.height)+" px &nbsp;·&nbsp; <b>transparent PNG</b>") : "Type something to preview.";
+      return;
+    }
     if(state.mode==="card"){
       const d = computeCardDims();
       if(d.pxW){
@@ -1842,6 +2501,13 @@
     const sheetReady = hasItems && state.sheet.lastGrid && state.sheet.lastGrid.total>0;
     downloadSheetPngBtn.disabled = !sheetReady;
     downloadSheetPdfBtn.disabled = !sheetReady;
+    textStickerDownloadBtn.classList.toggle("hidden", state.mode!=="textsticker");
+    textStickerDownloadBtn.disabled = !state.textSticker.resultCanvas;
+    const bulkReady = state.bulk.entries.length>0 && !state.bulk.running;
+    bulkZipBtn.classList.toggle("hidden", state.mode!=="bulk");
+    bulkFolderBtn.classList.toggle("hidden", state.mode!=="bulk" || typeof window.showDirectoryPicker!=="function");
+    bulkZipBtn.disabled = !bulkReady;
+    bulkFolderBtn.disabled = !bulkReady;
   }
 
   function buildConvertedBlob(item, cb){
